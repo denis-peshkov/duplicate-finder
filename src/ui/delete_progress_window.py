@@ -4,13 +4,14 @@
 
 from __future__ import annotations
 
+import time
 from typing import Callable, Optional
 
 import customtkinter as ctk
 
 from src.core.deleter import DeleteProgress
 from src.ui.components.path_display import PathDisplay
-from src.utils.formatters import format_count
+from src.utils.formatters import format_count, format_duration
 
 
 class DeleteProgressWindow(ctk.CTkToplevel):
@@ -24,12 +25,17 @@ class DeleteProgressWindow(ctk.CTkToplevel):
     ):
         super().__init__(parent)
         self.title("Deleting...")
-        self.geometry("560x340")
-        self.minsize(560, 320)
+        self.geometry("560x360")
+        self.minsize(560, 340)
         self.resizable(True, True)
         self._canceled = False
         self._on_cancel_callback = on_cancel
         self._total = max(total, 1)
+
+        self._started_at = time.monotonic()
+        self._last_counter: int | None = None
+        self._elapsed_seconds = 0.0
+        self._estimated_seconds: float | None = None
 
         self.transient(parent.winfo_toplevel())
         self.protocol("WM_DELETE_WINDOW", self.request_cancel)
@@ -73,7 +79,15 @@ class DeleteProgressWindow(ctk.CTkToplevel):
         self.progress_bar.set(0)
 
         self.percent_label = ctk.CTkLabel(frame, text="0%", anchor="e")
-        self.percent_label.pack(fill="x", padx=10, pady=(0, 8))
+        self.percent_label.pack(fill="x", padx=10, pady=(0, 2))
+
+        self.time_label = ctk.CTkLabel(
+            frame,
+            text="Elapsed: 0:00  |  Estimated: —",
+            anchor="e",
+            text_color="gray75",
+        )
+        self.time_label.pack(fill="x", padx=10, pady=(0, 8))
 
         self.path_display = PathDisplay(frame, height=120)
         self.path_display.pack(fill="both", expand=True, padx=10, pady=(0, 10))
@@ -102,6 +116,32 @@ class DeleteProgressWindow(ctk.CTkToplevel):
         if self._on_cancel_callback:
             self._on_cancel_callback()
 
+    def _update_timing(self, current: int, total: int) -> None:
+        """Elapsed/Estimated; elapsed пересчитывается при смене каунтера."""
+        if current != self._last_counter:
+            self._last_counter = current
+            self._elapsed_seconds = time.monotonic() - self._started_at
+
+            if current > 0 and total > 0:
+                ratio = current / total
+                if ratio > 0.001:
+                    remaining = max(0.0, self._elapsed_seconds / ratio - self._elapsed_seconds)
+                    self._estimated_seconds = remaining
+                else:
+                    self._estimated_seconds = None
+            else:
+                self._estimated_seconds = None
+
+        elapsed_text = format_duration(self._elapsed_seconds)
+        if self._estimated_seconds is None:
+            estimated_text = "—"
+        else:
+            estimated_text = format_duration(self._estimated_seconds)
+
+        self.time_label.configure(
+            text=f"Elapsed: {elapsed_text}  |  Estimated: {estimated_text}"
+        )
+
     def update_progress(self, progress: DeleteProgress) -> None:
         if self._canceled and not progress.canceled:
             self.phase_label.configure(text="Canceling...")
@@ -111,6 +151,7 @@ class DeleteProgressWindow(ctk.CTkToplevel):
         ratio = progress.current / total
         self.progress_bar.set(max(0.0, min(1.0, ratio)))
         self.percent_label.configure(text=f"{int(ratio * 100)}%")
+        self._update_timing(progress.current, total)
         self.status_label.configure(
             text=(
                 f"{format_count(progress.current)} / {format_count(progress.total)} "
