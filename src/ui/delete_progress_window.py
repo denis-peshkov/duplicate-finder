@@ -9,6 +9,7 @@ from typing import Callable, Optional
 import customtkinter as ctk
 
 from src.core.deleter import DeleteProgress
+from src.ui.components.path_display import PathDisplay
 from src.utils.formatters import format_count
 
 
@@ -23,9 +24,9 @@ class DeleteProgressWindow(ctk.CTkToplevel):
     ):
         super().__init__(parent)
         self.title("Deleting...")
-        self.geometry("560x240")
-        self.minsize(560, 240)
-        self.resizable(True, False)
+        self.geometry("560x280")
+        self.minsize(560, 260)
+        self.resizable(True, True)
         self._canceled = False
         self._on_cancel_callback = on_cancel
         self._total = max(total, 1)
@@ -74,16 +75,8 @@ class DeleteProgressWindow(ctk.CTkToplevel):
         self.percent_label = ctk.CTkLabel(frame, text="0%", anchor="e")
         self.percent_label.pack(fill="x", padx=10, pady=(0, 8))
 
-        self.path_label = ctk.CTkLabel(
-            frame,
-            text="",
-            wraplength=500,
-            justify="left",
-            anchor="nw",
-            text_color="gray65",
-            height=48,
-        )
-        self.path_label.pack(fill="x", padx=10, pady=(0, 10))
+        self.path_display = PathDisplay(frame, height=80)
+        self.path_display.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 
         self.after(50, self._activate_modal)
 
@@ -124,9 +117,7 @@ class DeleteProgressWindow(ctk.CTkToplevel):
                 f"file(s)"
             )
         )
-        self.path_label.configure(text=progress.current_path or "")
-        width = max(self.winfo_width() - 60, 400)
-        self.path_label.configure(wraplength=width)
+        self.path_display.set_path(progress.current_path or "")
 
     def finish(self) -> None:
         try:

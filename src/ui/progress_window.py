@@ -9,6 +9,7 @@ from typing import Callable, Optional
 import customtkinter as ctk
 
 from src.core.models import ScanProgress
+from src.ui.components.path_display import PathDisplay
 from src.utils.formatters import format_count
 
 
@@ -23,8 +24,8 @@ class ProgressWindow(ctk.CTkToplevel):
     ):
         super().__init__(parent)
         self.title(title)
-        self.geometry("640x320")
-        self.minsize(640, 320)
+        self.geometry("640x380")
+        self.minsize(640, 360)
         self.resizable(True, True)
         self._canceled = False
         self._on_cancel_callback = on_cancel
@@ -84,19 +85,8 @@ class ProgressWindow(ctk.CTkToplevel):
         )
         self.stats_label.pack(fill="x", padx=12)
 
-        path_box = ctk.CTkFrame(frame, fg_color="transparent", height=90)
-        path_box.pack(fill="x", padx=12, pady=(10, 12))
-        path_box.pack_propagate(False)
-
-        self.path_label = ctk.CTkLabel(
-            path_box,
-            text="",
-            wraplength=580,
-            justify="left",
-            anchor="nw",
-            text_color="gray65",
-        )
-        self.path_label.pack(fill="both", expand=True)
+        self.path_display = PathDisplay(frame, height=110)
+        self.path_display.pack(fill="both", expand=True, padx=12, pady=(10, 12))
 
         self.after(50, self._activate_modal)
 
@@ -187,9 +177,7 @@ class ProgressWindow(ctk.CTkToplevel):
             )
         )
 
-        self.path_label.configure(text=progress.current_path or "")
-        width = max(self.winfo_width() - 80, 400)
-        self.path_label.configure(wraplength=width)
+        self.path_display.set_path(progress.current_path or "")
 
     def _set_indeterminate(self) -> None:
         if not self._indeterminate:
