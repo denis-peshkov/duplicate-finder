@@ -5,16 +5,19 @@
 from __future__ import annotations
 
 import logging
+import queue
 import subprocess
 import sys
+import threading
 from pathlib import Path
 from tkinter import Listbox, Menu, messagebox
 from typing import Callable, Optional
 
 import customtkinter as ctk
 
-from src.core.deleter import delete_to_recycle_bin
+from src.core.deleter import DeleteProgress, DeleteResult, delete_to_recycle_bin
 from src.core.models import DuplicateGroup, FileEntry, ScanResult
+from src.ui.delete_progress_window import DeleteProgressWindow
 from src.utils.formatters import format_count
 
 logger = logging.getLogger(__name__)
@@ -62,8 +65,13 @@ class PageResults(ctk.CTkFrame):
         self._file_rows: list[ctk.CTkFrame] = []
         self._table_font = ctk.CTkFont(size=FILE_FONT_SIZE)
         self._delete_mode = ctk.StringVar(value="custom")
+        self._delete_queue: queue.Queue = queue.Queue()
+        self._delete_thread: threading.Thread | None = None
+        self._delete_cancel = threading.Event()
+        self._delete_progress: DeleteProgressWindow | None = None
 
         self._create_widgets()
+        self.after(100, self._process_delete_queue)
 
     def _create_widgets(self) -> None:
         footer = ctk.CTkFrame(self, fg_color="transparent", height=52)
@@ -417,6 +425,9 @@ class PageResults(ctk.CTkFrame):
     def _handle_next(self) -> None:
         if not self._result:
             return
+        if self._delete_thread and self._delete_thread.is_alive():
+            return
+
         selected = self._collect_selected_paths()
         if not selected:
             messagebox.showinfo(
@@ -438,9 +449,85 @@ class PageResults(ctk.CTkFrame):
         if not confirmed:
             return
 
-        result = delete_to_recycle_bin(selected)
-        if result.failed:
-            failed_text = "\n".join(f"{path}: {error}" for path, error in result.failed[:5])
+        self._start_delete(selected)
+
+    def _start_delete(self, selected: list[Path]) -> None:
+        self._delete_cancel.clear()
+        self.next_btn.configure(state="disabled")
+        self.back_btn.configure(state="disabled")
+
+        self._delete_progress = DeleteProgressWindow(
+            self.winfo_toplevel(),
+            total=len(selected),
+            on_cancel=self._delete_cancel.set,
+        )
+        self._delete_progress.update()
+
+        self._delete_thread = threading.Thread(
+            target=self._delete_worker,
+            args=(selected,),
+            daemon=True,
+            name="duplicate-delete",
+        )
+        self._delete_thread.start()
+
+    def _delete_worker(self, selected: list[Path]) -> None:
+        try:
+            def progress_callback(progress: DeleteProgress) -> None:
+                if self._delete_queue.qsize() < 64:
+                    self._delete_queue.put(("progress", progress))
+
+            result = delete_to_recycle_bin(
+                selected,
+                progress_callback=progress_callback,
+                cancel_check=self._delete_cancel.is_set,
+            )
+            self._delete_queue.put(("done", result))
+        except Exception as exc:
+            logger.exception("Delete failed")
+            self._delete_queue.put(("error", str(exc)))
+
+    def _process_delete_queue(self) -> None:
+        try:
+            while True:
+                message_type, payload = self._delete_queue.get_nowait()
+                if message_type == "progress" and self._delete_progress:
+                    self._delete_progress.update_progress(payload)
+                elif message_type == "done":
+                    self._on_delete_done(payload)
+                elif message_type == "error":
+                    self._on_delete_error(str(payload))
+        except queue.Empty:
+            pass
+        self.after(80, self._process_delete_queue)
+
+    def _close_delete_progress(self) -> None:
+        if self._delete_progress is not None:
+            try:
+                self._delete_progress.finish()
+                self._delete_progress.destroy()
+            except Exception:  # noqa: BLE001
+                pass
+            self._delete_progress = None
+        self.next_btn.configure(state="normal")
+        self.back_btn.configure(state="normal")
+
+    def _on_delete_done(self, result: DeleteResult) -> None:
+        self._close_delete_progress()
+
+        if result.canceled:
+            messagebox.showinfo(
+                "Duplicate Finder",
+                (
+                    f"Deletion canceled.\n"
+                    f"Moved: {format_count(len(result.deleted))}\n"
+                    f"Remaining were kept."
+                ),
+            )
+        elif result.failed:
+            failed_text = "\n".join(
+                f"{path}: {error}" for path, error in result.failed[:5]
+            )
             messagebox.showwarning(
                 "Partial deletion",
                 (
@@ -454,7 +541,12 @@ class PageResults(ctk.CTkFrame):
                 f"Moved {format_count(len(result.deleted))} file(s) to Recycle Bin.",
             )
 
-        self._remove_deleted_files(set(result.deleted))
+        if result.deleted:
+            self._remove_deleted_files(set(result.deleted))
+
+    def _on_delete_error(self, message: str) -> None:
+        self._close_delete_progress()
+        messagebox.showerror("Delete error", message)
 
     def _remove_deleted_files(self, deleted: set[Path]) -> None:
         if not self._result:
