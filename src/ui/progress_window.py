@@ -4,13 +4,14 @@
 
 from __future__ import annotations
 
+import time
 from typing import Callable, Optional
 
 import customtkinter as ctk
 
 from src.core.models import ScanProgress
 from src.ui.components.path_display import PathDisplay
-from src.utils.formatters import format_count
+from src.utils.formatters import format_count, format_duration
 
 
 class ProgressWindow(ctk.CTkToplevel):
@@ -24,12 +25,18 @@ class ProgressWindow(ctk.CTkToplevel):
     ):
         super().__init__(parent)
         self.title(title)
-        self.geometry("640x380")
-        self.minsize(640, 360)
+        self.geometry("640x400")
+        self.minsize(640, 380)
         self.resizable(True, True)
         self._canceled = False
         self._on_cancel_callback = on_cancel
         self._indeterminate = True
+
+        self._step_phase: str | None = None
+        self._step_started_at = time.monotonic()
+        self._last_counter: int | None = None
+        self._elapsed_seconds = 0.0
+        self._estimated_seconds: float | None = None
 
         self.transient(parent)
         self.protocol("WM_DELETE_WINDOW", self.request_cancel)
@@ -76,7 +83,15 @@ class ProgressWindow(ctk.CTkToplevel):
         self.progress_bar.start()
 
         self.percent_label = ctk.CTkLabel(frame, text="", anchor="e")
-        self.percent_label.pack(fill="x", padx=12, pady=(0, 8))
+        self.percent_label.pack(fill="x", padx=12, pady=(0, 2))
+
+        self.time_label = ctk.CTkLabel(
+            frame,
+            text="Elapsed: 0:00  |  Estimated: —",
+            anchor="e",
+            text_color="gray75",
+        )
+        self.time_label.pack(fill="x", padx=12, pady=(0, 8))
 
         self.stats_label = ctk.CTkLabel(
             frame,
@@ -112,6 +127,56 @@ class ProgressWindow(ctk.CTkToplevel):
         self.cancel_btn.configure(text="Canceling...", state="disabled")
         if self._on_cancel_callback:
             self._on_cancel_callback()
+
+    def _step_counter(self, progress: ScanProgress) -> int:
+        if progress.phase == "enumerating":
+            return progress.files_scanned
+        if progress.phase == "hashing":
+            return progress.files_hashed
+        if progress.phase == "matching":
+            if progress.percent is not None:
+                return int(progress.percent * 10000)
+            return progress.groups_found
+        return progress.files_scanned + progress.files_hashed
+
+    def _step_ratio(self, progress: ScanProgress) -> float | None:
+        if progress.total_files > 0 and progress.phase == "hashing":
+            return progress.files_hashed / max(progress.total_files, 1)
+        if progress.percent is not None:
+            return max(0.0, min(1.0, progress.percent))
+        return None
+
+    def _update_timing(self, progress: ScanProgress) -> None:
+        """Elapsed/Estimated для текущего шага; elapsed — при смене каунтера."""
+        if progress.phase != self._step_phase:
+            self._step_phase = progress.phase
+            self._step_started_at = time.monotonic()
+            self._last_counter = None
+            self._elapsed_seconds = 0.0
+            self._estimated_seconds = None
+
+        counter = self._step_counter(progress)
+        if counter != self._last_counter:
+            self._last_counter = counter
+            self._elapsed_seconds = time.monotonic() - self._step_started_at
+
+            ratio = self._step_ratio(progress)
+            if ratio is not None and ratio > 0.001 and counter > 0:
+                total_estimate = self._elapsed_seconds / ratio
+                remaining = max(0.0, total_estimate - self._elapsed_seconds)
+                self._estimated_seconds = remaining
+            else:
+                self._estimated_seconds = None
+
+        elapsed_text = format_duration(self._elapsed_seconds)
+        if self._estimated_seconds is None:
+            estimated_text = "—"
+        else:
+            estimated_text = format_duration(self._estimated_seconds)
+
+        self.time_label.configure(
+            text=f"Elapsed: {elapsed_text}  |  Estimated: {estimated_text}"
+        )
 
     def update_progress(self, progress: ScanProgress) -> None:
         """Обновить этап, проценты, счётчики и текущий файл."""
@@ -164,6 +229,8 @@ class ProgressWindow(ctk.CTkToplevel):
         else:
             self._set_indeterminate()
             self.percent_label.configure(text="")
+
+        self._update_timing(progress)
 
         hashed_part = format_count(progress.files_hashed)
         if progress.total_files:
