@@ -24,8 +24,8 @@ class DeleteProgressWindow(ctk.CTkToplevel):
     ):
         super().__init__(parent)
         self.title("Deleting...")
-        self.geometry("560x280")
-        self.minsize(560, 260)
+        self.geometry("560x340")
+        self.minsize(560, 320)
         self.resizable(True, True)
         self._canceled = False
         self._on_cancel_callback = on_cancel
@@ -75,7 +75,7 @@ class DeleteProgressWindow(ctk.CTkToplevel):
         self.percent_label = ctk.CTkLabel(frame, text="0%", anchor="e")
         self.percent_label.pack(fill="x", padx=10, pady=(0, 8))
 
-        self.path_display = PathDisplay(frame, height=80)
+        self.path_display = PathDisplay(frame, height=120)
         self.path_display.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 
         self.after(50, self._activate_modal)
