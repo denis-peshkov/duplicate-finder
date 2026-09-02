@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "duplicate-finder"
+version = "0.1.0"
+description = "Desktop app for finding and removing duplicate files"
+readme = "README.ru.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+
+authors = [
+    {name = "Denis Peshkov"},
+]
+
+keywords = [
+    "duplicate-finder",
+    "duplicate-files",
+    "desktop",
+    "customtkinter",
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: Russian",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: System :: Filesystems",
+]
+
+dependencies = [
+    "customtkinter>=5.2.0",
+    "send2trash>=1.8.0",
+    "tomli-w>=1.0.0",
+    "Pillow>=10.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pyinstaller>=6.0.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src", "src.*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,14 @@
+# Настройки по умолчанию для Duplicate Finder
+
+window_width = 1100
+window_height = 720
+first_run = true
+
+search_mode = "single_list"
+match_type = "exact"
+images_only = false
+include_subfolders1 = true
+include_subfolders2 = true
+
+list1_paths = []
+list2_paths = []
