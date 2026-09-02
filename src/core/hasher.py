@@ -16,24 +16,28 @@ PARTIAL_CHUNK_SIZE = 64 * 1024
 
 def partial_hash(path: Path, cancel_check: Callable[[], bool] | None = None) -> str:
     """Быстрый partial hash: первые и последние 64 KB."""
-    digest = hashlib.blake2b(digest_size=16)
-    size = path.stat().st_size
+    try:
+        digest = hashlib.blake2b(digest_size=16)
+        size = path.stat().st_size
 
-    with open(path, "rb") as handle:
-        head = handle.read(PARTIAL_CHUNK_SIZE)
-        digest.update(head)
+        with open(path, "rb") as handle:
+            head = handle.read(PARTIAL_CHUNK_SIZE)
+            digest.update(head)
 
-        if size > PARTIAL_CHUNK_SIZE:
-            if cancel_check and cancel_check():
-                return ""
-            if size > PARTIAL_CHUNK_SIZE * 2:
-                handle.seek(-PARTIAL_CHUNK_SIZE, 2)
-            else:
-                handle.seek(PARTIAL_CHUNK_SIZE)
-            tail = handle.read(PARTIAL_CHUNK_SIZE)
-            digest.update(tail)
+            if size > PARTIAL_CHUNK_SIZE:
+                if cancel_check and cancel_check():
+                    return ""
+                if size > PARTIAL_CHUNK_SIZE * 2:
+                    handle.seek(-PARTIAL_CHUNK_SIZE, 2)
+                else:
+                    handle.seek(PARTIAL_CHUNK_SIZE)
+                tail = handle.read(PARTIAL_CHUNK_SIZE)
+                digest.update(tail)
 
-    return digest.hexdigest()
+        return digest.hexdigest()
+    except OSError as exc:
+        logger.warning("Не удалось сделать partial hash %s: %s", path, exc)
+        return ""
 
 
 def full_hash(path: Path, cancel_check: Callable[[], bool] | None = None) -> str:
