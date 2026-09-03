@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "duplicate-finder"
 version = "0.1.0"
 description = "Desktop app for finding and removing duplicate files"
-readme = "README.ru.md"
+readme = "README.md"
 requires-python = ">=3.12"
 license = {text = "MIT"}
 

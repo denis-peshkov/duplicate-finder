@@ -11,6 +11,7 @@
     <packageSourceUrl>https://github.com/denis-peshkov/duplicate-finder/tree/master/distribution/chocolatey/duplicate-finder</packageSourceUrl>
     <docsUrl>https://github.com/denis-peshkov/duplicate-finder#readme</docsUrl>
     <bugTrackerUrl>https://github.com/denis-peshkov/duplicate-finder/issues</bugTrackerUrl>
+    <iconUrl>https://raw.githubusercontent.com/denis-peshkov/duplicate-finder/master/duplicate-finder-icon.png</iconUrl>
     <licenseUrl>https://github.com/denis-peshkov/duplicate-finder/blob/master/LICENSE</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <summary>Desktop app for finding and removing duplicate files.</summary>
