@@ -24,7 +24,6 @@ runs:
         set -euo pipefail
         python -m pip install --upgrade pip
         pip install -e ".[dev]"
-        python -m pip install pytest-cov
 
     - name: Run tests with coverage
       shell: bash
