@@ -7,8 +7,8 @@ class DuplicateFinder < Formula
   sha256 "0000000000000000000000000000000000000000000000000000000000000000"
   license "MIT"
 
-  depends_on "python@3.12"
   depends_on "python-tk@3.12"
+  depends_on "python@3.12"
 
   resource "customtkinter" do
     url "https://files.pythonhosted.org/packages/cf/48/c5a9d44188c44702e1e3db493c741e9c779596835a761b819fe15431d163/customtkinter-5.2.2.tar.gz"
