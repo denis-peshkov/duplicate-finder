@@ -1,5 +1,11 @@
 name: Test
-description: Run pytest
+description: Run pytest + (optional) SonarCloud scan
+
+inputs:
+  sonar_token:
+    description: SonarCloud token (if set, runs SonarCloud scan)
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -17,7 +23,27 @@ runs:
         set -euo pipefail
         python -m pip install --upgrade pip
         pip install -e ".[dev]"
+        python -m pip install pytest-cov
 
-    - name: Run tests
+    - name: Run tests with coverage
       shell: bash
-      run: pytest -q
+      run: |
+        set -euo pipefail
+        mkdir -p TestResults
+        pytest -q --cov=src --cov-report=xml:TestResults/coverage.xml
+
+    - name: SonarCloud Scan
+      uses: sonarsource/sonarcloud-github-action@v5
+      with:
+        args: >
+          -Dsonar.organization=denis-peshkov
+          -Dsonar.projectKey=DuplicateFinder
+          -Dsonar.projectName=Duplicate Finder
+          -Dsonar.sources=src
+          -Dsonar.tests=tests
+          -Dsonar.python.coverage.reportPaths=TestResults/coverage.xml
+          -Dsonar.scanner.skipJreProvisioning=true
+          -Dsonar.verbose=true
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        SONAR_TOKEN: ${{ inputs.sonar_token }}

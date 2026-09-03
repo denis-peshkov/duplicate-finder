@@ -48,7 +48,7 @@ flowchart TD
 | Job | Runner | When | Role |
 |-----|--------|------|------|
 | `version` | ubuntu-latest | always | GitVersion → `version`, `channel`, `prerelease` |
-| `test` | ubuntu-latest | after version | `pytest` |
+| `test` | ubuntu-latest | after version | `pytest` + SonarCloud scan |
 | `release-binaries` | matrix Win/macOS | after test | PyInstaller; upload `release-binary-*` on push to release branches |
 | `push-tags` | ubuntu-22.04 | push `master` | tags `v{version}`, `v{X.Y}`, `v{X}` |
 | `publish-chocolatey` | windows-latest | push master/release/hotfix | pack + push `.nupkg` |
@@ -67,5 +67,6 @@ On release builds (`publish_artifacts=true`), CI patches `pyproject.toml` and `A
 | `TAGTOKEN` | `push-tags`, Homebrew fork / preview tap |
 | `CHOCOLATEY_API_KEY` | `publish-chocolatey` |
 | `HOMEBREW_GITHUB_API_KEY` | `publish-homebrew` (`brew bump-formula-pr` / PR) |
+| `SONAR_TOKEN` | `test` (SonarCloud scan) |
 
 Pipeline distribution details: [distribution.md](distribution.md).

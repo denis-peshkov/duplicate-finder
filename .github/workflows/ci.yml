@@ -34,9 +34,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/test
+        with:
+          sonar_token: ${{ secrets.SONAR_TOKEN }}
 
   release-binaries:
     needs:
