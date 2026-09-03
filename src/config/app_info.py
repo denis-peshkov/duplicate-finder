@@ -14,6 +14,10 @@ APP_DEVELOPER = "Denis Peshkov"
 APP_WEBSITE = "https://peshkov.biz"
 APP_WEBSITE_LABEL = "peshkov.biz"
 APP_LICENSE_NAME = "MIT License"
+APP_OSS_LABEL = "open-source software"
+APP_OSS_URL = "https://github.com/denis-peshkov/duplicate-finder"
+APP_COPYRIGHT_RANGE = "2026"
+APP_COPYRIGHT_HOLDER = "Denis Peshkov"
 
 APP_LICENSE_TEXT = """\
 MIT License
