@@ -10,6 +10,8 @@
 ![Activity](https://img.shields.io/github/commit-activity/m/denis-peshkov/duplicate-finder)
 ![Activity](https://img.shields.io/github/commit-activity/y/denis-peshkov/duplicate-finder)
 
+Homebrew will only accept this project into [homebrew-core](https://github.com/Homebrew/homebrew-core) once the GitHub repo is “notable” enough: roughly **≥225** <img src="docs/readme-icons/star-light.svg" class="gh-light-mode-only" width="14" height="14" alt=""><img src="docs/readme-icons/star-dark.svg" class="gh-dark-mode-only" width="14" height="14" alt=""> **Star**, **≥90** <img src="docs/readme-icons/fork-light.svg" class="gh-light-mode-only" width="14" height="14" alt=""><img src="docs/readme-icons/fork-dark.svg" class="gh-dark-mode-only" width="14" height="14" alt=""> **Fork**, and **≥90** <img src="docs/readme-icons/watch-light.svg" class="gh-light-mode-only" width="14" height="14" alt=""><img src="docs/readme-icons/watch-dark.svg" class="gh-dark-mode-only" width="14" height="14" alt=""> **Watch**. If you find Duplicate Finder useful, use the buttons at the top of this page — thank you.
+
 # Duplicate Finder
 
 <p align="center">
