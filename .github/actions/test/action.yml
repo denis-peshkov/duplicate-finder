@@ -38,7 +38,7 @@ runs:
         args: >
           -Dsonar.organization=denis-peshkov
           -Dsonar.projectKey=DuplicateFinder
-          -Dsonar.projectName=Duplicate Finder
+          -Dsonar.projectName=DuplicateFinder
           -Dsonar.sources=src
           -Dsonar.tests=tests
           -Dsonar.python.coverage.reportPaths=TestResults/coverage.xml
