@@ -1,5 +1,6 @@
 [![License](https://img.shields.io/github/license/denis-peshkov/duplicate-finder)](LICENSE)
 [![GitHub Release Date](https://img.shields.io/github/release-date/denis-peshkov/duplicate-finder?label=released)](https://github.com/denis-peshkov/duplicate-finder/releases)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=duplicate-finder&metric=coverage&token=2e1bc340b26c62bd30e0b6a4b6bb8985e01cf33d)](https://sonarcloud.io/summary/new_code?id=duplicate-finder)
 [![issues](https://img.shields.io/github/issues/denis-peshkov/duplicate-finder)](https://github.com/denis-peshkov/duplicate-finder/issues)
 [![CI](https://github.com/denis-peshkov/duplicate-finder/actions/workflows/ci.yml/badge.svg)](https://github.com/denis-peshkov/duplicate-finder/actions/workflows/ci.yml)
 
