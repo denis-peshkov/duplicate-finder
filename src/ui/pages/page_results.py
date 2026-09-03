@@ -15,10 +15,12 @@ from typing import Callable, Optional
 
 import customtkinter as ctk
 
+from src.config.app_info import HELP_RESULTS
 from src.core.deleter import DeleteProgress, DeleteResult, delete_to_recycle_bin
 from src.core.models import DuplicateGroup, FileEntry, ScanResult
 from src.ui.about_window import show_about
 from src.ui.delete_progress_window import DeleteProgressWindow
+from src.ui.info_dialog import show_info_dialog
 from src.utils.formatters import format_count
 
 logger = logging.getLogger(__name__)
@@ -84,8 +86,16 @@ class PageResults(ctk.CTkFrame):
             text="?",
             width=28,
             height=28,
-            command=self._show_help,
+            command=self._show_results_help,
         ).pack(side="left")
+
+        ctk.CTkButton(
+            footer,
+            text="About",
+            width=70,
+            height=28,
+            command=self._show_about,
+        ).pack(side="left", padx=(8, 0))
 
         ctk.CTkButton(
             footer,
@@ -581,5 +591,8 @@ class PageResults(ctk.CTkFrame):
         if self.on_cancel:
             self.on_cancel()
 
-    def _show_help(self) -> None:
-        show_about(self, help_topic="results")
+    def _show_about(self) -> None:
+        show_about(self)
+
+    def _show_results_help(self) -> None:
+        show_info_dialog(self, "Results", HELP_RESULTS, width=520)

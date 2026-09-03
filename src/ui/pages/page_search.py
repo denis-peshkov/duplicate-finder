@@ -9,11 +9,13 @@ from typing import Callable, Optional
 
 import customtkinter as ctk
 
+from src.config.app_info import HELP_SEARCH, HELP_TWO_LISTS
 from src.config.settings import Settings
 from src.core.enumerator import parse_list_item
 from src.core.models import SearchConfig
 from src.ui.about_window import show_about
 from src.ui.components.file_list_panel import FileListPanel
+from src.ui.info_dialog import show_info_dialog
 
 
 class PageSearch(ctk.CTkFrame):
@@ -44,8 +46,16 @@ class PageSearch(ctk.CTkFrame):
             text="?",
             width=28,
             height=28,
-            command=lambda: self._show_help("general"),
+            command=self._show_search_help,
         ).pack(side="left")
+
+        ctk.CTkButton(
+            footer,
+            text="About",
+            width=70,
+            height=28,
+            command=self._show_about,
+        ).pack(side="left", padx=(8, 0))
 
         ctk.CTkButton(
             footer,
@@ -97,7 +107,7 @@ class PageSearch(ctk.CTkFrame):
             text="?",
             width=24,
             height=24,
-            command=lambda: self._show_help("two_lists"),
+            command=self._show_two_lists_help,
         ).pack(side="left", padx=(4, 0))
 
         self.list1_panel = FileListPanel(
@@ -225,5 +235,11 @@ class PageSearch(ctk.CTkFrame):
         if self.on_cancel:
             self.on_cancel()
 
-    def _show_help(self, topic: str) -> None:
-        show_about(self, help_topic=topic)
+    def _show_about(self) -> None:
+        show_about(self)
+
+    def _show_search_help(self) -> None:
+        show_info_dialog(self, "Search", HELP_SEARCH, width=520)
+
+    def _show_two_lists_help(self) -> None:
+        show_info_dialog(self, "Two lists", HELP_TWO_LISTS, width=520)

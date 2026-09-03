@@ -34,13 +34,12 @@ class AboutWindow(ctk.CTkToplevel):
     def __init__(
         self,
         parent: ctk.CTk | ctk.CTkToplevel | ctk.CTkFrame,
-        help_topic: str = "general",
     ):
         root = parent.winfo_toplevel()
         super().__init__(root)
         self.title(f"About {APP_NAME}")
-        self.geometry("560x520")
-        self.minsize(520, 440)
+        self.geometry("560x620")
+        self.minsize(520, 520)
         self.resizable(True, True)
 
         self.transient(root)
@@ -84,14 +83,9 @@ class AboutWindow(ctk.CTkToplevel):
         ).pack(fill="x", pady=(0, 12))
 
         self._section_title(body, "Help")
-        help_text = self._help_for_topic(help_topic)
-        ctk.CTkLabel(
-            body,
-            text=help_text,
-            anchor="w",
-            justify="left",
-            wraplength=500,
-        ).pack(fill="x", pady=(0, 12))
+        self._help_block(body, "Search", HELP_SEARCH)
+        self._help_block(body, "Two lists", HELP_TWO_LISTS)
+        self._help_block(body, "Results", HELP_RESULTS)
 
         self._section_title(body, "Developer")
         ctk.CTkLabel(
@@ -158,6 +152,22 @@ class AboutWindow(ctk.CTkToplevel):
             anchor="w",
         ).pack(fill="x", pady=(4, 4))
 
+    def _help_block(self, parent: ctk.CTkBaseClass, title: str, text: str) -> None:
+        ctk.CTkLabel(
+            parent,
+            text=title,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            anchor="w",
+            text_color=_MUTED_COLOR,
+        ).pack(fill="x", pady=(2, 0))
+        ctk.CTkLabel(
+            parent,
+            text=text,
+            anchor="w",
+            justify="left",
+            wraplength=500,
+        ).pack(fill="x", pady=(0, 8))
+
     def _link_label(
         self,
         parent: ctk.CTkBaseClass,
@@ -176,13 +186,6 @@ class AboutWindow(ctk.CTkToplevel):
         label.bind("<Button-1>", lambda _event: webbrowser.open(url))
         return label
 
-    def _help_for_topic(self, topic: str) -> str:
-        if topic == "two_lists":
-            return HELP_TWO_LISTS
-        if topic == "results":
-            return HELP_RESULTS
-        return HELP_SEARCH
-
     def _activate_modal(self) -> None:
         try:
             self.lift()
@@ -196,6 +199,6 @@ def show_about(
     parent: ctk.CTk | ctk.CTkToplevel | ctk.CTkFrame,
     help_topic: str = "general",
 ) -> AboutWindow:
-    """Открыть окно About (одно на родителя)."""
-    window = AboutWindow(parent, help_topic=help_topic)
-    return window
+    """Открыть окно About. help_topic оставлен для совместимости вызовов."""
+    _ = help_topic
+    return AboutWindow(parent)
