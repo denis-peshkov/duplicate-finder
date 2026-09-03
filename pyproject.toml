@@ -7,7 +7,7 @@ name = "duplicate-finder"
 version = "0.1.0"
 description = "Desktop app for finding and removing duplicate files"
 readme = "README.ru.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 license = {text = "MIT"}
 
 authors = [
@@ -28,7 +28,7 @@ classifiers = [
     "Natural Language :: Russian",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.12",
     "Topic :: System :: Filesystems",
 ]
 
@@ -44,6 +44,12 @@ dev = [
     "pytest>=8.0.0",
     "pyinstaller>=6.0.0",
 ]
+
+[project.scripts]
+duplicate-finder = "main:main"
+
+[tool.setuptools]
+py-modules = ["main"]
 
 [tool.setuptools.packages.find]
 where = ["."]

@@ -9,7 +9,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Optional
 
-import tomllib as tomli
+import tomllib
 import tomli_w
 
 logger = logging.getLogger(__name__)
@@ -46,14 +46,14 @@ def load_settings(config_path: Optional[Path] = None) -> Settings:
 
     try:
         with open(path, "rb") as handle:
-            data = tomli.load(handle)
+            data = tomllib.load(handle)
 
         known_fields = {key for key in asdict(Settings())}
         filtered_data = {key: value for key, value in data.items() if key in known_fields}
         settings = Settings(**filtered_data)
         logger.info("Настройки загружены: %s", path)
         return settings
-    except (tomli.TOMLDecodeError, OSError, TypeError) as exc:
+    except (tomllib.TOMLDecodeError, OSError, TypeError) as exc:
         logger.warning("Ошибка загрузки настроек: %s", exc)
         return Settings()
 

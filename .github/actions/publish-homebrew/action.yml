@@ -1,0 +1,112 @@
+name: Publish Homebrew
+description: Update homebrew-core formula and open PR or bump
+
+inputs:
+  version:
+    description: Release version (Major.Minor.run_number)
+    required: true
+  version_commit:
+    description: Commit SHA for the release (from version job)
+    required: true
+  tagtoken:
+    description: GitHub PAT for homebrew-core fork push
+    required: true
+  homebrew_github_api_key:
+    description: GitHub PAT for brew bump-formula-pr and gh pr create
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.version_commit }}
+
+    - name: Resolve source archive from Release
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        mkdir -p dist
+        ARCHIVE="dist/duplicate-finder-${VERSION}-src.tar.gz"
+        SOURCE_URL="https://github.com/denis-peshkov/duplicate-finder/releases/download/v${VERSION}/duplicate-finder-${VERSION}-src.tar.gz"
+        curl -fsSL -o "${ARCHIVE}" "${SOURCE_URL}"
+        SOURCE_SHA256="$(sha256sum "${ARCHIVE}" | awk '{print $1}')"
+
+        echo "SOURCE_SHA256=${SOURCE_SHA256}" >> "${GITHUB_ENV}"
+        echo "SOURCE_URL=${SOURCE_URL}" >> "${GITHUB_ENV}"
+
+        FORMULA="${{ github.workspace }}/distribution/homebrew-core/duplicate-finder.rb"
+        if [[ ! -f "${FORMULA}" ]]; then
+          echo "Formula template not found: ${FORMULA}" >&2
+          exit 1
+        fi
+
+        perl -pi -e "s|^  url \".*\"|  url \"${SOURCE_URL}\"|" "${FORMULA}"
+        perl -pi -e "s|^  sha256 \".*\"|  sha256 \"${SOURCE_SHA256}\"|" "${FORMULA}"
+        echo "Updated homebrew-core formula for v${VERSION}"
+
+    - name: Detect Homebrew formula in core
+      shell: bash
+      run: |
+        set -euo pipefail
+        FORMULA_URL="https://raw.githubusercontent.com/Homebrew/homebrew-core/main/Formula/d/duplicate-finder.rb"
+        STATUS="$(curl -sSL -o /dev/null -w "%{http_code}" "${FORMULA_URL}")"
+        if [ "${STATUS}" = "200" ]; then
+          echo "Formula found in homebrew-core"
+          echo "FORMULA_IN_CORE=1" >> "${GITHUB_ENV}"
+        else
+          echo "Formula not in homebrew-core (HTTP ${STATUS})"
+          echo "FORMULA_IN_CORE=0" >> "${GITHUB_ENV}"
+        fi
+
+    - name: Set up Homebrew
+      uses: Homebrew/actions/setup-homebrew@2026.07.10.1
+
+    - name: Validate new Homebrew formula
+      if: env.FORMULA_IN_CORE == '0'
+      shell: bash
+      run: |
+        set -euo pipefail
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        FORMULA="${{ github.workspace }}/distribution/homebrew-core/duplicate-finder.rb"
+        brew untap duplicate-finder/ci 2>/dev/null || true
+        brew tap-new duplicate-finder/ci
+        TAP="$(brew --repository duplicate-finder/ci)"
+        cp "${FORMULA}" "${TAP}/Formula/duplicate-finder.rb"
+        git -C "${TAP}" add Formula/duplicate-finder.rb
+        git -C "${TAP}" commit -m "CI validation"
+        export HOMEBREW_NO_INSTALL_FROM_API=1
+        brew install --build-from-source duplicate-finder/ci/duplicate-finder
+        brew test duplicate-finder
+        brew audit --strict --new duplicate-finder
+
+    - name: Publish Homebrew core PR (new formula)
+      if: env.FORMULA_IN_CORE == '0'
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        GIT_TOKEN: ${{ inputs.tagtoken }}
+        GH_API_TOKEN: ${{ inputs.homebrew_github_api_key }}
+      run: |
+        set -euo pipefail
+        ./.github/scripts/publish-homebrew-core-pr.sh "${{ github.workspace }}" "${GIT_TOKEN}" "${VERSION}" "${GH_API_TOKEN}"
+
+    - name: Bump homebrew-core formula
+      if: env.FORMULA_IN_CORE == '1'
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        HOMEBREW_GITHUB_API_TOKEN: ${{ inputs.homebrew_github_api_key }}
+        GH_TOKEN: ${{ inputs.homebrew_github_api_key }}
+      run: |
+        set -euo pipefail
+        if ! brew bump-formula-pr duplicate-finder \
+          --version="${VERSION}" \
+          --url="${{ env.SOURCE_URL }}" \
+          --sha256="${{ env.SOURCE_SHA256 }}"; then
+          echo "brew bump-formula-pr failed. HOMEBREW_GITHUB_API_KEY must be a classic PAT with public_repo scope." >&2
+          exit 1
+        fi

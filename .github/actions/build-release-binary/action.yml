@@ -1,9 +1,15 @@
 name: Build Release Binary
-description: Build Windows DuplicateFinder.exe with PyInstaller and upload artifact
+description: Build DuplicateFinder with PyInstaller for one platform and upload artifact
 
 inputs:
   version:
     description: Release version (Major.Minor.run_number)
+    required: true
+  target:
+    description: Target triple (e.g. x86_64-pc-windows-msvc, aarch64-apple-darwin)
+    required: true
+  exe:
+    description: Built executable file name (DuplicateFinder.exe or DuplicateFinder)
     required: true
   publish_artifacts:
     description: Package and upload release-binary-* artifact (push to master/release/hotfix)
@@ -18,7 +24,7 @@ runs:
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.9'
+        python-version: '3.12'
 
     - name: Set application version
       if: inputs.publish_artifacts == 'true'
@@ -45,14 +51,14 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        BINARY="dist/DuplicateFinder.exe"
-        ARCHIVE="$(./.github/scripts/package-release-binary.sh "${{ inputs.version }}" "x86_64-pc-windows-msvc" "${BINARY}" dist)"
+        BINARY="dist/${{ inputs.exe }}"
+        ARCHIVE="$(./.github/scripts/package-release-binary.sh "${{ inputs.version }}" "${{ inputs.target }}" "${BINARY}" dist)"
         echo "ARCHIVE=${ARCHIVE}" >> "${GITHUB_ENV}"
 
     - name: Upload release binary
       if: inputs.publish_artifacts == 'true'
       uses: actions/upload-artifact@v4
       with:
-        name: release-binary-x86_64-pc-windows-msvc
+        name: release-binary-${{ inputs.target }}
         path: ${{ env.ARCHIVE }}
         if-no-files-found: error

@@ -13,7 +13,7 @@ Desktop-приложение для поиска и удаления дубли�
 
 ## Требования
 
-- Python 3.9+
+- Python 3.12+
 - Windows (основная платформа), код кроссплатформенный
 
 ## Установка
@@ -25,6 +25,21 @@ choco install duplicate-finder
 ```
 
 После установки в PATH появляется команда `duplicate-finder`.
+
+### Homebrew (macOS)
+
+Стабильный релиз (после принятия формулы в homebrew-core):
+
+```bash
+brew install duplicate-finder
+```
+
+Preview (`release/*` / `hotfix/*`):
+
+```bash
+brew tap denis-peshkov/duplicate-finder https://github.com/denis-peshkov/duplicate-finder --branch homebrew-preview-tap
+brew install duplicate-finder-preview
+```
 
 ### Из исходников
 
@@ -47,14 +62,15 @@ python main.py
 pytest
 ```
 
-## Сборка exe (PyInstaller)
+## Сборка (PyInstaller)
 
 ```bash
 pip install pyinstaller
 pyinstaller duplicate_finder.spec
 ```
 
-Исполняемый файл будет в `dist/DuplicateFinder.exe`.
+- Windows: `dist/DuplicateFinder.exe`
+- macOS: `dist/DuplicateFinder`
 
 ## Настройки
 

@@ -42,8 +42,21 @@ jobs:
     needs:
       - version
       - test
-    name: binary-windows
-    runs-on: windows-latest
+    name: binary-${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            exe: DuplicateFinder.exe
+          - target: aarch64-apple-darwin
+            os: macos-14
+            exe: DuplicateFinder
+          - target: x86_64-apple-darwin
+            os: macos-13
+            exe: DuplicateFinder
     permissions:
       contents: read
       actions: write
@@ -52,6 +65,8 @@ jobs:
       - uses: ./.github/actions/build-release-binary
         with:
           version: ${{ needs.version.outputs.version }}
+          target: ${{ matrix.target }}
+          exe: ${{ matrix.exe }}
           publish_artifacts: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')) }}
 
   push-tags:
@@ -95,6 +110,23 @@ jobs:
           version_commit: ${{ needs.version.outputs.version_commit }}
           chocolatey_api_key: ${{ secrets.CHOCOLATEY_API_KEY }}
 
+  publish-homebrew-tap:
+    name: Publish Homebrew Preview
+    needs:
+      - version
+      - test
+    if: ${{ !failure() && !cancelled() && needs.test.result == 'success' && github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')) }}
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/publish-homebrew-tap
+        with:
+          version: ${{ needs.version.outputs.version }}
+          commit_sha: ${{ needs.version.outputs.version_commit }}
+          tagtoken: ${{ secrets.TAGTOKEN }}
+
   publish-release:
     name: Publish Release
     needs:
@@ -113,3 +145,21 @@ jobs:
           version: ${{ needs.version.outputs.version }}
           version_commit: ${{ needs.version.outputs.version_commit }}
           prerelease: ${{ needs.version.outputs.prerelease }}
+
+  publish-homebrew:
+    name: Publish Homebrew
+    needs:
+      - version
+      - publish-release
+    if: ${{ !failure() && !cancelled() && needs.publish-release.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/publish-homebrew
+        with:
+          version: ${{ needs.version.outputs.version }}
+          version_commit: ${{ needs.version.outputs.version_commit }}
+          tagtoken: ${{ secrets.TAGTOKEN }}
+          homebrew_github_api_key: ${{ secrets.HOMEBREW_GITHUB_API_KEY }}

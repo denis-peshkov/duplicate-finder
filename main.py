@@ -19,6 +19,10 @@ from src.utils.logger import setup_logging
 
 def main() -> None:
     """Главная функция запуска приложения."""
+    if len(sys.argv) > 1 and sys.argv[1] in ("--version", "-V"):
+        print(f"{APP_NAME} {APP_VERSION}")
+        return
+
     log_dir = Path.home() / ".duplicate-finder"
     log_file = log_dir / "duplicate-finder.log"
     setup_logging(log_file=log_file, level=logging.INFO)

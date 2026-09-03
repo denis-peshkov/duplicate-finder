@@ -1,0 +1,54 @@
+name: Publish Homebrew Preview Tap
+description: Update Formula/duplicate-finder-preview.rb on branch homebrew-preview-tap (no git tag)
+
+inputs:
+  version:
+    description: Release version (Major.Minor.run_number)
+    required: true
+  commit_sha:
+    description: Commit SHA for the preview source archive
+    required: true
+  tagtoken:
+    description: GitHub PAT to push branch homebrew-preview-tap
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Compute preview checksum and update formula draft
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        COMMIT_SHA: ${{ inputs.commit_sha }}
+      run: |
+        set -euo pipefail
+        mkdir -p dist
+        PREVIEW_URL="https://github.com/denis-peshkov/duplicate-finder/archive/${COMMIT_SHA}.tar.gz"
+        curl -fsSL "${PREVIEW_URL}" -o dist/preview-source.tar.gz
+        PREVIEW_SOURCE_SHA256="$(sha256sum dist/preview-source.tar.gz | awk '{print $1}')"
+        echo "PREVIEW_SOURCE_SHA256=${PREVIEW_SOURCE_SHA256}" >> "${GITHUB_ENV}"
+
+        FORMULA="${{ github.workspace }}/distribution/homebrew-preview/duplicate-finder-preview.rb"
+        if [[ ! -f "${FORMULA}" ]]; then
+          echo "Formula template not found: ${FORMULA}" >&2
+          exit 1
+        fi
+
+        perl -pi -e "s|^  version \".*\"|  version \"${VERSION}\"|" "${FORMULA}"
+        perl -pi -e "s|^  url \".*\"|  url \"${PREVIEW_URL}\"|" "${FORMULA}"
+        perl -pi -e "s|^  sha256 \".*\"|  sha256 \"${PREVIEW_SOURCE_SHA256}\"|" "${FORMULA}"
+        echo "Updated preview tap formula for ${VERSION} (${COMMIT_SHA})"
+
+    - name: Push formula to homebrew-preview-tap branch
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        GIT_TOKEN: ${{ inputs.tagtoken }}
+      run: |
+        set -euo pipefail
+        ./.github/scripts/publish-homebrew-preview-tap.sh \
+          "${VERSION}" \
+          "${{ github.workspace }}" \
+          "${GIT_TOKEN}"
