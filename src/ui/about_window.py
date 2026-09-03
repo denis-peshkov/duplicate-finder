@@ -1,5 +1,5 @@
 """
-Окно «О программе» / справка.
+Окно «О программе».
 """
 
 from __future__ import annotations
@@ -12,16 +12,12 @@ from src.config.app_info import (
     APP_COPYRIGHT_HOLDER,
     APP_COPYRIGHT_RANGE,
     APP_DESCRIPTION,
-    APP_DEVELOPER,
     APP_LICENSE_NAME,
     APP_NAME,
     APP_OSS_LABEL,
     APP_OSS_URL,
     APP_VERSION,
     APP_WEBSITE,
-    HELP_RESULTS,
-    HELP_SEARCH,
-    HELP_TWO_LISTS,
 )
 
 _LINK_COLOR = "#6cb6ff"
@@ -38,8 +34,8 @@ class AboutWindow(ctk.CTkToplevel):
         root = parent.winfo_toplevel()
         super().__init__(root)
         self.title(f"About {APP_NAME}")
-        self.geometry("560x620")
-        self.minsize(520, 520)
+        self.geometry("560x400")
+        self.minsize(520, 340)
         self.resizable(True, True)
 
         self.transient(root)
@@ -82,33 +78,15 @@ class AboutWindow(ctk.CTkToplevel):
             wraplength=500,
         ).pack(fill="x", pady=(0, 12))
 
-        self._section_title(body, "Help")
-        self._help_block(body, "Search", HELP_SEARCH)
-        self._help_block(body, "Two lists", HELP_TWO_LISTS)
-        self._help_block(body, "Results", HELP_RESULTS)
-
-        self._section_title(body, "Developer")
+        license_row = ctk.CTkFrame(body, fg_color="transparent")
+        license_row.pack(fill="x", pady=(4, 2))
         ctk.CTkLabel(
-            body,
-            text=APP_DEVELOPER,
-            anchor="w",
-        ).pack(fill="x", pady=(0, 12))
-
-        self._section_title(body, "Project website")
-        ctk.CTkLabel(
-            body,
-            text="More projects and contacts:",
-            anchor="w",
-        ).pack(fill="x", pady=(0, 2))
-        self._link_label(body, APP_WEBSITE, APP_WEBSITE).pack(anchor="w", pady=(0, 12))
-
-        self._section_title(body, "License agreement")
-        ctk.CTkLabel(
-            body,
+            license_row,
             text=APP_LICENSE_NAME,
             anchor="w",
             text_color=_MUTED_COLOR,
-        ).pack(fill="x", pady=(0, 16))
+            font=ctk.CTkFont(size=12),
+        ).pack(side="left")
 
         powered_row = ctk.CTkFrame(body, fg_color="transparent")
         powered_row.pack(fill="x", pady=(4, 2))
@@ -151,22 +129,6 @@ class AboutWindow(ctk.CTkToplevel):
             font=ctk.CTkFont(size=14, weight="bold"),
             anchor="w",
         ).pack(fill="x", pady=(4, 4))
-
-    def _help_block(self, parent: ctk.CTkBaseClass, title: str, text: str) -> None:
-        ctk.CTkLabel(
-            parent,
-            text=title,
-            font=ctk.CTkFont(size=12, weight="bold"),
-            anchor="w",
-            text_color=_MUTED_COLOR,
-        ).pack(fill="x", pady=(2, 0))
-        ctk.CTkLabel(
-            parent,
-            text=text,
-            anchor="w",
-            justify="left",
-            wraplength=500,
-        ).pack(fill="x", pady=(0, 8))
 
     def _link_label(
         self,
