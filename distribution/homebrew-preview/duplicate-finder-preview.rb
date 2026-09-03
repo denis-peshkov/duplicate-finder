@@ -9,6 +9,7 @@ class DuplicateFinderPreview < Formula
   license "MIT"
 
   depends_on "python@3.12"
+  depends_on "python-tk@3.12"
 
   def install
     venv = virtualenv_create(libexec, "python3.12")
