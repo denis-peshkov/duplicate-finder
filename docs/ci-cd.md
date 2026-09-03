@@ -21,8 +21,8 @@ flowchart TD
 
   subgraph matrix["release-binaries (matrix x 3)"]
     M1["windows-msvc · windows-latest"]
-    M2["aarch64-macos · macos-14"]
-    M3["x86_64-macos · macos-13"]
+    M2["aarch64-macos · macos-latest"]
+    M3["x86_64-macos · macos-15-intel"]
   end
 
   PT["push-tags<br/>master only"]

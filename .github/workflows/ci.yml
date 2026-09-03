@@ -52,10 +52,10 @@ jobs:
             os: windows-latest
             exe: DuplicateFinder.exe
           - target: aarch64-apple-darwin
-            os: macos-14
+            os: macos-latest
             exe: DuplicateFinder
           - target: x86_64-apple-darwin
-            os: macos-13
+            os: macos-15-intel
             exe: DuplicateFinder
     permissions:
       contents: read
