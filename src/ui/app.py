@@ -12,6 +12,7 @@ from typing import Optional
 import customtkinter as ctk
 from tkinter import messagebox
 
+from src.config.app_info import APP_NAME
 from src.config.settings import Settings, save_settings
 from src.core.finder import DuplicateFinder
 from src.core.models import ScanProgress, ScanResult, SearchConfig
@@ -38,7 +39,7 @@ class DuplicateFinderApp(ctk.CTk):
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
-        self.title("Duplicate Finder")
+        self.title(APP_NAME)
         self.geometry(f"{self.settings.window_width}x{self.settings.window_height}")
         self.minsize(900, 640)
 

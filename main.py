@@ -11,6 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+from src.config.app_info import APP_NAME, APP_VERSION
 from src.config.settings import load_settings, save_settings
 from src.ui.app import DuplicateFinderApp
 from src.utils.logger import setup_logging
@@ -24,7 +25,7 @@ def main() -> None:
 
     logger = logging.getLogger(__name__)
     logger.info("=" * 60)
-    logger.info("Duplicate Finder v0.1.0")
+    logger.info("%s v%s", APP_NAME, APP_VERSION)
     logger.info("=" * 60)
 
     settings = load_settings()

@@ -17,6 +17,7 @@ import customtkinter as ctk
 
 from src.core.deleter import DeleteProgress, DeleteResult, delete_to_recycle_bin
 from src.core.models import DuplicateGroup, FileEntry, ScanResult
+from src.ui.about_window import show_about
 from src.ui.delete_progress_window import DeleteProgressWindow
 from src.utils.formatters import format_count
 
@@ -581,15 +582,4 @@ class PageResults(ctk.CTkFrame):
             self.on_cancel()
 
     def _show_help(self) -> None:
-        messagebox.showinfo(
-            "Duplicate Finder — Help",
-            (
-                "Top list shows duplicate sets.\n"
-                "Select a set to see files in the table.\n"
-                "Two-list modes:\n"
-                "  Custom — clear all marks, then select manually.\n"
-                "  Delete from File List 1/2 — clear all, mark that list.\n"
-                "Press Next to move selected files to Recycle Bin.\n"
-                "Right-click a file for Rename / Open folder."
-            ),
-        )
+        show_about(self, help_topic="results")

@@ -12,6 +12,7 @@ import customtkinter as ctk
 from src.config.settings import Settings
 from src.core.enumerator import parse_list_item
 from src.core.models import SearchConfig
+from src.ui.about_window import show_about
 from src.ui.components.file_list_panel import FileListPanel
 
 
@@ -225,18 +226,4 @@ class PageSearch(ctk.CTkFrame):
             self.on_cancel()
 
     def _show_help(self, topic: str) -> None:
-        if topic == "two_lists":
-            text = (
-                "Two-list mode finds duplicates between File List 1 and File List 2.\n"
-                "Files from List 1 are matched against files in List 2."
-            )
-        else:
-            text = (
-                "Duplicate Finder helps you locate duplicate files.\n\n"
-                "Single list: find duplicates within one set of paths.\n"
-                "Two lists: compare files between two sets.\n"
-                "Exact duplicate: compare file content by hash.\n"
-                "Same filename: compare file names only.\n"
-                "Deleted files are moved to the Recycle Bin."
-            )
-        messagebox.showinfo("Duplicate Finder — Help", text)
+        show_about(self, help_topic=topic)
