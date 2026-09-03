@@ -34,9 +34,8 @@ class AboutWindow(ctk.CTkToplevel):
         root = parent.winfo_toplevel()
         super().__init__(root)
         self.title(f"About {APP_NAME}")
-        self.geometry("560x400")
-        self.minsize(520, 340)
-        self.resizable(True, True)
+        self.geometry("560x380")
+        self.resizable(False, False)
 
         self.transient(root)
         self.protocol("WM_DELETE_WINDOW", self.destroy)
@@ -52,7 +51,7 @@ class AboutWindow(ctk.CTkToplevel):
             command=self.destroy,
         ).pack(side="right")
 
-        body = ctk.CTkScrollableFrame(self)
+        body = ctk.CTkFrame(self, fg_color="transparent")
         body.pack(fill="both", expand=True, padx=16, pady=(16, 8))
 
         ctk.CTkLabel(
@@ -79,7 +78,7 @@ class AboutWindow(ctk.CTkToplevel):
         ).pack(fill="x", pady=(0, 12))
 
         license_row = ctk.CTkFrame(body, fg_color="transparent")
-        license_row.pack(fill="x", pady=(4, 2))
+        license_row.pack(fill="x", pady=(16, 2))
         ctk.CTkLabel(
             license_row,
             text=APP_LICENSE_NAME,
@@ -89,7 +88,7 @@ class AboutWindow(ctk.CTkToplevel):
         ).pack(side="left")
 
         powered_row = ctk.CTkFrame(body, fg_color="transparent")
-        powered_row.pack(fill="x", pady=(4, 2))
+        powered_row.pack(fill="x", pady=(0, 2))
         ctk.CTkLabel(
             powered_row,
             text="Powered by ",
