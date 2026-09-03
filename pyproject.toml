@@ -36,7 +36,6 @@ dependencies = [
     "customtkinter>=5.2.0",
     "send2trash>=1.8.0",
     "tomli-w>=1.0.0",
-    "Pillow>=10.0.0",
 ]
 
 [project.optional-dependencies]

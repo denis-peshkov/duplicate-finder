@@ -66,6 +66,8 @@ Works after the formula is merged into [Homebrew/homebrew-core](https://github.c
 
 Draft: [`distribution/homebrew-core/duplicate-finder.rb`](../distribution/homebrew-core/duplicate-finder.rb).
 
+Python deps are declared as PyPI `resource` blocks (`url` + `sha256` from [PyPI JSON](https://warehouse.pypa.io/api-reference/json.html)); install uses `virtualenv_install_with_resources`. After changing app dependencies, refresh resources (e.g. `brew update-python-resources` against a local tap copy, or regenerate from PyPI metadata).
+
 Secrets: `TAGTOKEN`, `HOMEBREW_GITHUB_API_KEY` (classic PAT with `public_repo`).
 
 ## Homebrew preview tap
