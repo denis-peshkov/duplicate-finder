@@ -4,13 +4,14 @@ description: Run pytest + (optional) SonarCloud scan
 inputs:
   sonar_token:
     description: SonarCloud token (if set, runs SonarCloud scan)
-    required: false
-    default: ''
+    required: true
 
 runs:
   using: composite
   steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Setup Python
       uses: actions/setup-python@v5
