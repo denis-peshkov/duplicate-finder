@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - release/*
+      - hotfix/*
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+
+  version:
+    name: Versioning
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      version_commit: ${{ steps.version.outputs.version_commit }}
+      major: ${{ steps.version.outputs.major }}
+      minor: ${{ steps.version.outputs.minor }}
+      semver: ${{ steps.version.outputs.semver }}
+      channel: ${{ steps.version.outputs.channel }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        uses: ./.github/actions/version
+
+  test:
+    name: Test
+    needs:
+      - version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/test
+
+  release-binaries:
+    needs:
+      - version
+      - test
+    name: binary-windows
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/build-release-binary
+        with:
+          version: ${{ needs.version.outputs.version }}
+          publish_artifacts: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')) }}
+
+  push-tags:
+    name: Push Git Tags
+    needs:
+      - version
+      - release-binaries
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+      - id: push
+        uses: ./.github/actions/push-tags
+        with:
+          version: ${{ needs.version.outputs.version }}
+          major: ${{ needs.version.outputs.major }}
+          minor: ${{ needs.version.outputs.minor }}
+          tagtoken: ${{ secrets.TAGTOKEN }}
+
+  publish-chocolatey:
+    name: Publish Chocolatey
+    needs:
+      - version
+      - release-binaries
+    if: ${{ !failure() && !cancelled() && needs.release-binaries.result == 'success' && github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')) }}
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/publish-chocolatey
+        with:
+          version: ${{ needs.version.outputs.version }}
+          channel: ${{ needs.version.outputs.channel }}
+          version_commit: ${{ needs.version.outputs.version_commit }}
+          chocolatey_api_key: ${{ secrets.CHOCOLATEY_API_KEY }}
+
+  publish-release:
+    name: Publish Release
+    needs:
+      - version
+      - release-binaries
+      - push-tags
+    if: ${{ !failure() && !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/master' && needs.release-binaries.result == 'success' && needs.push-tags.result == 'success' }}
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/publish-release
+        with:
+          version: ${{ needs.version.outputs.version }}
+          version_commit: ${{ needs.version.outputs.version_commit }}
+          prerelease: ${{ needs.version.outputs.prerelease }}

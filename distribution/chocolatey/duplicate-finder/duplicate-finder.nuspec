@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>duplicate-finder</id>
+    <version>0.0.0</version>
+    <title>Duplicate Finder</title>
+    <authors>Denis Peshkov</authors>
+    <owners>Denis Peshkov</owners>
+    <projectUrl>https://github.com/denis-peshkov/duplicate-finder</projectUrl>
+    <projectSourceUrl>https://github.com/denis-peshkov/duplicate-finder</projectSourceUrl>
+    <packageSourceUrl>https://github.com/denis-peshkov/duplicate-finder/tree/master/distribution/chocolatey/duplicate-finder</packageSourceUrl>
+    <docsUrl>https://github.com/denis-peshkov/duplicate-finder#readme</docsUrl>
+    <bugTrackerUrl>https://github.com/denis-peshkov/duplicate-finder/issues</bugTrackerUrl>
+    <licenseUrl>https://github.com/denis-peshkov/duplicate-finder/blob/master/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <summary>Desktop app for finding and removing duplicate files.</summary>
+    <description>Desktop application for finding and removing duplicate files. Compare one list of paths or two lists against each other, match by exact file content or by filename, optionally limit the search to images, then move unwanted copies to the Recycle Bin.</description>
+    <releaseNotes>https://github.com/denis-peshkov/duplicate-finder/releases</releaseNotes>
+    <tags>duplicate files desktop finder cleanup</tags>
+  </metadata>
+  <files>
+    <file src="tools/**" target="tools" />
+  </files>
+</package>

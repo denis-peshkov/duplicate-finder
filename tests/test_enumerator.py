@@ -2,19 +2,26 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from src.core.enumerator import enumerate_paths, format_list_item, parse_list_item
 
 
 def test_parse_list_item_folder_suffix() -> None:
-    path, is_folder = parse_list_item(r"P:\data\*")
+    path, is_folder = parse_list_item(rf"P:\data\*")
     assert is_folder is True
     assert path == Path(r"P:\data")
 
 
+def test_parse_list_item_folder_suffix_forward_slash() -> None:
+    path, is_folder = parse_list_item("data/*")
+    assert is_folder is True
+    assert path == Path("data")
+
+
 def test_format_list_item_folder() -> None:
-    assert format_list_item(Path(r"P:\data"), True) == r"P:\data\*"
+    assert format_list_item(Path("data"), True) == f"data{os.sep}*"
 
 
 def test_enumerate_with_subfolders(tmp_path: Path) -> None:

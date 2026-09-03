@@ -1,0 +1,58 @@
+name: Build Release Binary
+description: Build Windows DuplicateFinder.exe with PyInstaller and upload artifact
+
+inputs:
+  version:
+    description: Release version (Major.Minor.run_number)
+    required: true
+  publish_artifacts:
+    description: Package and upload release-binary-* artifact (push to master/release/hotfix)
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+
+    - name: Set application version
+      if: inputs.publish_artifacts == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        VERSION="${{ inputs.version }}"
+        perl -pi -e "s/^version = \".*\"/version = \"${VERSION}\"/" pyproject.toml
+        perl -pi -e "s/^APP_VERSION = \".*\"/APP_VERSION = \"${VERSION}\"/" src/config/app_info.py
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        set -euo pipefail
+        python -m pip install --upgrade pip
+        pip install -e ".[dev]"
+
+    - name: Build with PyInstaller
+      shell: bash
+      run: pyinstaller duplicate_finder.spec
+
+    - name: Package release binary
+      if: inputs.publish_artifacts == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        BINARY="dist/DuplicateFinder.exe"
+        ARCHIVE="$(./.github/scripts/package-release-binary.sh "${{ inputs.version }}" "x86_64-pc-windows-msvc" "${BINARY}" dist)"
+        echo "ARCHIVE=${ARCHIVE}" >> "${GITHUB_ENV}"
+
+    - name: Upload release binary
+      if: inputs.publish_artifacts == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-binary-x86_64-pc-windows-msvc
+        path: ${{ env.ARCHIVE }}
+        if-no-files-found: error

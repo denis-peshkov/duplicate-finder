@@ -1,0 +1,25 @@
+Verification is intended to assist the Chocolatey moderators and community
+in verifying that this package's contents are trustworthy.
+
+Package maintainer is the software author (Denis Peshkov).
+
+Preview build (no GitHub Release for this package version).
+
+The embedded binary was built from the official GitHub repository:
+https://github.com/denis-peshkov/duplicate-finder
+
+Commit: __COMMIT_SHA__
+Branch: __BRANCH__
+CI workflow run: __CI_RUN_URL__
+
+Source tree at commit:
+__SOURCE_ARCHIVE_URL__
+
+SHA256 of DuplicateFinder.exe in this package:
+__EXE_SHA256__
+
+To verify on Windows PowerShell:
+  Get-FileHash "$env:ChocolateyInstall\lib\duplicate-finder\tools\DuplicateFinder.exe" -Algorithm SHA256
+
+This preview package embeds the Windows binary built in CI. Compare the hash
+above with the CI run artifacts or rebuild from the source archive at commit.

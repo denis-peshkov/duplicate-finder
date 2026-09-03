@@ -1,0 +1,71 @@
+name: Version
+description: Run GitVersion and set release channel outputs
+
+outputs:
+  version:
+    description: Major.Minor.run_number with optional prerelease suffix
+    value: ${{ steps.set.outputs.version }}
+  version_commit:
+    description: Commit SHA for the current workflow ref
+    value: ${{ steps.commit.outputs.sha }}
+  major:
+    description: Major version from GitVersion
+    value: ${{ steps.gitversion.outputs.major }}
+  minor:
+    description: Minor version from GitVersion
+    value: ${{ steps.gitversion.outputs.minor }}
+  semver:
+    description: Full SemVer from GitVersion
+    value: ${{ steps.gitversion.outputs.semVer }}
+  channel:
+    description: release or preview based on branch
+    value: ${{ steps.channel.outputs.name }}
+  prerelease:
+    description: true for preview branches, false for master
+    value: ${{ steps.channel.outputs.prerelease }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup GitVersion
+      uses: gittools/actions/gitversion/setup@v1.1.1
+      with:
+        versionSpec: 5.12.0
+
+    - name: Determine Version
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v1.1.1
+      with:
+        useConfigFile: true
+
+    - name: Set VERSION
+      id: set
+      shell: bash
+      run: |
+        set -euo pipefail
+        VERSION="${{ steps.gitversion.outputs.major }}.${{ steps.gitversion.outputs.minor }}.${{ github.run_number }}${{ steps.gitversion.outputs.preReleaseLabelWithDash }}"
+        echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+        echo "Version: ${VERSION} (semVer=${{ steps.gitversion.outputs.semVer }})"
+
+    - name: Set VERSION_COMMIT
+      id: commit
+      shell: bash
+      run: |
+        set -euo pipefail
+        echo "sha=${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
+
+    - name: Set release channel
+      id: channel
+      shell: bash
+      run: |
+        if [ "${GITHUB_REF}" = "refs/heads/master" ]; then
+          echo "name=release" >> "${GITHUB_OUTPUT}"
+          echo "prerelease=false" >> "${GITHUB_OUTPUT}"
+        else
+          echo "name=preview" >> "${GITHUB_OUTPUT}"
+          echo "prerelease=true" >> "${GITHUB_OUTPUT}"
+        fi

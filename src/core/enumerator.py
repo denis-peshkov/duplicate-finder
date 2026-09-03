@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import Callable, Iterable
 
@@ -29,14 +30,16 @@ def parse_list_item(raw_path: str) -> tuple[Path, bool]:
     """Разбор элемента списка: файл или папка с суффиксом *."""
     text = raw_path.strip()
     if text.endswith("*"):
-        return Path(text[:-1]), True
+        # folder\* / folder/* — убрать маркер и разделитель перед ним
+        text = text[:-1].rstrip("\\/")
+        return Path(text), True
     return Path(text), False
 
 
 def format_list_item(path: Path, is_folder: bool) -> str:
     """Форматирование элемента для отображения в списке."""
     if is_folder:
-        return f"{path}\\*"
+        return f"{path}{os.sep}*"
     return str(path)
 
 

@@ -13,10 +13,20 @@ Desktop-приложение для поиска и удаления дубли�
 
 ## Требования
 
-- Python 3.11+
+- Python 3.9+
 - Windows (основная платформа), код кроссплатформенный
 
 ## Установка
+
+### Chocolatey (Windows)
+
+```bash
+choco install duplicate-finder
+```
+
+После установки в PATH появляется команда `duplicate-finder`.
+
+### Из исходников
 
 ```bash
 cd duplicate-finder

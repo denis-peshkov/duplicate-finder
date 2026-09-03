@@ -1,0 +1,51 @@
+name: Publish Chocolatey
+description: Stage and push Chocolatey package
+
+inputs:
+  version:
+    description: Release version (Major.Minor.run_number)
+    required: true
+  channel:
+    description: release or preview (from version job)
+    required: true
+  version_commit:
+    description: Commit SHA for preview VERIFICATION
+    required: true
+  chocolatey_api_key:
+    description: chocolatey.org API key
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Download release binaries
+      uses: actions/download-artifact@v4
+      with:
+        pattern: release-binary-*
+        path: dist/binaries
+        merge-multiple: true
+
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v2
+
+    - name: Stage and pack Chocolatey package
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        CHANNEL: ${{ inputs.channel }}
+        COMMIT_SHA: ${{ inputs.version_commit }}
+        BRANCH: ${{ github.ref_name }}
+        CI_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      run: |
+        set -euo pipefail
+        WINDOWS_ZIP="dist/binaries/duplicate-finder-${VERSION}-x86_64-pc-windows-msvc.zip"
+        ./.github/scripts/stage-chocolatey-package.sh "${VERSION}" "${WINDOWS_ZIP}" "${{ github.workspace }}" dist/choco
+
+    - name: Publish Chocolatey package
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        CHOCOLATEY_API_KEY: ${{ inputs.chocolatey_api_key }}
+      run: ./.github/scripts/publish-chocolatey-package.sh "${VERSION}" "dist/choco/duplicate-finder.${VERSION}.nupkg"
