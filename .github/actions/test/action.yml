@@ -1,5 +1,5 @@
 name: Test
-description: Run pytest + (optional) SonarCloud scan
+description: Run pytest and SonarCloud scan
 
 inputs:
   sonar_token:
@@ -38,7 +38,7 @@ runs:
       with:
         args: >
           -Dsonar.organization=denis-peshkov
-          -Dsonar.projectKey=DuplicateFinder
+          -Dsonar.projectKey=duplicate-finder
           -Dsonar.projectName=DuplicateFinder
           -Dsonar.sources=src
           -Dsonar.tests=tests
