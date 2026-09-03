@@ -33,7 +33,7 @@ runs:
         pytest -q --cov=src --cov-report=xml:TestResults/coverage.xml
 
     - name: SonarCloud Scan
-      uses: sonarsource/sonarcloud-github-action@v5
+      uses: SonarSource/sonarqube-scan-action@v5
       with:
         args: >
           -Dsonar.organization=denis-peshkov
@@ -42,7 +42,6 @@ runs:
           -Dsonar.sources=src
           -Dsonar.tests=tests
           -Dsonar.python.coverage.reportPaths=TestResults/coverage.xml
-          -Dsonar.scanner.skipJreProvisioning=true
           -Dsonar.verbose=true
       env:
         GITHUB_TOKEN: ${{ github.token }}
