@@ -197,7 +197,7 @@ class PageResults(ctk.CTkFrame):
 
         ctk.CTkCheckBox(
             content,
-            text="Чистить пустые папки в target локации",
+            text="Clean empty folders in target location",
             variable=self._clean_empty_folders,
         ).pack(anchor="w", padx=10, pady=(0, 6))
 
