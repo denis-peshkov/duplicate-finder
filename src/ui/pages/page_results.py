@@ -73,7 +73,7 @@ class PageResults(ctk.CTkFrame):
         self._sort_column: str | None = None
         self._sort_reverse = False
         self._delete_mode = ctk.StringVar(value="custom")
-        self._clean_empty_folders = ctk.BooleanVar(value=False)
+        self._clean_empty_folders = ctk.BooleanVar(value=True)
         self._delete_queue: queue.Queue = queue.Queue()
         self._delete_thread: threading.Thread | None = None
         self._delete_cancel = threading.Event()
