@@ -390,7 +390,7 @@ class PageResults(ctk.CTkFrame):
                 frame.configure(width=path_width)
                 label.configure(text=_ellipsize(full, path_width))
         except Exception:  # noqa: BLE001
-            logger.exception("Ошибка при обновлении ширины колонок")
+            logger.exception("Failed to update column widths")
         finally:
             self._applying_widths = False
 

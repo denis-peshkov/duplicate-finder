@@ -35,7 +35,7 @@ def main() -> None:
     settings = load_settings()
 
     if settings.first_run:
-        logger.info("Первый запуск приложения")
+        logger.info("First application launch")
         settings.first_run = False
         save_settings(settings)
 
@@ -43,7 +43,7 @@ def main() -> None:
         app = DuplicateFinderApp(settings)
         app.run()
     except Exception as exc:
-        logger.critical("Критическая ошибка: %s", exc, exc_info=True)
+        logger.critical("Critical error: %s", exc, exc_info=True)
         sys.exit(1)
 
 

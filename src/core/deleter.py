@@ -71,11 +71,11 @@ def delete_to_recycle_bin(
         try:
             send2trash(str(path))
             deleted.append(path)
-            logger.info("Файл перемещён в корзину: %s", path)
+            logger.info("Moved to Recycle Bin: %s", path)
         except Exception as exc:  # noqa: BLE001
             message = str(exc)
             failed.append((path, message))
-            logger.error("Не удалось удалить %s: %s", path, message)
+            logger.error("Failed to delete %s: %s", path, message)
 
     return DeleteResult(deleted=deleted, failed=failed, canceled=False)
 
@@ -100,17 +100,17 @@ def _try_remove_empty_dir(
             return
     except OSError as exc:
         failed.append((folder, str(exc)))
-        logger.error("Не удалось прочитать папку %s: %s", folder, exc)
+        logger.error("Failed to read folder %s: %s", folder, exc)
         return
 
     try:
         send2trash(str(folder))
         removed.append(folder)
-        logger.info("Пустая папка перемещена в корзину: %s", folder)
+        logger.info("Empty folder moved to Recycle Bin: %s", folder)
     except Exception as exc:  # noqa: BLE001
         message = str(exc)
         failed.append((folder, message))
-        logger.error("Не удалось удалить пустую папку %s: %s", folder, message)
+        logger.error("Failed to delete empty folder %s: %s", folder, message)
 
 
 def remove_empty_folders(
@@ -128,7 +128,7 @@ def remove_empty_folders(
     failed: list[tuple[Path, str]] = []
     root_list = list(roots or [])
     if not root_list:
-        logger.warning("remove_empty_folders: search roots не заданы, пропуск")
+        logger.warning("remove_empty_folders: no search roots, skipping")
         return removed, failed
 
     seen_roots: set[Path] = set()
@@ -149,7 +149,7 @@ def remove_empty_folders(
             walker = os.walk(root_res, topdown=False)
         except OSError as exc:
             failed.append((root_res, str(exc)))
-            logger.error("Не удалось обойти %s: %s", root_res, exc)
+            logger.error("Failed to walk %s: %s", root_res, exc)
             continue
 
         for dirpath, _dirnames, _filenames in walker:

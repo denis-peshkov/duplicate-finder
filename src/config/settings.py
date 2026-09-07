@@ -41,7 +41,7 @@ def load_settings(config_path: Optional[Path] = None) -> Settings:
     path = config_path or DEFAULT_CONFIG_PATH
 
     if not path.exists():
-        logger.info("Файл настроек не найден: %s, используются настройки по умолчанию", path)
+        logger.info("Settings file not found: %s, using defaults", path)
         return Settings()
 
     try:
@@ -51,10 +51,10 @@ def load_settings(config_path: Optional[Path] = None) -> Settings:
         known_fields = {key for key in asdict(Settings())}
         filtered_data = {key: value for key, value in data.items() if key in known_fields}
         settings = Settings(**filtered_data)
-        logger.info("Настройки загружены: %s", path)
+        logger.info("Settings loaded: %s", path)
         return settings
     except (tomllib.TOMLDecodeError, OSError, TypeError) as exc:
-        logger.warning("Ошибка загрузки настроек: %s", exc)
+        logger.warning("Failed to load settings: %s", exc)
         return Settings()
 
 
@@ -66,6 +66,6 @@ def save_settings(settings: Settings, config_path: Optional[Path] = None) -> Non
     try:
         with open(path, "wb") as handle:
             tomli_w.dump(asdict(settings), handle)
-        logger.info("Настройки сохранены: %s", path)
+        logger.info("Settings saved: %s", path)
     except (OSError, TypeError) as exc:
-        logger.error("Ошибка сохранения настроек: %s", exc)
+        logger.error("Failed to save settings: %s", exc)

@@ -64,7 +64,7 @@ def enumerate_paths(
 
         path, is_folder = parse_list_item(raw_item)
         if not path.exists():
-            logger.warning("Путь не найден: %s", path)
+            logger.warning("Path not found: %s", path)
             continue
 
         try:
@@ -98,7 +98,7 @@ def enumerate_paths(
                             if on_file:
                                 on_file(entry)
         except OSError as exc:
-            logger.warning("Ошибка доступа к %s: %s", path, exc)
+            logger.warning("Access error for %s: %s", path, exc)
 
     return entries
 
@@ -130,7 +130,7 @@ def _walk_directory(
             if on_file:
                 on_file(entry)
         except OSError as exc:
-            logger.warning("Ошибка чтения %s: %s", item, exc)
+            logger.warning("Read error for %s: %s", item, exc)
 
 
 def _make_entry(path: Path, source: ListSource) -> FileEntry:

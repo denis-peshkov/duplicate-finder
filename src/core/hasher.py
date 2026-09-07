@@ -37,7 +37,7 @@ def partial_hash(path: Path, cancel_check: Callable[[], bool] | None = None) -> 
 
         return digest.hexdigest()
     except OSError as exc:
-        logger.warning("Не удалось сделать partial hash %s: %s", path, exc)
+        logger.warning("Failed partial hash for %s: %s", path, exc)
         return ""
 
 
@@ -65,5 +65,5 @@ def hash_file(
     try:
         return full_hash(path, cancel_check=cancel_check)
     except OSError as exc:
-        logger.warning("Не удалось хешировать %s: %s", path, exc)
+        logger.warning("Failed to hash %s: %s", path, exc)
         return ""
