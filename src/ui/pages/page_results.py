@@ -10,7 +10,7 @@ import subprocess
 import sys
 import threading
 from pathlib import Path
-from tkinter import Listbox, Menu, messagebox
+from tkinter import Listbox, Menu, messagebox, ttk
 from typing import Callable, Optional
 
 import customtkinter as ctk
@@ -26,13 +26,12 @@ from src.utils.formatters import format_count
 logger = logging.getLogger(__name__)
 
 FILE_FONT_SIZE = 14
-CHECK_COL_WIDTH = 28
-ROW_HEIGHT = 28
-NAME_COL_DEFAULT = 220
-SIZE_COL_DEFAULT = 110
-NAME_COL_MIN = 80
-SIZE_COL_MIN = 70
-PATH_COL_MIN = 120
+CHECK_ON = "☑"
+CHECK_OFF = "☐"
+COL_CHECK = "check"
+COL_NAME = "name"
+COL_SIZE = "size"
+COL_PATH = "path"
 
 
 def _format_size(num_bytes: int) -> str:
@@ -45,19 +44,6 @@ def _format_size(num_bytes: int) -> str:
         if size < 1024 or unit == units[-1]:
             return f"{size:.1f} {unit}"
     return f"{num_bytes} bytes"
-
-
-def _ellipsize(text: str, width_px: int, font_size: int = FILE_FONT_SIZE) -> str:
-    """Обрезать текст под ширину колонки с многоточием."""
-    if width_px <= 0:
-        return ""
-    # Приблизительно: ~0.55em на символ для Segoe UI
-    max_chars = max(4, int(width_px / max(font_size * 0.55, 1)))
-    if len(text) <= max_chars:
-        return text
-    if max_chars <= 1:
-        return "…"
-    return text[: max_chars - 1] + "…"
 
 
 def _group_title(group: DuplicateGroup) -> str:
@@ -82,23 +68,10 @@ class PageResults(ctk.CTkFrame):
         self.on_cancel = on_cancel
         self._result: ScanResult | None = None
         self._selected_group_index: int = -1
-        self._row_vars: dict[Path, ctk.BooleanVar] = {}
         self._entry_by_path: dict[Path, FileEntry] = {}
         self._checked_paths: set[Path] = set()
-        self._file_rows: list[ctk.CTkFrame] = []
-        self._table_font = ctk.CTkFont(size=FILE_FONT_SIZE)
-        self._name_col_width = NAME_COL_DEFAULT
-        self._size_col_width = SIZE_COL_DEFAULT
-        self._resize_col: str | None = None
-        self._resize_start_x = 0
-        self._resize_start_width = 0
-        self._applying_widths = False
-        self._width_apply_after: str | None = None
-        self._header_name_label: ctk.CTkLabel | None = None
-        self._header_size_label: ctk.CTkLabel | None = None
-        self._row_name_cells: list[tuple[ctk.CTkFrame, ctk.CTkLabel, str]] = []
-        self._row_size_cells: list[tuple[ctk.CTkFrame, ctk.CTkLabel]] = []
-        self._row_path_cells: list[tuple[ctk.CTkFrame, ctk.CTkLabel, str]] = []
+        self._sort_column: str | None = None
+        self._sort_reverse = False
         self._delete_mode = ctk.StringVar(value="custom")
         self._clean_empty_folders = ctk.BooleanVar(value=False)
         self._delete_queue: queue.Queue = queue.Queue()
@@ -219,7 +192,8 @@ class PageResults(ctk.CTkFrame):
             content,
             text=(
                 "Select the checkbox of the items you wish to delete, "
-                "or right-click for more options, including Rename."
+                "or right-click for more options, including Rename. "
+                "Click a column header to sort."
             ),
             anchor="w",
             justify="left",
@@ -239,172 +213,104 @@ class PageResults(ctk.CTkFrame):
         table_frame = ctk.CTkFrame(content)
         table_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 
-        self._table_header = ctk.CTkFrame(table_frame, fg_color="transparent", height=28)
-        self._table_header.pack(fill="x", padx=4, pady=(6, 0))
-        self._table_header.pack_propagate(False)
-        self._build_table_header()
+        tree_host = ctk.CTkFrame(table_frame, fg_color="#1a1a1a")
+        tree_host.pack(fill="both", expand=True, padx=4, pady=4)
 
-        self.table_scroll = ctk.CTkScrollableFrame(table_frame, fg_color="transparent")
-        self.table_scroll.pack(fill="both", expand=True, padx=4, pady=(0, 6))
-        self.table_scroll.bind("<Configure>", self._schedule_column_widths)
-
-    def _build_table_header(self) -> None:
-        """Заголовок таблицы с ручками ресайза колонок."""
-        for child in self._table_header.winfo_children():
-            child.destroy()
-
-        ctk.CTkLabel(self._table_header, text="", width=CHECK_COL_WIDTH).pack(side="left")
-
-        name_wrap = ctk.CTkFrame(
-            self._table_header,
-            width=self._name_col_width,
-            fg_color="transparent",
+        self._configure_tree_style()
+        self.files_tree = ttk.Treeview(
+            tree_host,
+            columns=(COL_CHECK, COL_NAME, COL_SIZE, COL_PATH),
+            show="headings",
+            selectmode="browse",
+            style="Results.Treeview",
         )
-        name_wrap.pack(side="left", fill="y")
-        name_wrap.pack_propagate(False)
-        self._header_name_wrap = name_wrap
-        self._header_name_label = ctk.CTkLabel(
-            name_wrap,
+        self.files_tree.heading(
+            COL_CHECK,
+            text="",
+            command=lambda: self._sort_by(COL_CHECK),
+        )
+        self.files_tree.heading(
+            COL_NAME,
             text="Filename",
+            command=lambda: self._sort_by(COL_NAME),
             anchor="w",
-            font=self._table_font,
         )
-        self._header_name_label.pack(side="left", fill="both", expand=True)
-
-        self._make_resize_grip("name").pack(side="left", fill="y", padx=(0, 2))
-
-        size_wrap = ctk.CTkFrame(
-            self._table_header,
-            width=self._size_col_width,
-            fg_color="transparent",
-        )
-        size_wrap.pack(side="left", fill="y")
-        size_wrap.pack_propagate(False)
-        self._header_size_wrap = size_wrap
-        self._header_size_label = ctk.CTkLabel(
-            size_wrap,
+        self.files_tree.heading(
+            COL_SIZE,
             text="File Size",
+            command=lambda: self._sort_by(COL_SIZE),
             anchor="w",
-            font=self._table_font,
         )
-        self._header_size_label.pack(side="left", fill="both", expand=True)
-
-        self._make_resize_grip("size").pack(side="left", fill="y", padx=(0, 2))
-
-        path_wrap = ctk.CTkFrame(self._table_header, fg_color="transparent")
-        path_wrap.pack(side="left", fill="both", expand=True)
-        self._header_path_wrap = path_wrap
-        ctk.CTkLabel(
-            path_wrap,
+        self.files_tree.heading(
+            COL_PATH,
             text="Original Path",
+            command=lambda: self._sort_by(COL_PATH),
             anchor="w",
-            font=self._table_font,
-        ).pack(side="left", fill="both", expand=True)
-
-    def _make_resize_grip(self, column: str) -> ctk.CTkFrame:
-        grip = ctk.CTkFrame(
-            self._table_header,
-            width=4,
-            fg_color=("gray70", "gray40"),
-            cursor="size_we",
         )
-        grip.bind("<ButtonPress-1>", lambda e, c=column: self._start_col_resize(e, c))
-        grip.bind("<B1-Motion>", self._on_col_resize)
-        grip.bind("<ButtonRelease-1>", self._end_col_resize)
-        return grip
+        self.files_tree.column(COL_CHECK, width=36, minwidth=36, stretch=False, anchor="center")
+        self.files_tree.column(COL_NAME, width=220, minwidth=80, stretch=False, anchor="w")
+        self.files_tree.column(COL_SIZE, width=110, minwidth=70, stretch=False, anchor="w")
+        self.files_tree.column(COL_PATH, width=420, minwidth=120, stretch=True, anchor="w")
 
-    def _start_col_resize(self, event: object, column: str) -> None:
-        self._resize_col = column
-        self._resize_start_x = int(getattr(event, "x_root", 0))
-        self._resize_start_width = (
-            self._name_col_width if column == "name" else self._size_col_width
+        y_scroll = ttk.Scrollbar(tree_host, orient="vertical", command=self.files_tree.yview)
+        x_scroll = ttk.Scrollbar(tree_host, orient="horizontal", command=self.files_tree.xview)
+        self.files_tree.configure(yscrollcommand=y_scroll.set, xscrollcommand=x_scroll.set)
+
+        self.files_tree.grid(row=0, column=0, sticky="nsew")
+        y_scroll.grid(row=0, column=1, sticky="ns")
+        x_scroll.grid(row=1, column=0, sticky="ew")
+        tree_host.grid_rowconfigure(0, weight=1)
+        tree_host.grid_columnconfigure(0, weight=1)
+
+        self.files_tree.bind("<Button-1>", self._on_tree_click)
+        self.files_tree.bind("<Button-3>", self._on_tree_right_click)
+        self.files_tree.bind("<space>", self._on_tree_space)
+
+    def _configure_tree_style(self) -> None:
+        style = ttk.Style()
+        try:
+            style.theme_use("clam")
+        except Exception:  # noqa: BLE001
+            pass
+        style.configure(
+            "Results.Treeview",
+            background="#1a1a1a",
+            foreground="#e8e8e8",
+            fieldbackground="#1a1a1a",
+            borderwidth=0,
+            rowheight=28,
+            font=("Segoe UI", FILE_FONT_SIZE),
         )
-
-    def _on_col_resize(self, event: object) -> None:
-        if not self._resize_col:
-            return
-        delta = int(getattr(event, "x_root", 0)) - self._resize_start_x
-        if self._resize_col == "name":
-            self._name_col_width = max(NAME_COL_MIN, self._resize_start_width + delta)
-        else:
-            self._size_col_width = max(SIZE_COL_MIN, self._resize_start_width + delta)
-        self._apply_column_widths()
-
-    def _end_col_resize(self, _event: object = None) -> None:
-        self._resize_col = None
-
-    def _schedule_column_widths(self, _event: object = None) -> None:
-        """Отложенное обновление — без рекурсии от Configure."""
-        if self._applying_widths or self._resize_col:
-            return
-        if self._width_apply_after is not None:
-            try:
-                self.after_cancel(self._width_apply_after)
-            except Exception:  # noqa: BLE001
-                pass
-        self._width_apply_after = self.after(16, self._apply_column_widths)
-
-    def _path_col_width(self) -> int:
-        try:
-            total = int(self.table_scroll.winfo_width())
-        except Exception:  # noqa: BLE001
-            total = 800
-        if total <= 1:
-            total = 800
-        used = CHECK_COL_WIDTH + self._name_col_width + self._size_col_width + 16
-        return max(PATH_COL_MIN, total - used)
-
-    def _alive(self, widget: object) -> bool:
-        try:
-            return bool(widget.winfo_exists())  # type: ignore[attr-defined]
-        except Exception:  # noqa: BLE001
-            return False
-
-    def _apply_column_widths(self) -> None:
-        """Обновить ширины ячеек и переобрезать текст под новый размер."""
-        self._width_apply_after = None
-        if self._applying_widths:
-            return
-        self._applying_widths = True
-        try:
-            path_width = self._path_col_width()
-
-            if hasattr(self, "_header_name_wrap") and self._alive(self._header_name_wrap):
-                self._header_name_wrap.configure(width=self._name_col_width)
-            if hasattr(self, "_header_size_wrap") and self._alive(self._header_size_wrap):
-                self._header_size_wrap.configure(width=self._size_col_width)
-
-            for frame, label, full in list(self._row_name_cells):
-                if not self._alive(frame) or not self._alive(label):
-                    continue
-                frame.configure(width=self._name_col_width)
-                label.configure(text=_ellipsize(full, self._name_col_width))
-
-            for frame, _label in list(self._row_size_cells):
-                if not self._alive(frame):
-                    continue
-                frame.configure(width=self._size_col_width)
-
-            for frame, label, full in list(self._row_path_cells):
-                if not self._alive(frame) or not self._alive(label):
-                    continue
-                frame.configure(width=path_width)
-                label.configure(text=_ellipsize(full, path_width))
-        except Exception:  # noqa: BLE001
-            logger.exception("Failed to update column widths")
-        finally:
-            self._applying_widths = False
+        style.configure(
+            "Results.Treeview.Heading",
+            background="#2b2b2b",
+            foreground="#e8e8e8",
+            relief="flat",
+            borderwidth=0,
+            font=("Segoe UI", FILE_FONT_SIZE, "bold"),
+        )
+        style.map(
+            "Results.Treeview",
+            background=[("selected", "#3a3a3a")],
+            foreground=[("selected", "#ffffff")],
+        )
+        style.map(
+            "Results.Treeview.Heading",
+            background=[("active", "#3a3a3a")],
+        )
 
     def show_results(self, result: ScanResult) -> None:
         """Отобразить результаты сканирования."""
         self._result = result
         self._selected_group_index = -1
-        self._row_vars.clear()
         self._entry_by_path.clear()
         self._checked_paths.clear()
+        self._sort_column = None
+        self._sort_reverse = False
         self._clear_table()
         self.sets_list.delete(0, "end")
         self._delete_mode.set("custom")
+        self._update_heading_labels()
 
         if result.search_mode == "two_lists":
             self.delete_mode_frame.pack(fill="x", padx=10, pady=(4, 0), before=self.hint_label)
@@ -426,15 +332,6 @@ class PageResults(ctk.CTkFrame):
             self.sets_list.selection_set(0)
             self.sets_list.activate(0)
             self._show_group(0)
-        else:
-            empty = ctk.CTkLabel(
-                self.table_scroll,
-                text="No duplicates found.",
-                text_color="gray70",
-                font=self._table_font,
-            )
-            empty.pack(anchor="w", pady=8)
-            self._file_rows.append(empty)  # type: ignore[arg-type]
 
     def _on_set_selected(self, _event: object = None) -> None:
         selection = self.sets_list.curselection()
@@ -449,105 +346,108 @@ class PageResults(ctk.CTkFrame):
         self._render_table(self._result.groups[index])
 
     def _clear_table(self) -> None:
-        for widget in self.table_scroll.winfo_children():
-            widget.destroy()
-        self._file_rows.clear()
-        self._row_name_cells.clear()
-        self._row_size_cells.clear()
-        self._row_path_cells.clear()
+        for item in self.files_tree.get_children():
+            self.files_tree.delete(item)
+
+    def _path_from_iid(self, iid: str) -> Path:
+        return Path(iid)
 
     def _render_table(self, group: DuplicateGroup) -> None:
         self._clear_table()
-        self._row_vars.clear()
         self._entry_by_path.clear()
-        path_width = self._path_col_width()
 
         for entry in group.files:
-            row = ctk.CTkFrame(
-                self.table_scroll,
-                fg_color="transparent",
-                height=ROW_HEIGHT,
-            )
-            row.pack(fill="x", pady=1)
-            row.pack_propagate(False)
-            self._file_rows.append(row)
-
-            var = ctk.BooleanVar(value=entry.path in self._checked_paths)
-            self._row_vars[entry.path] = var
             self._entry_by_path[entry.path] = entry
-            var.trace_add(
-                "write",
-                lambda *_args, p=entry.path, v=var: self._on_checkbox_changed(p, v),
+            check = CHECK_ON if entry.path in self._checked_paths else CHECK_OFF
+            self.files_tree.insert(
+                "",
+                "end",
+                iid=str(entry.path),
+                values=(
+                    check,
+                    entry.path.name,
+                    _format_size(entry.size),
+                    str(entry.path),
+                ),
             )
 
-            ctk.CTkCheckBox(row, text="", variable=var, width=CHECK_COL_WIDTH, height=ROW_HEIGHT).pack(
-                side="left"
-            )
+        if self._sort_column:
+            self._apply_sort(self._sort_column, reverse=self._sort_reverse, update_heading=False)
 
-            name_full = entry.path.name
-            name_frame = ctk.CTkFrame(
-                row,
-                width=self._name_col_width,
-                height=ROW_HEIGHT,
-                fg_color="transparent",
-            )
-            name_frame.pack(side="left", fill="y")
-            name_frame.pack_propagate(False)
-            name_label = ctk.CTkLabel(
-                name_frame,
-                text=_ellipsize(name_full, self._name_col_width),
-                anchor="w",
-                font=self._table_font,
-            )
-            name_label.pack(side="left", fill="both", expand=True)
-            self._row_name_cells.append((name_frame, name_label, name_full))
+    def _heading_title(self, column: str) -> str:
+        titles = {
+            COL_CHECK: "",
+            COL_NAME: "Filename",
+            COL_SIZE: "File Size",
+            COL_PATH: "Original Path",
+        }
+        title = titles.get(column, column)
+        if self._sort_column != column:
+            return title
+        return f"{title} {'▼' if self._sort_reverse else '▲'}".strip()
 
-            size_frame = ctk.CTkFrame(
-                row,
-                width=self._size_col_width,
-                height=ROW_HEIGHT,
-                fg_color="transparent",
-            )
-            size_frame.pack(side="left", fill="y")
-            size_frame.pack_propagate(False)
-            size_label = ctk.CTkLabel(
-                size_frame,
-                text=_format_size(entry.size),
-                anchor="w",
-                font=self._table_font,
-            )
-            size_label.pack(side="left", fill="both", expand=True)
-            self._row_size_cells.append((size_frame, size_label))
+    def _update_heading_labels(self) -> None:
+        for column in (COL_CHECK, COL_NAME, COL_SIZE, COL_PATH):
+            self.files_tree.heading(column, text=self._heading_title(column))
 
-            path_full = str(entry.path)
-            path_frame = ctk.CTkFrame(
-                row,
-                width=path_width,
-                height=ROW_HEIGHT,
-                fg_color="transparent",
-            )
-            path_frame.pack(side="left", fill="y")
-            path_frame.pack_propagate(False)
-            path_label = ctk.CTkLabel(
-                path_frame,
-                text=_ellipsize(path_full, path_width),
-                anchor="w",
-                font=self._table_font,
-            )
-            path_label.pack(side="left", fill="both", expand=True)
-            self._row_path_cells.append((path_frame, path_label, path_full))
+    def _sort_by(self, column: str) -> None:
+        reverse = self._sort_column == column and not self._sort_reverse
+        self._apply_sort(column, reverse=reverse, update_heading=True)
 
-            for widget in (row, name_label, size_label, path_label):
-                widget.bind(
-                    "<Button-3>",
-                    lambda e, p=entry.path: self._show_context_menu(e, p),
-                )
+    def _apply_sort(self, column: str, *, reverse: bool, update_heading: bool) -> None:
+        items = list(self.files_tree.get_children(""))
+        if not items:
+            return
 
-    def _on_checkbox_changed(self, path: Path, var: ctk.BooleanVar) -> None:
-        if var.get():
-            self._checked_paths.add(path)
-        else:
-            self._checked_paths.discard(path)
+        def sort_key(iid: str) -> object:
+            path = self._path_from_iid(iid)
+            entry = self._entry_by_path.get(path)
+            if column == COL_CHECK:
+                return 0 if path in self._checked_paths else 1
+            if column == COL_NAME:
+                return path.name.lower()
+            if column == COL_SIZE:
+                return entry.size if entry else 0
+            return str(path).lower()
+
+        items.sort(key=sort_key, reverse=reverse)
+        for index, iid in enumerate(items):
+            self.files_tree.move(iid, "", index)
+
+        self._sort_column = column
+        self._sort_reverse = reverse
+        if update_heading:
+            self._update_heading_labels()
+
+    def _on_tree_click(self, event: object) -> str | None:
+        tree = self.files_tree
+        region = tree.identify_region(event.x, event.y)  # type: ignore[attr-defined]
+        if region != "cell":
+            return None
+        column = tree.identify_column(event.x)  # type: ignore[attr-defined]
+        row = tree.identify_row(event.y)  # type: ignore[attr-defined]
+        if not row:
+            return None
+        # #1 = check column
+        if column == "#1":
+            path = self._path_from_iid(row)
+            self._set_checked(path, path not in self._checked_paths)
+            return "break"
+        return None
+
+    def _on_tree_space(self, _event: object) -> str:
+        selection = self.files_tree.selection()
+        if selection:
+            path = self._path_from_iid(selection[0])
+            self._set_checked(path, path not in self._checked_paths)
+        return "break"
+
+    def _on_tree_right_click(self, event: object) -> None:
+        row = self.files_tree.identify_row(event.y)  # type: ignore[attr-defined]
+        if not row:
+            return
+        self.files_tree.selection_set(row)
+        self._show_context_menu(event, self._path_from_iid(row))
 
     def _on_delete_mode_change(self) -> None:
         """Custom — сброс всех выделений.
@@ -569,10 +469,13 @@ class PageResults(ctk.CTkFrame):
         self._sync_visible_checkboxes()
 
     def _sync_visible_checkboxes(self) -> None:
-        for path, var in self._row_vars.items():
-            desired = path in self._checked_paths
-            if bool(var.get()) != desired:
-                var.set(desired)
+        for iid in self.files_tree.get_children(""):
+            path = self._path_from_iid(iid)
+            values = list(self.files_tree.item(iid, "values"))
+            if not values:
+                continue
+            values[0] = CHECK_ON if path in self._checked_paths else CHECK_OFF
+            self.files_tree.item(iid, values=values)
 
     def _show_context_menu(self, event: object, path: Path) -> None:
         menu = Menu(self, tearoff=0)
@@ -597,12 +500,15 @@ class PageResults(ctk.CTkFrame):
             self._checked_paths.add(path)
         else:
             self._checked_paths.discard(path)
-        var = self._row_vars.get(path)
-        if var is not None and bool(var.get()) != value:
-            var.set(value)
+        iid = str(path)
+        if self.files_tree.exists(iid):
+            values = list(self.files_tree.item(iid, "values"))
+            if values:
+                values[0] = CHECK_ON if value else CHECK_OFF
+                self.files_tree.item(iid, values=values)
 
     def _open_folder(self, path: Path) -> None:
-        folder = path.parent if path.exists() else path.parent
+        folder = path.parent
         try:
             if sys.platform.startswith("win"):
                 subprocess.run(["explorer", "/select,", str(path)], check=False)
@@ -642,12 +548,6 @@ class PageResults(ctk.CTkFrame):
 
     def _collect_selected_paths(self) -> list[Path]:
         """Все отмеченные файлы по всем сетам."""
-        # синхронизируем видимые чекбоксы на случай ручного изменения
-        for path, var in self._row_vars.items():
-            if var.get():
-                self._checked_paths.add(path)
-            else:
-                self._checked_paths.discard(path)
         return sorted(self._checked_paths, key=lambda p: str(p).lower())
 
     def _handle_next(self) -> None:

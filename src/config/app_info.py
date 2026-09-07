@@ -59,6 +59,8 @@ HELP_TWO_LISTS = (
 HELP_RESULTS = (
     "Top list shows duplicate sets.\n"
     "Select a set to see files in the table.\n"
+    "Click a column header to sort (click again to reverse).\n"
+    "Click the checkbox column to mark files for deletion.\n"
     "Two-list modes:\n"
     "  Custom — clear all marks, then select manually.\n"
     "  Delete from File List 1/2 — clear all, mark that list.\n"
