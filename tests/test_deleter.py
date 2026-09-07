@@ -79,6 +79,30 @@ def test_remove_empty_folders_walks_all_roots(tmp_path: Path) -> None:
     assert (kept / "stay.txt").exists()
 
 
+def test_remove_empty_folders_reports_progress(tmp_path: Path) -> None:
+    root = tmp_path / "scan_root"
+    (root / "a" / "b").mkdir(parents=True)
+    (root / "c").mkdir(parents=True)
+
+    events: list[DeleteProgress] = []
+
+    def fake_trash(path: str) -> None:
+        Path(path).rmdir()
+
+    with patch("src.core.deleter.send2trash", side_effect=fake_trash):
+        removed, failed = remove_empty_folders(
+            roots=[root],
+            progress_callback=events.append,
+        )
+
+    assert not failed
+    assert len(removed) >= 2
+    assert events
+    assert all(event.phase == "folders" for event in events)
+    assert events[-1].folders_removed == len(removed)
+    assert events[-1].folders_scanned >= len(removed)
+
+
 def test_remove_empty_folders_keeps_folder_with_files(tmp_path: Path) -> None:
     root = tmp_path / "scan_root"
     folder = root / "mixed"

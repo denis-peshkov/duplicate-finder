@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
@@ -17,12 +18,15 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class DeleteProgress:
-    """Прогресс удаления."""
+    """Прогресс удаления файлов или очистки пустых папок."""
 
-    current: int
-    total: int
+    current: int = 0
+    total: int = 0
     current_path: str = ""
     canceled: bool = False
+    phase: str = "files"  # files | folders
+    folders_scanned: int = 0
+    folders_removed: int = 0
 
 
 @dataclass
@@ -55,6 +59,7 @@ def delete_to_recycle_bin(
                         total=total,
                         current_path=str(path),
                         canceled=True,
+                        phase="files",
                     )
                 )
             return DeleteResult(deleted=deleted, failed=failed, canceled=True)
@@ -65,6 +70,7 @@ def delete_to_recycle_bin(
                     current=index,
                     total=total,
                     current_path=str(path),
+                    phase="files",
                 )
             )
 
@@ -91,30 +97,33 @@ def _try_remove_empty_dir(
     folder: Path,
     removed: list[Path],
     failed: list[tuple[Path, str]],
-) -> None:
-    """Удалить каталог, если в нём нет файлов и подпапок."""
+) -> bool:
+    """Удалить каталог, если пуст. Возвращает True, если удалён."""
     try:
         if not folder.is_dir():
-            return
+            return False
         if any(folder.iterdir()):
-            return
+            return False
     except OSError as exc:
         failed.append((folder, str(exc)))
         logger.error("Failed to read folder %s: %s", folder, exc)
-        return
+        return False
 
     try:
         send2trash(str(folder))
         removed.append(folder)
         logger.info("Empty folder moved to Recycle Bin: %s", folder)
+        return True
     except Exception as exc:  # noqa: BLE001
         message = str(exc)
         failed.append((folder, message))
         logger.error("Failed to delete empty folder %s: %s", folder, message)
+        return False
 
 
 def remove_empty_folders(
     roots: list[Path] | None = None,
+    progress_callback: Callable[[DeleteProgress], None] | None = None,
     cancel_check: Callable[[], bool] | None = None,
 ) -> tuple[list[Path], list[tuple[Path, str]]]:
     """
@@ -130,6 +139,38 @@ def remove_empty_folders(
     if not root_list:
         logger.warning("remove_empty_folders: no search roots, skipping")
         return removed, failed
+
+    scanned = 0
+    last_emit_at = 0.0
+
+    def emit(folder: Path, *, force: bool = False) -> None:
+        nonlocal last_emit_at
+        if not progress_callback:
+            return
+        now = time.monotonic()
+        if not force and (now - last_emit_at) < 0.05:
+            return
+        last_emit_at = now
+        progress_callback(
+            DeleteProgress(
+                phase="folders",
+                folders_scanned=scanned,
+                folders_removed=len(removed),
+                current_path=str(folder),
+                current=len(removed),
+                total=0,
+            )
+        )
+
+    if progress_callback:
+        progress_callback(
+            DeleteProgress(
+                phase="folders",
+                folders_scanned=0,
+                folders_removed=0,
+                current_path="",
+            )
+        )
 
     seen_roots: set[Path] = set()
     for root in root_list:
@@ -154,10 +195,24 @@ def remove_empty_folders(
 
         for dirpath, _dirnames, _filenames in walker:
             if cancel_check and cancel_check():
+                emit(Path(dirpath), force=True)
                 return removed, failed
             folder = Path(dirpath)
+            scanned += 1
             if _resolve_path(folder) == root_res:
+                emit(folder)
                 continue
-            _try_remove_empty_dir(folder, removed, failed)
+            was_removed = _try_remove_empty_dir(folder, removed, failed)
+            emit(folder, force=was_removed)
+
+    if progress_callback:
+        progress_callback(
+            DeleteProgress(
+                phase="folders",
+                folders_scanned=scanned,
+                folders_removed=len(removed),
+                current_path="",
+            )
+        )
 
     return removed, failed

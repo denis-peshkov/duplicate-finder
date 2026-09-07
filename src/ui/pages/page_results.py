@@ -694,6 +694,7 @@ class PageResults(ctk.CTkFrame):
             self.winfo_toplevel(),
             total=max(len(selected), 1),
             on_cancel=self._delete_cancel.set,
+            initial_phase="folders" if (clean_empty and not selected) else "files",
         )
         self._delete_progress.update()
 
@@ -724,6 +725,7 @@ class PageResults(ctk.CTkFrame):
                 roots = self._result.search_roots if self._result else []
                 folders_removed, folders_failed = remove_empty_folders(
                     roots=roots,
+                    progress_callback=progress_callback,
                     cancel_check=self._delete_cancel.is_set,
                 )
                 result.folders_removed = folders_removed
