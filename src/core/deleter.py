@@ -80,19 +80,6 @@ def delete_to_recycle_bin(
     return DeleteResult(deleted=deleted, failed=failed, canceled=False)
 
 
-def _folder_contains_no_files(folder: Path) -> bool:
-    """True, если каталог существует и нигде внутри нет файлов."""
-    try:
-        if not folder.is_dir():
-            return False
-        for _root, _dirs, files in os.walk(folder):
-            if files:
-                return False
-        return True
-    except OSError:
-        return False
-
-
 def _resolve_path(path: Path) -> Path:
     try:
         return path.resolve()
@@ -100,34 +87,42 @@ def _resolve_path(path: Path) -> Path:
         return path
 
 
-def _is_strictly_under_roots(folder: Path, roots: list[Path]) -> bool:
-    """Папка строго внутри одного из search roots (сам root не удаляем)."""
-    folder_res = _resolve_path(folder)
-    for root in roots:
-        root_res = _resolve_path(root)
-        if folder_res == root_res:
-            return False
-        try:
-            folder_res.relative_to(root_res)
-            return True
-        except ValueError:
-            continue
-    return False
+def _try_remove_empty_dir(
+    folder: Path,
+    removed: list[Path],
+    failed: list[tuple[Path, str]],
+) -> None:
+    """Удалить каталог, если в нём нет файлов и подпапок."""
+    try:
+        if not folder.is_dir():
+            return
+        if any(folder.iterdir()):
+            return
+    except OSError as exc:
+        failed.append((folder, str(exc)))
+        logger.error("Не удалось прочитать папку %s: %s", folder, exc)
+        return
+
+    try:
+        send2trash(str(folder))
+        removed.append(folder)
+        logger.info("Пустая папка перемещена в корзину: %s", folder)
+    except Exception as exc:  # noqa: BLE001
+        message = str(exc)
+        failed.append((folder, message))
+        logger.error("Не удалось удалить пустую папку %s: %s", folder, message)
 
 
 def remove_empty_folders(
-    deleted_files: list[Path],
     roots: list[Path] | None = None,
     cancel_check: Callable[[], bool] | None = None,
 ) -> tuple[list[Path], list[tuple[Path, str]]]:
     """
-    Удалить пустые папки в иерархии удалённых файлов (target-локации).
+    Быстро обойти все указанные корни поиска и удалить пустые папки.
 
-    Папка считается пустой, если в ней нет ни одного файла
-    (вложенные пустые каталоги удаляются вместе с ней).
-
-    Удаляются только папки строго внутри search roots — сами roots
-    и всё выше них не трогаем.
+    Папка считается пустой, если в ней нет ни файлов, ни подпапок
+    (обход снизу вверх — вложенные пустые удаляются первыми).
+    Сами search roots не удаляются.
     """
     removed: list[Path] = []
     failed: list[tuple[Path, str]] = []
@@ -136,31 +131,33 @@ def remove_empty_folders(
         logger.warning("remove_empty_folders: search roots не заданы, пропуск")
         return removed, failed
 
-    ancestors: set[Path] = set()
-    for path in deleted_files:
-        current = path.parent
-        while current.parent != current:
-            if root_list and not _is_strictly_under_roots(current, root_list):
-                break
-            ancestors.add(current)
-            current = current.parent
-
-    for folder in sorted(ancestors, key=lambda path: len(path.parts), reverse=True):
+    seen_roots: set[Path] = set()
+    for root in root_list:
         if cancel_check and cancel_check():
             break
-        if not folder.exists():
+
+        root_path = Path(root)
+        if not root_path.is_dir():
             continue
-        if root_list and not _is_strictly_under_roots(folder, root_list):
+
+        root_res = _resolve_path(root_path)
+        if root_res in seen_roots:
             continue
-        if not _folder_contains_no_files(folder):
-            continue
+        seen_roots.add(root_res)
+
         try:
-            send2trash(str(folder))
-            removed.append(folder)
-            logger.info("Пустая папка перемещена в корзину: %s", folder)
-        except Exception as exc:  # noqa: BLE001
-            message = str(exc)
-            failed.append((folder, message))
-            logger.error("Не удалось удалить пустую папку %s: %s", folder, message)
+            walker = os.walk(root_res, topdown=False)
+        except OSError as exc:
+            failed.append((root_res, str(exc)))
+            logger.error("Не удалось обойти %s: %s", root_res, exc)
+            continue
+
+        for dirpath, _dirnames, _filenames in walker:
+            if cancel_check and cancel_check():
+                return removed, failed
+            folder = Path(dirpath)
+            if _resolve_path(folder) == root_res:
+                continue
+            _try_remove_empty_dir(folder, removed, failed)
 
     return removed, failed

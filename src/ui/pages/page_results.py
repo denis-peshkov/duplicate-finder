@@ -648,27 +648,42 @@ class PageResults(ctk.CTkFrame):
             return
 
         selected = self._collect_selected_paths()
-        if not selected:
+        clean_empty = self._clean_empty_folders.get()
+        if not selected and not clean_empty:
             messagebox.showinfo(
                 "Duplicate Finder",
-                "Select at least one file to delete, or go Back.",
+                "Select at least one file to delete, enable empty-folder cleanup, or go Back.",
             )
             return
 
-        preview = "\n".join(str(path) for path in selected[:10])
-        extra = (
-            f"\n... and {format_count(len(selected) - 10)} more"
-            if len(selected) > 10
-            else ""
-        )
-        confirmed = messagebox.askyesno(
-            "Confirm deletion",
-            f"Move {format_count(len(selected))} file(s) to Recycle Bin?\n\n{preview}{extra}",
-        )
+        if selected:
+            preview = "\n".join(str(path) for path in selected[:10])
+            extra = (
+                f"\n... and {format_count(len(selected) - 10)} more"
+                if len(selected) > 10
+                else ""
+            )
+            clean_note = (
+                "\n\nEmpty folders under search paths will also be cleaned."
+                if clean_empty
+                else ""
+            )
+            confirmed = messagebox.askyesno(
+                "Confirm deletion",
+                (
+                    f"Move {format_count(len(selected))} file(s) to Recycle Bin?\n\n"
+                    f"{preview}{extra}{clean_note}"
+                ),
+            )
+        else:
+            confirmed = messagebox.askyesno(
+                "Confirm cleanup",
+                "Clean empty folders under all search paths?",
+            )
         if not confirmed:
             return
 
-        self._start_delete(selected, clean_empty=self._clean_empty_folders.get())
+        self._start_delete(selected, clean_empty=clean_empty)
 
     def _start_delete(self, selected: list[Path], *, clean_empty: bool) -> None:
         self._delete_cancel.clear()
@@ -677,7 +692,7 @@ class PageResults(ctk.CTkFrame):
 
         self._delete_progress = DeleteProgressWindow(
             self.winfo_toplevel(),
-            total=len(selected),
+            total=max(len(selected), 1),
             on_cancel=self._delete_cancel.set,
         )
         self._delete_progress.update()
@@ -696,15 +711,18 @@ class PageResults(ctk.CTkFrame):
                 if self._delete_queue.qsize() < 64:
                     self._delete_queue.put(("progress", progress))
 
-            result = delete_to_recycle_bin(
-                selected,
-                progress_callback=progress_callback,
-                cancel_check=self._delete_cancel.is_set,
-            )
-            if clean_empty and result.deleted and not result.canceled:
+            if selected:
+                result = delete_to_recycle_bin(
+                    selected,
+                    progress_callback=progress_callback,
+                    cancel_check=self._delete_cancel.is_set,
+                )
+            else:
+                result = DeleteResult(deleted=[], failed=[], canceled=False)
+
+            if clean_empty and not result.canceled:
                 roots = self._result.search_roots if self._result else []
                 folders_removed, folders_failed = remove_empty_folders(
-                    result.deleted,
                     roots=roots,
                     cancel_check=self._delete_cancel.is_set,
                 )
@@ -777,13 +795,18 @@ class PageResults(ctk.CTkFrame):
                 ),
             )
         else:
-            messagebox.showinfo(
-                "Duplicate Finder",
-                (
+            if result.deleted:
+                message = (
                     f"Moved {format_count(len(result.deleted))} file(s) to Recycle Bin."
                     f"{folders_note}"
-                ),
-            )
+                )
+            elif result.folders_removed:
+                message = (
+                    f"Removed {format_count(len(result.folders_removed))} empty folder(s)."
+                )
+            else:
+                message = f"Nothing was deleted.{folders_note}"
+            messagebox.showinfo("Duplicate Finder", message)
 
         if result.deleted:
             self._remove_deleted_files(set(result.deleted))

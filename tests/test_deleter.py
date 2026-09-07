@@ -52,46 +52,41 @@ def test_delete_can_cancel(tmp_path: Path) -> None:
     assert len(result.deleted) == 2
 
 
-def test_remove_empty_folders_walks_up(tmp_path: Path) -> None:
+def test_remove_empty_folders_walks_all_roots(tmp_path: Path) -> None:
     root = tmp_path / "scan_root"
     nested = root / "a" / "b"
     nested.mkdir(parents=True)
-    target = nested / "file.txt"
-    target.write_text("x", encoding="utf-8")
-    target.unlink()
+    orphan = root / "empty_orphan" / "deep"
+    orphan.mkdir(parents=True)
+    kept = root / "with_file"
+    kept.mkdir()
+    (kept / "stay.txt").write_text("y", encoding="utf-8")
 
     def fake_trash(path: str) -> None:
         Path(path).rmdir()
 
     with patch("src.core.deleter.send2trash", side_effect=fake_trash):
-        removed, failed = remove_empty_folders(
-            [nested / "file.txt"],
-            roots=[root],
-        )
+        removed, failed = remove_empty_folders(roots=[root])
 
     assert not failed
     assert nested in removed
     assert (root / "a") in removed
+    assert orphan in removed
+    assert (root / "empty_orphan") in removed
+    assert kept not in removed
     assert root not in removed
-    assert not nested.exists()
-    assert not (root / "a").exists()
     assert root.exists()
-    assert tmp_path.exists()
+    assert (kept / "stay.txt").exists()
 
 
 def test_remove_empty_folders_keeps_folder_with_files(tmp_path: Path) -> None:
     root = tmp_path / "scan_root"
     folder = root / "mixed"
     folder.mkdir(parents=True)
-    (folder / "gone.txt").write_text("x", encoding="utf-8")
     (folder / "stay.txt").write_text("y", encoding="utf-8")
-    (folder / "gone.txt").unlink()
 
     with patch("src.core.deleter.send2trash") as mocked:
-        removed, failed = remove_empty_folders(
-            [folder / "gone.txt"],
-            roots=[root],
-        )
+        removed, failed = remove_empty_folders(roots=[root])
 
     assert removed == []
     assert failed == []
