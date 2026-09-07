@@ -45,11 +45,15 @@ class DuplicateFinder:
         total_files_scanned: int = 0,
         canceled: bool = False,
     ) -> ScanResult:
+        roots = list(self.config.list1_paths)
+        if self.config.mode == "two_lists":
+            roots.extend(self.config.list2_paths)
         return ScanResult(
             groups=groups or [],
             total_files_scanned=total_files_scanned,
             canceled=canceled,
             search_mode=self.config.mode,
+            search_roots=roots,
         )
 
     def _is_canceled(self) -> bool:

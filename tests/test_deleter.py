@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
 
-from src.core.deleter import DeleteProgress, delete_to_recycle_bin
+from src.core.deleter import DeleteProgress, delete_to_recycle_bin, remove_empty_folders
 
 
 def test_delete_reports_progress(tmp_path: Path) -> None:
@@ -50,3 +50,50 @@ def test_delete_can_cancel(tmp_path: Path) -> None:
 
     assert result.canceled is True
     assert len(result.deleted) == 2
+
+
+def test_remove_empty_folders_walks_up(tmp_path: Path) -> None:
+    root = tmp_path / "scan_root"
+    nested = root / "a" / "b"
+    nested.mkdir(parents=True)
+    target = nested / "file.txt"
+    target.write_text("x", encoding="utf-8")
+    target.unlink()
+
+    def fake_trash(path: str) -> None:
+        Path(path).rmdir()
+
+    with patch("src.core.deleter.send2trash", side_effect=fake_trash):
+        removed, failed = remove_empty_folders(
+            [nested / "file.txt"],
+            roots=[root],
+        )
+
+    assert not failed
+    assert nested in removed
+    assert (root / "a") in removed
+    assert root not in removed
+    assert not nested.exists()
+    assert not (root / "a").exists()
+    assert root.exists()
+    assert tmp_path.exists()
+
+
+def test_remove_empty_folders_keeps_folder_with_files(tmp_path: Path) -> None:
+    root = tmp_path / "scan_root"
+    folder = root / "mixed"
+    folder.mkdir(parents=True)
+    (folder / "gone.txt").write_text("x", encoding="utf-8")
+    (folder / "stay.txt").write_text("y", encoding="utf-8")
+    (folder / "gone.txt").unlink()
+
+    with patch("src.core.deleter.send2trash") as mocked:
+        removed, failed = remove_empty_folders(
+            [folder / "gone.txt"],
+            roots=[root],
+        )
+
+    assert removed == []
+    assert failed == []
+    assert mocked.call_count == 0
+    assert (folder / "stay.txt").exists()

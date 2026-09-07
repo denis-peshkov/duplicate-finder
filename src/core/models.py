@@ -74,6 +74,7 @@ class ScanResult:
     total_files_scanned: int = 0
     canceled: bool = False
     search_mode: SearchMode = "single_list"
+    search_roots: list[Path] = field(default_factory=list)
 
     @property
     def duplicate_file_count(self) -> int:

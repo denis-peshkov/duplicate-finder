@@ -16,7 +16,7 @@ from typing import Callable, Optional
 import customtkinter as ctk
 
 from src.config.app_info import HELP_RESULTS
-from src.core.deleter import DeleteProgress, DeleteResult, delete_to_recycle_bin
+from src.core.deleter import DeleteProgress, DeleteResult, delete_to_recycle_bin, remove_empty_folders
 from src.core.models import DuplicateGroup, FileEntry, ScanResult
 from src.ui.about_window import show_about
 from src.ui.delete_progress_window import DeleteProgressWindow
@@ -68,6 +68,7 @@ class PageResults(ctk.CTkFrame):
         self._file_rows: list[ctk.CTkFrame] = []
         self._table_font = ctk.CTkFont(size=FILE_FONT_SIZE)
         self._delete_mode = ctk.StringVar(value="custom")
+        self._clean_empty_folders = ctk.BooleanVar(value=False)
         self._delete_queue: queue.Queue = queue.Queue()
         self._delete_thread: threading.Thread | None = None
         self._delete_cancel = threading.Event()
@@ -192,7 +193,13 @@ class PageResults(ctk.CTkFrame):
             justify="left",
             wraplength=900,
         )
-        self.hint_label.pack(fill="x", padx=10, pady=(4, 6))
+        self.hint_label.pack(fill="x", padx=10, pady=(4, 4))
+
+        ctk.CTkCheckBox(
+            content,
+            text="Чистить пустые папки в target локации",
+            variable=self._clean_empty_folders,
+        ).pack(anchor="w", padx=10, pady=(0, 6))
 
         # По умолчанию скрыт — показывается только в two_lists
         self.delete_mode_frame.pack_forget()
@@ -460,9 +467,9 @@ class PageResults(ctk.CTkFrame):
         if not confirmed:
             return
 
-        self._start_delete(selected)
+        self._start_delete(selected, clean_empty=self._clean_empty_folders.get())
 
-    def _start_delete(self, selected: list[Path]) -> None:
+    def _start_delete(self, selected: list[Path], *, clean_empty: bool) -> None:
         self._delete_cancel.clear()
         self.next_btn.configure(state="disabled")
         self.back_btn.configure(state="disabled")
@@ -476,13 +483,13 @@ class PageResults(ctk.CTkFrame):
 
         self._delete_thread = threading.Thread(
             target=self._delete_worker,
-            args=(selected,),
+            args=(selected, clean_empty),
             daemon=True,
             name="duplicate-delete",
         )
         self._delete_thread.start()
 
-    def _delete_worker(self, selected: list[Path]) -> None:
+    def _delete_worker(self, selected: list[Path], clean_empty: bool) -> None:
         try:
             def progress_callback(progress: DeleteProgress) -> None:
                 if self._delete_queue.qsize() < 64:
@@ -493,6 +500,15 @@ class PageResults(ctk.CTkFrame):
                 progress_callback=progress_callback,
                 cancel_check=self._delete_cancel.is_set,
             )
+            if clean_empty and result.deleted and not result.canceled:
+                roots = self._result.search_roots if self._result else []
+                folders_removed, folders_failed = remove_empty_folders(
+                    result.deleted,
+                    roots=roots,
+                    cancel_check=self._delete_cancel.is_set,
+                )
+                result.folders_removed = folders_removed
+                result.folders_failed = folders_failed
             self._delete_queue.put(("done", result))
         except Exception as exc:
             logger.exception("Delete failed")
@@ -526,6 +542,16 @@ class PageResults(ctk.CTkFrame):
     def _on_delete_done(self, result: DeleteResult) -> None:
         self._close_delete_progress()
 
+        folders_note = ""
+        if result.folders_removed or result.folders_failed:
+            folders_note = (
+                f"\nEmpty folders removed: {format_count(len(result.folders_removed))}"
+            )
+            if result.folders_failed:
+                folders_note += (
+                    f"\nEmpty folders failed: {format_count(len(result.folders_failed))}"
+                )
+
         if result.canceled:
             messagebox.showinfo(
                 "Duplicate Finder",
@@ -533,23 +559,29 @@ class PageResults(ctk.CTkFrame):
                     f"Deletion canceled.\n"
                     f"Moved: {format_count(len(result.deleted))}\n"
                     f"Remaining were kept."
+                    f"{folders_note}"
                 ),
             )
-        elif result.failed:
+        elif result.failed or result.folders_failed:
+            failed_items = list(result.failed) + list(result.folders_failed)
             failed_text = "\n".join(
-                f"{path}: {error}" for path, error in result.failed[:5]
+                f"{path}: {error}" for path, error in failed_items[:5]
             )
             messagebox.showwarning(
                 "Partial deletion",
                 (
                     f"Deleted: {format_count(len(result.deleted))}\n"
-                    f"Failed: {format_count(len(result.failed))}\n\n{failed_text}"
+                    f"Failed: {format_count(len(result.failed))}"
+                    f"{folders_note}\n\n{failed_text}"
                 ),
             )
         else:
             messagebox.showinfo(
                 "Duplicate Finder",
-                f"Moved {format_count(len(result.deleted))} file(s) to Recycle Bin.",
+                (
+                    f"Moved {format_count(len(result.deleted))} file(s) to Recycle Bin."
+                    f"{folders_note}"
+                ),
             )
 
         if result.deleted:

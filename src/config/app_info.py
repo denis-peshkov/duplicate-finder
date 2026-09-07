@@ -63,5 +63,6 @@ HELP_RESULTS = (
     "  Custom — clear all marks, then select manually.\n"
     "  Delete from File List 1/2 — clear all, mark that list.\n"
     "Press Next to move selected files to Recycle Bin.\n"
+    "Optional: clean empty folders in target location after delete.\n"
     "Right-click a file for Rename / Open folder."
 )
