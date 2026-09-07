@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 FILE_FONT_SIZE = 14
 CHECK_COL_WIDTH = 28
+ROW_HEIGHT = 28
 NAME_COL_DEFAULT = 220
 SIZE_COL_DEFAULT = 110
 NAME_COL_MIN = 80
@@ -462,8 +463,13 @@ class PageResults(ctk.CTkFrame):
         path_width = self._path_col_width()
 
         for entry in group.files:
-            row = ctk.CTkFrame(self.table_scroll, fg_color="transparent")
-            row.pack(fill="x", pady=2)
+            row = ctk.CTkFrame(
+                self.table_scroll,
+                fg_color="transparent",
+                height=ROW_HEIGHT,
+            )
+            row.pack(fill="x", pady=1)
+            row.pack_propagate(False)
             self._file_rows.append(row)
 
             var = ctk.BooleanVar(value=entry.path in self._checked_paths)
@@ -474,7 +480,7 @@ class PageResults(ctk.CTkFrame):
                 lambda *_args, p=entry.path, v=var: self._on_checkbox_changed(p, v),
             )
 
-            ctk.CTkCheckBox(row, text="", variable=var, width=CHECK_COL_WIDTH).pack(
+            ctk.CTkCheckBox(row, text="", variable=var, width=CHECK_COL_WIDTH, height=ROW_HEIGHT).pack(
                 side="left"
             )
 
@@ -482,6 +488,7 @@ class PageResults(ctk.CTkFrame):
             name_frame = ctk.CTkFrame(
                 row,
                 width=self._name_col_width,
+                height=ROW_HEIGHT,
                 fg_color="transparent",
             )
             name_frame.pack(side="left", fill="y")
@@ -498,6 +505,7 @@ class PageResults(ctk.CTkFrame):
             size_frame = ctk.CTkFrame(
                 row,
                 width=self._size_col_width,
+                height=ROW_HEIGHT,
                 fg_color="transparent",
             )
             size_frame.pack(side="left", fill="y")
@@ -515,6 +523,7 @@ class PageResults(ctk.CTkFrame):
             path_frame = ctk.CTkFrame(
                 row,
                 width=path_width,
+                height=ROW_HEIGHT,
                 fg_color="transparent",
             )
             path_frame.pack(side="left", fill="y")
