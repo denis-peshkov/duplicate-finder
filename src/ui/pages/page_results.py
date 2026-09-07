@@ -26,6 +26,12 @@ from src.utils.formatters import format_count
 logger = logging.getLogger(__name__)
 
 FILE_FONT_SIZE = 14
+CHECK_COL_WIDTH = 28
+NAME_COL_DEFAULT = 220
+SIZE_COL_DEFAULT = 110
+NAME_COL_MIN = 80
+SIZE_COL_MIN = 70
+PATH_COL_MIN = 120
 
 
 def _format_size(num_bytes: int) -> str:
@@ -38,6 +44,19 @@ def _format_size(num_bytes: int) -> str:
         if size < 1024 or unit == units[-1]:
             return f"{size:.1f} {unit}"
     return f"{num_bytes} bytes"
+
+
+def _ellipsize(text: str, width_px: int, font_size: int = FILE_FONT_SIZE) -> str:
+    """Обрезать текст под ширину колонки с многоточием."""
+    if width_px <= 0:
+        return ""
+    # Приблизительно: ~0.55em на символ для Segoe UI
+    max_chars = max(4, int(width_px / max(font_size * 0.55, 1)))
+    if len(text) <= max_chars:
+        return text
+    if max_chars <= 1:
+        return "…"
+    return text[: max_chars - 1] + "…"
 
 
 def _group_title(group: DuplicateGroup) -> str:
@@ -67,6 +86,18 @@ class PageResults(ctk.CTkFrame):
         self._checked_paths: set[Path] = set()
         self._file_rows: list[ctk.CTkFrame] = []
         self._table_font = ctk.CTkFont(size=FILE_FONT_SIZE)
+        self._name_col_width = NAME_COL_DEFAULT
+        self._size_col_width = SIZE_COL_DEFAULT
+        self._resize_col: str | None = None
+        self._resize_start_x = 0
+        self._resize_start_width = 0
+        self._applying_widths = False
+        self._width_apply_after: str | None = None
+        self._header_name_label: ctk.CTkLabel | None = None
+        self._header_size_label: ctk.CTkLabel | None = None
+        self._row_name_cells: list[tuple[ctk.CTkFrame, ctk.CTkLabel, str]] = []
+        self._row_size_cells: list[tuple[ctk.CTkFrame, ctk.CTkLabel]] = []
+        self._row_path_cells: list[tuple[ctk.CTkFrame, ctk.CTkLabel, str]] = []
         self._delete_mode = ctk.StringVar(value="custom")
         self._clean_empty_folders = ctk.BooleanVar(value=False)
         self._delete_queue: queue.Queue = queue.Queue()
@@ -207,23 +238,161 @@ class PageResults(ctk.CTkFrame):
         table_frame = ctk.CTkFrame(content)
         table_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 
-        header = ctk.CTkFrame(table_frame, fg_color="transparent", height=28)
-        header.pack(fill="x", padx=4, pady=(6, 0))
-        header.pack_propagate(False)
-
-        ctk.CTkLabel(header, text="", width=28).pack(side="left")
-        ctk.CTkLabel(
-            header, text="Filename", width=180, anchor="w", font=self._table_font
-        ).pack(side="left")
-        ctk.CTkLabel(
-            header, text="File Size", width=110, anchor="w", font=self._table_font
-        ).pack(side="left")
-        ctk.CTkLabel(
-            header, text="Original Path", anchor="w", font=self._table_font
-        ).pack(side="left", fill="x", expand=True)
+        self._table_header = ctk.CTkFrame(table_frame, fg_color="transparent", height=28)
+        self._table_header.pack(fill="x", padx=4, pady=(6, 0))
+        self._table_header.pack_propagate(False)
+        self._build_table_header()
 
         self.table_scroll = ctk.CTkScrollableFrame(table_frame, fg_color="transparent")
         self.table_scroll.pack(fill="both", expand=True, padx=4, pady=(0, 6))
+        self.table_scroll.bind("<Configure>", self._schedule_column_widths)
+
+    def _build_table_header(self) -> None:
+        """Заголовок таблицы с ручками ресайза колонок."""
+        for child in self._table_header.winfo_children():
+            child.destroy()
+
+        ctk.CTkLabel(self._table_header, text="", width=CHECK_COL_WIDTH).pack(side="left")
+
+        name_wrap = ctk.CTkFrame(
+            self._table_header,
+            width=self._name_col_width,
+            fg_color="transparent",
+        )
+        name_wrap.pack(side="left", fill="y")
+        name_wrap.pack_propagate(False)
+        self._header_name_wrap = name_wrap
+        self._header_name_label = ctk.CTkLabel(
+            name_wrap,
+            text="Filename",
+            anchor="w",
+            font=self._table_font,
+        )
+        self._header_name_label.pack(side="left", fill="both", expand=True)
+
+        self._make_resize_grip("name").pack(side="left", fill="y", padx=(0, 2))
+
+        size_wrap = ctk.CTkFrame(
+            self._table_header,
+            width=self._size_col_width,
+            fg_color="transparent",
+        )
+        size_wrap.pack(side="left", fill="y")
+        size_wrap.pack_propagate(False)
+        self._header_size_wrap = size_wrap
+        self._header_size_label = ctk.CTkLabel(
+            size_wrap,
+            text="File Size",
+            anchor="w",
+            font=self._table_font,
+        )
+        self._header_size_label.pack(side="left", fill="both", expand=True)
+
+        self._make_resize_grip("size").pack(side="left", fill="y", padx=(0, 2))
+
+        path_wrap = ctk.CTkFrame(self._table_header, fg_color="transparent")
+        path_wrap.pack(side="left", fill="both", expand=True)
+        self._header_path_wrap = path_wrap
+        ctk.CTkLabel(
+            path_wrap,
+            text="Original Path",
+            anchor="w",
+            font=self._table_font,
+        ).pack(side="left", fill="both", expand=True)
+
+    def _make_resize_grip(self, column: str) -> ctk.CTkFrame:
+        grip = ctk.CTkFrame(
+            self._table_header,
+            width=4,
+            fg_color=("gray70", "gray40"),
+            cursor="size_we",
+        )
+        grip.bind("<ButtonPress-1>", lambda e, c=column: self._start_col_resize(e, c))
+        grip.bind("<B1-Motion>", self._on_col_resize)
+        grip.bind("<ButtonRelease-1>", self._end_col_resize)
+        return grip
+
+    def _start_col_resize(self, event: object, column: str) -> None:
+        self._resize_col = column
+        self._resize_start_x = int(getattr(event, "x_root", 0))
+        self._resize_start_width = (
+            self._name_col_width if column == "name" else self._size_col_width
+        )
+
+    def _on_col_resize(self, event: object) -> None:
+        if not self._resize_col:
+            return
+        delta = int(getattr(event, "x_root", 0)) - self._resize_start_x
+        if self._resize_col == "name":
+            self._name_col_width = max(NAME_COL_MIN, self._resize_start_width + delta)
+        else:
+            self._size_col_width = max(SIZE_COL_MIN, self._resize_start_width + delta)
+        self._apply_column_widths()
+
+    def _end_col_resize(self, _event: object = None) -> None:
+        self._resize_col = None
+
+    def _schedule_column_widths(self, _event: object = None) -> None:
+        """Отложенное обновление — без рекурсии от Configure."""
+        if self._applying_widths or self._resize_col:
+            return
+        if self._width_apply_after is not None:
+            try:
+                self.after_cancel(self._width_apply_after)
+            except Exception:  # noqa: BLE001
+                pass
+        self._width_apply_after = self.after(16, self._apply_column_widths)
+
+    def _path_col_width(self) -> int:
+        try:
+            total = int(self.table_scroll.winfo_width())
+        except Exception:  # noqa: BLE001
+            total = 800
+        if total <= 1:
+            total = 800
+        used = CHECK_COL_WIDTH + self._name_col_width + self._size_col_width + 16
+        return max(PATH_COL_MIN, total - used)
+
+    def _alive(self, widget: object) -> bool:
+        try:
+            return bool(widget.winfo_exists())  # type: ignore[attr-defined]
+        except Exception:  # noqa: BLE001
+            return False
+
+    def _apply_column_widths(self) -> None:
+        """Обновить ширины ячеек и переобрезать текст под новый размер."""
+        self._width_apply_after = None
+        if self._applying_widths:
+            return
+        self._applying_widths = True
+        try:
+            path_width = self._path_col_width()
+
+            if hasattr(self, "_header_name_wrap") and self._alive(self._header_name_wrap):
+                self._header_name_wrap.configure(width=self._name_col_width)
+            if hasattr(self, "_header_size_wrap") and self._alive(self._header_size_wrap):
+                self._header_size_wrap.configure(width=self._size_col_width)
+
+            for frame, label, full in list(self._row_name_cells):
+                if not self._alive(frame) or not self._alive(label):
+                    continue
+                frame.configure(width=self._name_col_width)
+                label.configure(text=_ellipsize(full, self._name_col_width))
+
+            for frame, _label in list(self._row_size_cells):
+                if not self._alive(frame):
+                    continue
+                frame.configure(width=self._size_col_width)
+
+            for frame, label, full in list(self._row_path_cells):
+                if not self._alive(frame) or not self._alive(label):
+                    continue
+                frame.configure(width=path_width)
+                label.configure(text=_ellipsize(full, path_width))
+        except Exception:  # noqa: BLE001
+            logger.exception("Ошибка при обновлении ширины колонок")
+        finally:
+            self._applying_widths = False
 
     def show_results(self, result: ScanResult) -> None:
         """Отобразить результаты сканирования."""
@@ -282,11 +451,15 @@ class PageResults(ctk.CTkFrame):
         for widget in self.table_scroll.winfo_children():
             widget.destroy()
         self._file_rows.clear()
+        self._row_name_cells.clear()
+        self._row_size_cells.clear()
+        self._row_path_cells.clear()
 
     def _render_table(self, group: DuplicateGroup) -> None:
         self._clear_table()
         self._row_vars.clear()
         self._entry_by_path.clear()
+        path_width = self._path_col_width()
 
         for entry in group.files:
             row = ctk.CTkFrame(self.table_scroll, fg_color="transparent")
@@ -301,37 +474,65 @@ class PageResults(ctk.CTkFrame):
                 lambda *_args, p=entry.path, v=var: self._on_checkbox_changed(p, v),
             )
 
-            ctk.CTkCheckBox(row, text="", variable=var, width=28).pack(side="left")
+            ctk.CTkCheckBox(row, text="", variable=var, width=CHECK_COL_WIDTH).pack(
+                side="left"
+            )
 
+            name_full = entry.path.name
+            name_frame = ctk.CTkFrame(
+                row,
+                width=self._name_col_width,
+                fg_color="transparent",
+            )
+            name_frame.pack(side="left", fill="y")
+            name_frame.pack_propagate(False)
             name_label = ctk.CTkLabel(
-                row,
-                text=entry.path.name,
-                width=180,
+                name_frame,
+                text=_ellipsize(name_full, self._name_col_width),
                 anchor="w",
                 font=self._table_font,
             )
-            name_label.pack(side="left")
+            name_label.pack(side="left", fill="both", expand=True)
+            self._row_name_cells.append((name_frame, name_label, name_full))
 
+            size_frame = ctk.CTkFrame(
+                row,
+                width=self._size_col_width,
+                fg_color="transparent",
+            )
+            size_frame.pack(side="left", fill="y")
+            size_frame.pack_propagate(False)
             size_label = ctk.CTkLabel(
-                row,
+                size_frame,
                 text=_format_size(entry.size),
-                width=110,
                 anchor="w",
                 font=self._table_font,
             )
-            size_label.pack(side="left")
+            size_label.pack(side="left", fill="both", expand=True)
+            self._row_size_cells.append((size_frame, size_label))
 
-            path_label = ctk.CTkLabel(
+            path_full = str(entry.path)
+            path_frame = ctk.CTkFrame(
                 row,
-                text=str(entry.path),
+                width=path_width,
+                fg_color="transparent",
+            )
+            path_frame.pack(side="left", fill="y")
+            path_frame.pack_propagate(False)
+            path_label = ctk.CTkLabel(
+                path_frame,
+                text=_ellipsize(path_full, path_width),
                 anchor="w",
-                justify="left",
                 font=self._table_font,
             )
-            path_label.pack(side="left", fill="x", expand=True)
+            path_label.pack(side="left", fill="both", expand=True)
+            self._row_path_cells.append((path_frame, path_label, path_full))
 
             for widget in (row, name_label, size_label, path_label):
-                widget.bind("<Button-3>", lambda e, p=entry.path: self._show_context_menu(e, p))
+                widget.bind(
+                    "<Button-3>",
+                    lambda e, p=entry.path: self._show_context_menu(e, p),
+                )
 
     def _on_checkbox_changed(self, path: Path, var: ctk.BooleanVar) -> None:
         if var.get():
