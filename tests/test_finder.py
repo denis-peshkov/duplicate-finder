@@ -78,6 +78,30 @@ def test_exact_two_lists(tmp_path: Path) -> None:
     assert sources == {"list1", "list2"}
 
 
+def test_exact_two_lists_skips_unique_sizes(tmp_path: Path) -> None:
+    """Файлы уникального размера между списками не должны давать ложных групп."""
+    list1 = tmp_path / "list1"
+    list2 = tmp_path / "list2"
+    _write(list1 / "big.bin", b"x" * 100)
+    _write(list2 / "small.bin", b"y" * 10)
+    _write(list1 / "same.bin", b"z" * 20)
+    _write(list2 / "same2.bin", b"z" * 20)
+
+    config = SearchConfig(
+        mode="two_lists",
+        list1_paths=[list1],
+        list2_paths=[list2],
+        include_subfolders1=True,
+        include_subfolders2=True,
+        match_type="exact",
+        images_only=False,
+    )
+    result = DuplicateFinder(config).scan()
+    assert len(result.groups) == 1
+    names = {entry.path.name for entry in result.groups[0].files}
+    assert names == {"same.bin", "same2.bin"}
+
+
 def test_filename_two_lists(tmp_path: Path) -> None:
     list1 = tmp_path / "list1"
     list2 = tmp_path / "list2"

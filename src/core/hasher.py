@@ -11,11 +11,12 @@ from typing import Callable
 
 logger = logging.getLogger(__name__)
 
-PARTIAL_CHUNK_SIZE = 64 * 1024
+CHUNK = 8
+PARTIAL_CHUNK_SIZE = CHUNK * 1024
 
 
 def partial_hash(path: Path, cancel_check: Callable[[], bool] | None = None) -> str:
-    """Быстрый partial hash: первые и последние 64 KB."""
+    f"""Быстрый partial hash: первые и последние {CHUNK} KB."""
     try:
         digest = hashlib.blake2b(digest_size=16)
         size = path.stat().st_size
