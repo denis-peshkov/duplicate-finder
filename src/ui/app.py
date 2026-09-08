@@ -41,7 +41,7 @@ class DuplicateFinderApp(ctk.CTk):
 
         self.title(APP_NAME)
         self.geometry(f"{self.settings.window_width}x{self.settings.window_height}")
-        self.minsize(900, 640)
+        self.minsize(900, 800)
 
         self.container = ctk.CTkFrame(self)
         self.container.pack(fill="both", expand=True)
