@@ -25,6 +25,7 @@ class SearchConfig:
     include_subfolders2: bool
     match_type: MatchType
     images_only: bool
+    exclude_masks: list[str] = field(default_factory=list)
 
 
 @dataclass

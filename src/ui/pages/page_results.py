@@ -16,6 +16,7 @@ from typing import Callable, Optional
 import customtkinter as ctk
 
 from src.config.app_info import HELP_RESULTS
+from src.config.settings import Settings
 from src.core.deleter import DeleteProgress, DeleteResult, delete_to_recycle_bin, remove_empty_folders
 from src.core.models import DuplicateGroup, FileEntry, ScanResult
 from src.ui.about_window import show_about
@@ -60,10 +61,12 @@ class PageResults(ctk.CTkFrame):
     def __init__(
         self,
         parent: ctk.CTkFrame,
+        settings: Settings,
         on_back: Optional[Callable[[], None]] = None,
         on_cancel: Optional[Callable[[], None]] = None,
     ):
         super().__init__(parent, fg_color="transparent")
+        self.settings = settings
         self.on_back = on_back
         self.on_cancel = on_cancel
         self._result: ScanResult | None = None
@@ -73,7 +76,7 @@ class PageResults(ctk.CTkFrame):
         self._sort_column: str | None = None
         self._sort_reverse = False
         self._delete_mode = ctk.StringVar(value="custom")
-        self._clean_empty_folders = ctk.BooleanVar(value=True)
+        self._clean_empty_folders = ctk.BooleanVar(value=bool(settings.clean_empty_folders))
         self._delete_queue: queue.Queue = queue.Queue()
         self._delete_thread: threading.Thread | None = None
         self._delete_cancel = threading.Event()
@@ -205,6 +208,7 @@ class PageResults(ctk.CTkFrame):
             content,
             text="Clean empty folders in target location",
             variable=self._clean_empty_folders,
+            command=self._on_clean_empty_changed,
         ).pack(anchor="w", padx=10, pady=(0, 6))
 
         # По умолчанию скрыт — показывается только в two_lists
@@ -299,8 +303,16 @@ class PageResults(ctk.CTkFrame):
             background=[("active", "#3a3a3a")],
         )
 
+    def save_to_settings(self) -> None:
+        """Сохранить состояние чекбокса очистки пустых папок."""
+        self.settings.clean_empty_folders = bool(self._clean_empty_folders.get())
+
+    def _on_clean_empty_changed(self) -> None:
+        self.save_to_settings()
+
     def show_results(self, result: ScanResult) -> None:
         """Отобразить результаты сканирования."""
+        self._clean_empty_folders.set(bool(self.settings.clean_empty_folders))
         self._result = result
         self._selected_group_index = -1
         self._entry_by_path.clear()

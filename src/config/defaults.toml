@@ -12,3 +12,5 @@ include_subfolders2 = true
 
 list1_paths = []
 list2_paths = []
+exclude_masks = []
+clean_empty_folders = true

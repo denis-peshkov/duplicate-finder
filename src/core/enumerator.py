@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 import logging
 import os
 from pathlib import Path
@@ -47,6 +48,23 @@ def _is_image(path: Path) -> bool:
     return path.suffix.lower() in IMAGE_EXTENSIONS
 
 
+def matches_exclude_mask(path: Path, masks: Iterable[str]) -> bool:
+    """Проверка пути/имени файла по exclude-маскам (fnmatch)."""
+    name = path.name
+    full = str(path)
+    full_fwd = full.replace("\\", "/")
+    for raw in masks:
+        mask = raw.strip()
+        if not mask:
+            continue
+        mask_fwd = mask.replace("\\", "/")
+        if fnmatch.fnmatch(name, mask) or fnmatch.fnmatch(full, mask):
+            return True
+        if fnmatch.fnmatch(full_fwd, mask_fwd) or fnmatch.fnmatch(name, mask_fwd):
+            return True
+    return False
+
+
 def enumerate_paths(
     raw_items: Iterable[str],
     include_subfolders: bool,
@@ -54,9 +72,11 @@ def enumerate_paths(
     source: ListSource,
     on_file: Callable[[FileEntry], None] | None = None,
     cancel_check: Callable[[], bool] | None = None,
+    exclude_masks: Iterable[str] | None = None,
 ) -> list[FileEntry]:
     """Собрать файлы из списка путей."""
     entries: list[FileEntry] = []
+    masks = [mask for mask in (exclude_masks or []) if mask and mask.strip()]
 
     for raw_item in raw_items:
         if cancel_check and cancel_check():
@@ -70,6 +90,8 @@ def enumerate_paths(
         try:
             if path.is_file():
                 if images_only and not _is_image(path):
+                    continue
+                if matches_exclude_mask(path, masks):
                     continue
                 entry = _make_entry(path, source)
                 entries.append(entry)
@@ -85,6 +107,7 @@ def enumerate_paths(
                         entries,
                         on_file,
                         cancel_check,
+                        masks,
                     )
                 else:
                     for child in path.iterdir():
@@ -92,6 +115,8 @@ def enumerate_paths(
                             break
                         if child.is_file():
                             if images_only and not _is_image(child):
+                                continue
+                            if matches_exclude_mask(child, masks):
                                 continue
                             entry = _make_entry(child, source)
                             entries.append(entry)
@@ -111,6 +136,7 @@ def _walk_directory(
     entries: list[FileEntry],
     on_file: Callable[[FileEntry], None] | None,
     cancel_check: Callable[[], bool] | None,
+    exclude_masks: list[str],
 ) -> None:
     if include_subfolders:
         iterator = directory.rglob("*")
@@ -123,6 +149,8 @@ def _walk_directory(
         if not item.is_file():
             continue
         if images_only and not _is_image(item):
+            continue
+        if matches_exclude_mask(item, exclude_masks):
             continue
         try:
             entry = _make_entry(item, source)

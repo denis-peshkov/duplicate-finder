@@ -34,6 +34,8 @@ class Settings:
 
     list1_paths: list[str] = field(default_factory=list)
     list2_paths: list[str] = field(default_factory=list)
+    exclude_masks: list[str] = field(default_factory=list)
+    clean_empty_folders: bool = True
 
 
 def load_settings(config_path: Optional[Path] = None) -> Settings:
