@@ -48,6 +48,7 @@ HELP_SEARCH = (
     "Two lists: compare files between two sets.\n"
     "Exact duplicate: compare file content by hash.\n"
     "Same filename: compare file names only.\n"
+    "Include masks: if set, only matching files are scanned (e.g. *.jpg, *.png).\n"
     "Exclude masks: skip matching files (e.g. *.tmp, Thumbs.db, */.git/*).\n"
     "Deleted files are moved to the Recycle Bin."
 )

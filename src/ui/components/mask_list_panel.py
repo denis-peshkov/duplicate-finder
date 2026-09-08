@@ -1,5 +1,5 @@
 """
-Панель списка масок исключения (например *.tmp, Thumbs.db).
+Панель списка масок (include / exclude), например *.tmp, Thumbs.db.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ import customtkinter as ctk
 
 
 class MaskListPanel(ctk.CTkFrame):
-    """Список exclude-масок с Add / Remove."""
+    """Список масок с Add / Remove."""
 
     def __init__(
         self,
@@ -31,7 +31,7 @@ class MaskListPanel(ctk.CTkFrame):
 
         self.mask_entry = ctk.CTkEntry(
             entry_row,
-            placeholder_text="e.g. *.tmp, Thumbs.db, */.git/*",
+            placeholder_text="e.g. *.jpg, *.tmp, */.git/*",
         )
         self.mask_entry.pack(side="left", fill="x", expand=True)
         self.mask_entry.bind("<Return>", lambda _e: self._add_mask())

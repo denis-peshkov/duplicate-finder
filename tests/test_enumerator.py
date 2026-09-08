@@ -83,6 +83,45 @@ def test_enumerate_exclude_masks(tmp_path: Path) -> None:
     assert names == {"keep.txt"}
 
 
+def test_enumerate_include_masks(tmp_path: Path) -> None:
+    root = tmp_path / "root"
+    root.mkdir()
+    (root / "a.txt").write_text("a", encoding="utf-8")
+    (root / "b.jpg").write_text("b", encoding="utf-8")
+    (root / "c.png").write_text("c", encoding="utf-8")
+
+    items = [format_list_item(root, True)]
+    entries = enumerate_paths(
+        items,
+        include_subfolders=True,
+        images_only=False,
+        source="list1",
+        include_masks=["*.jpg", "*.png"],
+    )
+    names = {entry.path.name for entry in entries}
+    assert names == {"b.jpg", "c.png"}
+
+
+def test_enumerate_include_then_exclude(tmp_path: Path) -> None:
+    root = tmp_path / "root"
+    root.mkdir()
+    (root / "keep.jpg").write_text("a", encoding="utf-8")
+    (root / "drop.tmp.jpg").write_text("b", encoding="utf-8")
+    (root / "other.txt").write_text("c", encoding="utf-8")
+
+    items = [format_list_item(root, True)]
+    entries = enumerate_paths(
+        items,
+        include_subfolders=True,
+        images_only=False,
+        source="list1",
+        include_masks=["*.jpg"],
+        exclude_masks=["*.tmp.jpg"],
+    )
+    names = {entry.path.name for entry in entries}
+    assert names == {"keep.jpg"}
+
+
 def test_matches_exclude_mask_path_pattern(tmp_path: Path) -> None:
     from src.core.enumerator import matches_exclude_mask
 

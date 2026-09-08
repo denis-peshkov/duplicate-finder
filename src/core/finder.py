@@ -112,6 +112,7 @@ class DuplicateFinder:
             on_file=on_file,
             cancel_check=self.cancel_check,
             exclude_masks=self.config.exclude_masks,
+            include_masks=self.config.include_masks,
         )
         self._emit(
             force=True,
