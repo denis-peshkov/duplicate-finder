@@ -1,5 +1,7 @@
 [![License](https://img.shields.io/github/license/denis-peshkov/duplicate-finder)](LICENSE)
 [![GitHub Release Date](https://img.shields.io/github/release-date/denis-peshkov/duplicate-finder?label=released)](https://github.com/denis-peshkov/duplicate-finder/releases)
+[![Chocolatey](https://img.shields.io/chocolatey/v/duplicate-finder)](https://community.chocolatey.org/packages/duplicate-finder)
+[![Chocolatey](https://img.shields.io/chocolatey/dt/duplicate-finder)](https://community.chocolatey.org/packages/duplicate-finder)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=duplicate-finder&metric=coverage&token=2e1bc340b26c62bd30e0b6a4b6bb8985e01cf33d)](https://sonarcloud.io/summary/new_code?id=duplicate-finder)
 [![issues](https://img.shields.io/github/issues/denis-peshkov/duplicate-finder)](https://github.com/denis-peshkov/duplicate-finder/issues)
 [![CI](https://github.com/denis-peshkov/duplicate-finder/actions/workflows/ci.yml/badge.svg)](https://github.com/denis-peshkov/duplicate-finder/actions/workflows/ci.yml)
@@ -113,10 +115,10 @@ pyinstaller duplicate_finder.spec
 
 | Branch | SemVer (example) | Git tags | GitHub Release | Chocolatey | Homebrew |
 |--------|------------------|----------|----------------|------------|----------|
-| `master` | `0.1.5` (stable) | `v0.1.5`, `v0.1`, `v0` | **Release** (binaries + source) | push (stable) | core PR / bump |
-| `release/*`, `hotfix/*` | `0.2.0-preview.3` | — | — | push (prerelease) | preview tap (`homebrew-preview-tap`) |
+| `master` | `1.0.15` (stable) | `v1.0.15`, `v1.0`, `v1` | **Release** (binaries + source) | push after Release | core PR / bump |
+| `release/*`, `hotfix/*` | `1.0.15-preview.3` | — | — | push (prerelease) | preview tap (`homebrew-preview-tap`) |
 
-Preview branches publish Chocolatey and the Homebrew preview tap (no git tags). **Git tags** and **GitHub Release** run on **`master` only**. Details: [docs/ci-cd.md](docs/ci-cd.md).
+Preview branches publish Chocolatey and the Homebrew preview tap (no git tags). **Git tags** and **GitHub Release** run on **`master` only**; on `master`, Chocolatey waits for that Release so `VERIFICATION.txt` URLs resolve. Details: [docs/ci-cd.md](docs/ci-cd.md).
 
 On release binary builds, CI substitutes `version` in `pyproject.toml` and `APP_VERSION` in `src/config/app_info.py` before PyInstaller.
 

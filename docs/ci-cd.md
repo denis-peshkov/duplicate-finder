@@ -35,9 +35,11 @@ flowchart TD
   V --> TEST
   TEST --> matrix
   matrix --> PT
-  matrix --> CHR
   TEST --> HBT
   PT --> REL
+  matrix --> REL
+  REL --> CHR
+  matrix --> CHR
   REL --> HB
 ```
 
@@ -51,9 +53,9 @@ flowchart TD
 | `test` | ubuntu-latest | after version | `pytest` + SonarCloud scan |
 | `release-binaries` | matrix Win/macOS | after test | PyInstaller; upload `release-binary-*` on push to release branches |
 | `push-tags` | ubuntu-22.04 | push `master` | tags `v{version}`, `v{X.Y}`, `v{X}` |
-| `publish-chocolatey` | windows-latest | push master/release/hotfix | pack + push `.nupkg` |
-| `publish-homebrew-tap` | ubuntu-22.04 | push release/hotfix | branch `homebrew-preview-tap` |
 | `publish-release` | ubuntu-22.04 | push `master` | GitHub Release + checksums |
+| `publish-chocolatey` | windows-latest | after release on `master`; push release/hotfix | pack + push `.nupkg` |
+| `publish-homebrew-tap` | ubuntu-22.04 | push release/hotfix | branch `homebrew-preview-tap` |
 | `publish-homebrew` | macos-latest | after release on `master` | homebrew-core PR / bump |
 
 On release builds (`publish_artifacts=true`), CI patches `pyproject.toml` and `APP_VERSION` in `src/config/app_info.py` before PyInstaller.

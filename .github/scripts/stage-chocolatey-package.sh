@@ -78,16 +78,20 @@ fi
 
 if [[ "${CHANNEL}" == "preview" ]]; then
   SOURCE_ARCHIVE_URL="https://github.com/${GITHUB_REPO}/archive/${COMMIT_SHA}.tar.gz"
+  ICON_URL="https://cdn.jsdelivr.net/gh/${GITHUB_REPO}@${COMMIT_SHA}/duplicate-finder-icon.png"
   perl -pe \
     "s|__COMMIT_SHA__|${COMMIT_SHA}|g; s|__BRANCH__|${BRANCH}|g; s|__CI_RUN_URL__|${CI_RUN_URL}|g; s|__SOURCE_ARCHIVE_URL__|${SOURCE_ARCHIVE_URL}|g; s|__EXE_SHA256__|${EXE_SHA256}|g" \
     "${VERIFICATION_TEMPLATE}" > "${STAGING}/tools/VERIFICATION.txt"
 else
   RELEASE_URL="https://github.com/${GITHUB_REPO}/releases/download/v${VERSION}/duplicate-finder-${VERSION}-x86_64-pc-windows-msvc.zip"
-  perl -pe "s|__RELEASE_URL__|${RELEASE_URL}|g; s|__EXE_SHA256__|${EXE_SHA256}|g" \
+  SHA256SUMS_URL="https://github.com/${GITHUB_REPO}/releases/download/v${VERSION}/SHA256SUMS"
+  ICON_URL="https://cdn.jsdelivr.net/gh/${GITHUB_REPO}@v${VERSION}/duplicate-finder-icon.png"
+  perl -pe "s|__RELEASE_URL__|${RELEASE_URL}|g; s|__SHA256SUMS_URL__|${SHA256SUMS_URL}|g; s|__EXE_SHA256__|${EXE_SHA256}|g" \
     "${VERIFICATION_TEMPLATE}" > "${STAGING}/tools/VERIFICATION.txt"
 fi
 
 perl -pi -e "s|<version>.*</version>|<version>${VERSION}</version>|" "${STAGING}/duplicate-finder.nuspec"
+perl -pi -e "s|<iconUrl>.*</iconUrl>|<iconUrl>${ICON_URL}</iconUrl>|" "${STAGING}/duplicate-finder.nuspec"
 
 if ! command -v choco >/dev/null 2>&1; then
   echo "Chocolatey CLI (choco) is required to pack packages with Chocolatey nuspec metadata." >&2
