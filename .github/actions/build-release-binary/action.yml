@@ -1,5 +1,5 @@
 name: Build Release Binary
-description: Build DuplicateFinder with PyInstaller for one platform and upload artifact
+description: Build duplicate-finder with PyInstaller for one platform and upload artifact
 
 inputs:
   version:
@@ -9,7 +9,7 @@ inputs:
     description: Target triple (e.g. x86_64-pc-windows-msvc, aarch64-apple-darwin)
     required: true
   exe:
-    description: Built executable file name (DuplicateFinder.exe or DuplicateFinder)
+    description: Built executable file name (duplicate-finder.exe or duplicate-finder)
     required: true
   publish_artifacts:
     description: Package and upload release-binary-* artifact (push to master/release/hotfix)
@@ -32,6 +32,7 @@ runs:
       run: |
         set -euo pipefail
         VERSION="${{ inputs.version }}"
+        echo "Application version: ${VERSION}"
         perl -pi -e "s/^version = \".*\"/version = \"${VERSION}\"/" pyproject.toml
         perl -pi -e "s/^APP_VERSION = \".*\"/APP_VERSION = \"${VERSION}\"/" src/config/app_info.py
 

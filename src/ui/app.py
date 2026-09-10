@@ -27,6 +27,7 @@ class DuplicateFinderApp(ctk.CTk):
     """Главное окно приложения."""
 
     def __init__(self, settings: Optional[Settings] = None):
+        """Инициализировать главное окно и страницы поиска/результатов."""
         super().__init__()
 
         self.settings = settings or Settings()
@@ -41,7 +42,7 @@ class DuplicateFinderApp(ctk.CTk):
 
         self.title(APP_NAME)
         self.geometry(f"{self.settings.window_width}x{self.settings.window_height}")
-        self.minsize(900, 640)
+        self.minsize(900, 800)
 
         self.container = ctk.CTkFrame(self)
         self.container.pack(fill="both", expand=True)
@@ -54,6 +55,7 @@ class DuplicateFinderApp(ctk.CTk):
         )
         self.page_results = PageResults(
             self.container,
+            settings=self.settings,
             on_back=self._show_search_page,
             on_cancel=self._on_close,
         )
@@ -67,10 +69,12 @@ class DuplicateFinderApp(ctk.CTk):
         self.mainloop()
 
     def _show_search_page(self) -> None:
+        """Показать страницу настройки поиска."""
         self.page_results.pack_forget()
         self.page_search.pack(fill="both", expand=True)
 
     def _show_results_page(self, result: ScanResult) -> None:
+        """Показать страницу результатов сканирования."""
         self.page_search.pack_forget()
         # Результаты удобнее на более широком окне
         if self.winfo_width() < 1000:
@@ -79,6 +83,7 @@ class DuplicateFinderApp(ctk.CTk):
         self.page_results.show_results(result)
 
     def _start_scan(self, config: SearchConfig) -> None:
+        """Запустить фоновое сканирование по конфигу."""
         if self._scan_thread and self._scan_thread.is_alive():
             return
 
@@ -107,13 +112,16 @@ class DuplicateFinderApp(ctk.CTk):
         logger.info("Scan cancel requested by user")
 
     def _scan_worker(self, config: SearchConfig) -> None:
+        """Фоновый поток сканирования дубликатов."""
         try:
             def progress_callback(progress: ScanProgress) -> None:
+                """Поставить прогресс скана в очередь UI."""
                 # Не забиваем очередь сотнями сообщений
                 if self._msg_queue.qsize() < 32:
                     self._msg_queue.put(("progress", progress))
 
             def cancel_check() -> bool:
+                """Проверить, запрошена ли отмена скана."""
                 return self._cancel_event.is_set()
 
             finder = DuplicateFinder(
@@ -130,6 +138,7 @@ class DuplicateFinderApp(ctk.CTk):
             self._msg_queue.put(("error", str(exc)))
 
     def _process_queue(self) -> None:
+        """Обработать сообщения скана из очереди на UI-потоке."""
         try:
             while True:
                 message_type, payload = self._msg_queue.get_nowait()
@@ -144,6 +153,7 @@ class DuplicateFinderApp(ctk.CTk):
         self.after(80, self._process_queue)
 
     def _close_progress(self) -> None:
+        """Закрыть окно прогресса сканирования."""
         if self._progress_window is not None:
             try:
                 self._progress_window.finish()
@@ -153,6 +163,7 @@ class DuplicateFinderApp(ctk.CTk):
             self._progress_window = None
 
     def _on_scan_done(self, result: ScanResult) -> None:
+        """Обработать успешное завершение скана."""
         self._close_progress()
 
         if result.canceled:
@@ -166,15 +177,18 @@ class DuplicateFinderApp(ctk.CTk):
         self._show_results_page(result)
 
     def _on_scan_error(self, message: str) -> None:
+        """Показать ошибку скана и вернуться к поиску."""
         self._close_progress()
         messagebox.showerror("Scan error", message)
         self._show_search_page()
 
     def _on_close(self) -> None:
+        """Сохранить настройки и закрыть приложение."""
         if self._scan_thread and self._scan_thread.is_alive():
             self._request_cancel()
             if self._progress_window is not None:
                 self._progress_window.request_cancel()
         self.page_search.save_to_settings()
+        self.page_results.save_to_settings()
         save_settings(self.settings)
         self.destroy()

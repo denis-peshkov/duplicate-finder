@@ -23,6 +23,7 @@ class FileListPanel(ctk.CTkFrame):
         include_subfolders: bool = True,
         on_change: Optional[Callable[[], None]] = None,
     ):
+        """Создать панель списка путей файлов/папок."""
         super().__init__(parent)
         self.on_change = on_change
         self._items: list[tuple[str, bool]] = []
@@ -108,10 +109,12 @@ class FileListPanel(ctk.CTkFrame):
         self.subfolders_var.set(value)
 
     def _notify_change(self) -> None:
+        """Вызвать колбэк on_change при изменении списка."""
         if self.on_change:
             self.on_change()
 
     def _refresh_listbox(self) -> None:
+        """Перерисовать список путей и кнопки действий."""
         self.listbox.configure(state="normal")
         self.listbox.delete("1.0", "end")
         for index, (path, is_folder) in enumerate(self._items):
@@ -125,6 +128,7 @@ class FileListPanel(ctk.CTkFrame):
         self.modify_btn.configure(state=state)
 
     def _on_list_click(self, _event: object) -> None:
+        """Выделить элемент списка по клику."""
         if not self._items:
             return
         index = self.listbox.index("insert").split(".")[0]
@@ -137,6 +141,7 @@ class FileListPanel(ctk.CTkFrame):
         self._refresh_listbox()
 
     def _add_files(self) -> None:
+        """Добавить выбранные файлы через диалог."""
         paths = filedialog.askopenfilenames(title="Select files")
         if not paths:
             return
@@ -147,6 +152,7 @@ class FileListPanel(ctk.CTkFrame):
         self._notify_change()
 
     def _add_folder(self) -> None:
+        """Добавить выбранную папку через диалог."""
         path = filedialog.askdirectory(title="Select folder")
         if not path:
             return
@@ -156,6 +162,7 @@ class FileListPanel(ctk.CTkFrame):
         self._notify_change()
 
     def _remove_selected(self) -> None:
+        """Удалить выделенный путь из списка."""
         if self._selected_index is None or not self._items:
             return
         del self._items[self._selected_index]
@@ -167,6 +174,7 @@ class FileListPanel(ctk.CTkFrame):
         self._notify_change()
 
     def _modify_selected(self) -> None:
+        """Изменить выделенный путь через диалог."""
         if self._selected_index is None:
             return
         path, is_folder = self._items[self._selected_index]
@@ -183,6 +191,7 @@ class ModifyPathDialog(ctk.CTkToplevel):
     """Диалог изменения пути в списке."""
 
     def __init__(self, parent: ctk.CTkBaseClass, path: str, is_folder: bool):
+        """Создать диалог редактирования пути списка."""
         super().__init__(parent)
         self.title("Modify path")
         self.geometry("480x160")
@@ -211,6 +220,7 @@ class ModifyPathDialog(ctk.CTkToplevel):
         ctk.CTkButton(buttons, text="Cancel", width=90, command=self.destroy).pack(side="right")
 
     def _ok(self) -> None:
+        """Подтвердить изменения в диалоге пути."""
         text = self.path_entry.get().strip()
         if not text:
             messagebox.showwarning("Modify path", "Path cannot be empty.")

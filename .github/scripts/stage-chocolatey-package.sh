@@ -63,17 +63,17 @@ cp "${NUSPEC_TEMPLATE}" "${STAGING}/duplicate-finder.nuspec"
 cp "${TEMPLATE_DIR}/tools/"*.ps1 "${STAGING}/tools/"
 cp "${LICENSE_SRC}" "${STAGING}/tools/LICENSE.txt"
 
-unzip -j -o "${WINDOWS_ZIP}" "DuplicateFinder.exe" -d "${STAGING}/tools/"
+unzip -j -o "${WINDOWS_ZIP}" "duplicate-finder.exe" -d "${STAGING}/tools/"
 
-if [[ ! -f "${STAGING}/tools/DuplicateFinder.exe" ]]; then
-  echo "DuplicateFinder.exe not found in ${WINDOWS_ZIP}" >&2
+if [[ ! -f "${STAGING}/tools/duplicate-finder.exe" ]]; then
+  echo "duplicate-finder.exe not found in ${WINDOWS_ZIP}" >&2
   exit 1
 fi
 
 if command -v sha256sum >/dev/null 2>&1; then
-  EXE_SHA256="$(sha256sum "${STAGING}/tools/DuplicateFinder.exe" | awk '{print toupper($1)}')"
+  EXE_SHA256="$(sha256sum "${STAGING}/tools/duplicate-finder.exe" | awk '{print toupper($1)}')"
 else
-  EXE_SHA256="$(shasum -a 256 "${STAGING}/tools/DuplicateFinder.exe" | awk '{print toupper($1)}')"
+  EXE_SHA256="$(shasum -a 256 "${STAGING}/tools/duplicate-finder.exe" | awk '{print toupper($1)}')"
 fi
 
 if [[ "${CHANNEL}" == "preview" ]]; then
@@ -83,7 +83,8 @@ if [[ "${CHANNEL}" == "preview" ]]; then
     "${VERIFICATION_TEMPLATE}" > "${STAGING}/tools/VERIFICATION.txt"
 else
   RELEASE_URL="https://github.com/${GITHUB_REPO}/releases/download/v${VERSION}/duplicate-finder-${VERSION}-x86_64-pc-windows-msvc.zip"
-  perl -pe "s|__RELEASE_URL__|${RELEASE_URL}|g; s|__EXE_SHA256__|${EXE_SHA256}|g" \
+  SHA256SUMS_URL="https://github.com/${GITHUB_REPO}/releases/download/v${VERSION}/SHA256SUMS"
+  perl -pe "s|__RELEASE_URL__|${RELEASE_URL}|g; s|__SHA256SUMS_URL__|${SHA256SUMS_URL}|g; s|__EXE_SHA256__|${EXE_SHA256}|g" \
     "${VERIFICATION_TEMPLATE}" > "${STAGING}/tools/VERIFICATION.txt"
 fi
 

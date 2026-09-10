@@ -14,3 +14,8 @@ venv/
 .pytest_cache/
 .mypy_cache/
 *.log
+.coverage
+.coverage.*
+htmlcov/
+TestResults/
+coverage.xml

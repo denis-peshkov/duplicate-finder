@@ -15,6 +15,7 @@ from src.core.enumerator import parse_list_item
 from src.core.models import SearchConfig
 from src.ui.about_window import show_about
 from src.ui.components.file_list_panel import FileListPanel
+from src.ui.components.mask_list_panel import MaskListPanel
 from src.ui.info_dialog import show_info_dialog
 
 
@@ -28,6 +29,7 @@ class PageSearch(ctk.CTkFrame):
         on_search: Optional[Callable[[SearchConfig], None]] = None,
         on_cancel: Optional[Callable[[], None]] = None,
     ):
+        """Создать страницу настройки поиска и загрузить значения из settings."""
         super().__init__(parent, fg_color="transparent")
         self.settings = settings
         self.on_search = on_search
@@ -37,6 +39,7 @@ class PageSearch(ctk.CTkFrame):
         self._load_from_settings()
 
     def _create_widgets(self) -> None:
+        """Создать виджеты страницы настройки поиска."""
         # Footer снизу, контент сверху — чтобы доп. список не уезжал под кнопки
         footer = ctk.CTkFrame(self, fg_color="transparent")
         footer.pack(side="bottom", fill="x", padx=12, pady=(0, 12))
@@ -155,7 +158,17 @@ class PageSearch(ctk.CTkFrame):
             self.match_section,
             text="Find images only",
             variable=self.images_only_var,
-        ).pack(anchor="w", pady=(8, 8))
+        ).pack(anchor="w", pady=(8, 4))
+
+        masks_row = ctk.CTkFrame(main, fg_color="transparent")
+        masks_row.pack(fill="x", padx=8, pady=(4, 8))
+        masks_row.grid_columnconfigure(0, weight=1)
+        masks_row.grid_columnconfigure(1, weight=1)
+
+        self.include_panel = MaskListPanel(masks_row, label="Include masks:")
+        self.include_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 4))
+        self.exclude_panel = MaskListPanel(masks_row, label="Exclude masks:")
+        self.exclude_panel.grid(row=0, column=1, sticky="nsew", padx=(4, 0))
 
         self._on_mode_change()
 
@@ -178,6 +191,7 @@ class PageSearch(ctk.CTkFrame):
             self.list1_panel.set_list_height(120)
 
     def _load_from_settings(self) -> None:
+        """Заполнить UI значениями из settings."""
         self.mode_var.set(self.settings.search_mode)
         self.match_var.set(self.settings.match_type)
         self.images_only_var.set(self.settings.images_only)
@@ -185,6 +199,8 @@ class PageSearch(ctk.CTkFrame):
         self.list2_panel.set_items(self.settings.list2_paths)
         self.list1_panel.set_include_subfolders(self.settings.include_subfolders1)
         self.list2_panel.set_include_subfolders(self.settings.include_subfolders2)
+        self.include_panel.set_masks(self.settings.include_masks)
+        self.exclude_panel.set_masks(self.settings.exclude_masks)
         self._on_mode_change()
 
     def save_to_settings(self) -> None:
@@ -196,6 +212,8 @@ class PageSearch(ctk.CTkFrame):
         self.settings.list2_paths = self.list2_panel.get_items()
         self.settings.include_subfolders1 = self.list1_panel.get_include_subfolders()
         self.settings.include_subfolders2 = self.list2_panel.get_include_subfolders()
+        self.settings.include_masks = self.include_panel.get_masks()
+        self.settings.exclude_masks = self.exclude_panel.get_masks()
 
     def build_config(self) -> SearchConfig | None:
         """Собрать SearchConfig с валидацией."""
@@ -221,9 +239,12 @@ class PageSearch(ctk.CTkFrame):
             include_subfolders2=self.list2_panel.get_include_subfolders(),
             match_type=self.match_var.get(),  # type: ignore[arg-type]
             images_only=bool(self.images_only_var.get()),
+            include_masks=self.include_panel.get_masks(),
+            exclude_masks=self.exclude_panel.get_masks(),
         )
 
     def _handle_search(self) -> None:
+        """Собрать конфиг и запустить поиск."""
         config = self.build_config()
         if config is None:
             return
@@ -232,14 +253,18 @@ class PageSearch(ctk.CTkFrame):
             self.on_search(config)
 
     def _handle_cancel(self) -> None:
+        """Закрыть приложение со страницы поиска."""
         if self.on_cancel:
             self.on_cancel()
 
     def _show_about(self) -> None:
+        """Открыть окно About."""
         show_about(self)
 
     def _show_search_help(self) -> None:
+        """Показать справку по настройке поиска."""
         show_info_dialog(self, "Search", HELP_SEARCH, width=520)
 
     def _show_two_lists_help(self) -> None:
+        """Показать справку по режиму двух списков."""
         show_info_dialog(self, "Two lists", HELP_TWO_LISTS, width=520)

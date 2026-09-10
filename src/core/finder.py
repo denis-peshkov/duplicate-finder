@@ -26,6 +26,7 @@ class DuplicateFinder:
         progress_callback: Callable[[ScanProgress], None] | None = None,
         cancel_check: Callable[[], bool] | None = None,
     ):
+        """Создать поисковик с конфигом и опциональными колбэками прогресса/отмены."""
         self.config = config
         self.progress_callback = progress_callback
         self.cancel_check = cancel_check
@@ -45,17 +46,24 @@ class DuplicateFinder:
         total_files_scanned: int = 0,
         canceled: bool = False,
     ) -> ScanResult:
+        """Собрать ScanResult с корнями поиска из конфига."""
+        roots = list(self.config.list1_paths)
+        if self.config.mode == "two_lists":
+            roots.extend(self.config.list2_paths)
         return ScanResult(
             groups=groups or [],
             total_files_scanned=total_files_scanned,
             canceled=canceled,
             search_mode=self.config.mode,
+            search_roots=roots,
         )
 
     def _is_canceled(self) -> bool:
+        """Проверить флаг отмены сканирования."""
         return bool(self.cancel_check and self.cancel_check())
 
     def _emit(self, *, force: bool = False, **kwargs: object) -> None:
+        """Отправить throttled-снимок прогресса в UI-колбэк."""
         for key, value in kwargs.items():
             setattr(self._progress, key, value)
 
@@ -84,6 +92,7 @@ class DuplicateFinder:
         source: str,
         list_label: str,
     ) -> list[FileEntry]:
+        """Перечислить файлы одного списка путей с масками."""
         self._emit(
             force=True,
             phase="enumerating",
@@ -93,6 +102,7 @@ class DuplicateFinder:
         )
 
         def on_file(entry: FileEntry) -> None:
+            """Обновить прогресс при обнаружении очередного файла."""
             self._progress.files_scanned += 1
             self._emit(
                 current_path=str(entry.path),
@@ -107,6 +117,8 @@ class DuplicateFinder:
             source=source,  # type: ignore[arg-type]
             on_file=on_file,
             cancel_check=self.cancel_check,
+            exclude_masks=self.config.exclude_masks,
+            include_masks=self.config.include_masks,
         )
         self._emit(
             force=True,
@@ -116,6 +128,7 @@ class DuplicateFinder:
         return entries
 
     def _scan_filename(self) -> ScanResult:
+        """Найти дубликаты по имени файла."""
         list1 = self._collect_list(
             [str(path) for path in self.config.list1_paths],
             self.config.include_subfolders1,
@@ -151,6 +164,7 @@ class DuplicateFinder:
         entries: list[FileEntry],
         min_count: int,
     ) -> list[DuplicateGroup]:
+        """Сгруппировать файлы с одинаковым именем."""
         buckets: dict[str, list[FileEntry]] = defaultdict(list)
         for entry in entries:
             if self._is_canceled():
@@ -169,6 +183,7 @@ class DuplicateFinder:
         list1: list[FileEntry],
         list2: list[FileEntry],
     ) -> list[DuplicateGroup]:
+        """Сопоставить одноимённые файлы между двумя списками."""
         names_in_list2: dict[str, list[FileEntry]] = defaultdict(list)
         for entry in list2:
             names_in_list2[entry.path.name.lower()].append(entry)
@@ -193,6 +208,7 @@ class DuplicateFinder:
         return groups
 
     def _scan_exact(self) -> ScanResult:
+        """Найти exact-дубликаты по размеру и хешу."""
         list1 = self._collect_list(
             [str(path) for path in self.config.list1_paths],
             self.config.include_subfolders1,
@@ -236,6 +252,28 @@ class DuplicateFinder:
         return self._make_result(groups=groups, total_files_scanned=len(all_entries))
 
     def _hash_entries(self, entries: list[FileEntry]) -> list[FileEntry]:
+        """Отобрать кандидатов и посчитать для них хеши."""
+        candidates = self._select_hash_candidates(entries)
+
+        self._emit(
+            force=True,
+            phase="hashing",
+            total_files=len(candidates),
+            files_hashed=0,
+            status_text=f"Hashing {format_count(len(candidates))} files...",
+            percent=0.0,
+        )
+
+        return self._hash_candidates_pipeline(candidates)
+
+    def _select_hash_candidates(self, entries: list[FileEntry]) -> list[FileEntry]:
+        """Отобрать файлы, которые вообще могут быть дублями по размеру."""
+        if self.config.mode == "two_lists":
+            sizes_list1 = {entry.size for entry in entries if entry.source == "list1"}
+            sizes_list2 = {entry.size for entry in entries if entry.source == "list2"}
+            common_sizes = sizes_list1 & sizes_list2
+            return [entry for entry in entries if entry.size in common_sizes]
+
         by_size: dict[int, list[FileEntry]] = defaultdict(list)
         for entry in entries:
             by_size[entry.size].append(entry)
@@ -244,48 +282,10 @@ class DuplicateFinder:
         for size_group in by_size.values():
             if len(size_group) > 1:
                 candidates.extend(size_group)
-
-        # В single-list хешируем только кандидатов; в two-lists — все (нужны пересечения)
-        if self.config.mode == "two_lists":
-            work_list = list(entries)
-        else:
-            work_list = candidates
-
-        self._emit(
-            force=True,
-            phase="hashing",
-            total_files=len(work_list),
-            files_hashed=0,
-            status_text=f"Hashing {format_count(len(work_list))} files...",
-            percent=0.0,
-        )
-
-        if self.config.mode == "single_list":
-            return self._hash_candidates_pipeline(candidates)
-
-        hashed: list[FileEntry] = []
-        for index, entry in enumerate(work_list, start=1):
-            if self._is_canceled():
-                break
-            digest = hash_file(entry.path, cancel_check=self.cancel_check)
-            if not digest:
-                continue
-            entry.hash_value = digest
-            hashed.append(entry)
-            self._progress.files_hashed = index
-            self._emit(
-                files_hashed=index,
-                total_files=len(work_list),
-                current_path=str(entry.path),
-                status_text=(
-                    f"Hashing files: {format_count(index)} / "
-                    f"{format_count(len(work_list))}"
-                ),
-                percent=index / max(len(work_list), 1),
-            )
-        return hashed
+        return candidates
 
     def _hash_candidates_pipeline(self, candidates: list[FileEntry]) -> list[FileEntry]:
+        """Quick hash (голова+хвост 64KB) → full hash только у совпавших."""
         partial_buckets: dict[str, list[FileEntry]] = defaultdict(list)
         total = max(len(candidates), 1)
 
@@ -309,7 +309,7 @@ class DuplicateFinder:
 
         full_candidates: list[FileEntry] = []
         for bucket in partial_buckets.values():
-            if len(bucket) > 1:
+            if self._partial_bucket_is_candidate(bucket):
                 full_candidates.extend(bucket)
 
         hashed: list[FileEntry] = []
@@ -333,11 +333,20 @@ class DuplicateFinder:
             )
         return hashed
 
+    def _partial_bucket_is_candidate(self, bucket: list[FileEntry]) -> bool:
+        """Нужен ли полный hash для группы с одинаковым quick hash."""
+        if self.config.mode == "two_lists":
+            has_list1 = any(entry.source == "list1" for entry in bucket)
+            has_list2 = any(entry.source == "list2" for entry in bucket)
+            return has_list1 and has_list2
+        return len(bucket) > 1
+
     def _group_by_hash(
         self,
         entries: list[FileEntry],
         min_count: int,
     ) -> list[DuplicateGroup]:
+        """Сгруппировать файлы с одинаковым полным хешем."""
         buckets: dict[str, list[FileEntry]] = defaultdict(list)
         for entry in entries:
             if entry.hash_value:
@@ -355,6 +364,7 @@ class DuplicateFinder:
         list1: list[FileEntry],
         list2: list[FileEntry],
     ) -> list[DuplicateGroup]:
+        """Сопоставить хеш-группы между двумя списками."""
         hashes_in_list2: dict[str, list[FileEntry]] = defaultdict(list)
         for entry in list2:
             if entry.hash_value:

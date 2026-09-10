@@ -23,6 +23,7 @@ class ProgressWindow(ctk.CTkToplevel):
         title: str = "Duplicate Finder",
         on_cancel: Optional[Callable[[], None]] = None,
     ):
+        """Создать окно прогресса сканирования."""
         super().__init__(parent)
         self.title(title)
         self.geometry("640x400")
@@ -106,6 +107,7 @@ class ProgressWindow(ctk.CTkToplevel):
         self.after(50, self._activate_modal)
 
     def _activate_modal(self) -> None:
+        """Поднять окно прогресса и захватить фокус."""
         try:
             self.lift()
             self.focus_force()
@@ -115,6 +117,7 @@ class ProgressWindow(ctk.CTkToplevel):
 
     @property
     def canceled(self) -> bool:
+        """True, если пользователь запросил отмену скана."""
         return self._canceled
 
     def request_cancel(self) -> None:
@@ -129,6 +132,7 @@ class ProgressWindow(ctk.CTkToplevel):
             self._on_cancel_callback()
 
     def _step_counter(self, progress: ScanProgress) -> int:
+        """Числовой счётчик шага для оценки времени."""
         if progress.phase == "enumerating":
             return progress.files_scanned
         if progress.phase == "hashing":
@@ -140,6 +144,7 @@ class ProgressWindow(ctk.CTkToplevel):
         return progress.files_scanned + progress.files_hashed
 
     def _step_ratio(self, progress: ScanProgress) -> float | None:
+        """Доля прогресса 0..1 или None в indeterminate."""
         if progress.total_files > 0 and progress.phase == "hashing":
             return progress.files_hashed / max(progress.total_files, 1)
         if progress.percent is not None:
@@ -247,6 +252,7 @@ class ProgressWindow(ctk.CTkToplevel):
         self.path_display.set_path(progress.current_path or "")
 
     def _set_indeterminate(self) -> None:
+        """Включить неопределённый режим прогресс-бара."""
         if not self._indeterminate:
             self.progress_bar.stop()
             self.progress_bar.configure(mode="indeterminate")
@@ -254,6 +260,7 @@ class ProgressWindow(ctk.CTkToplevel):
             self._indeterminate = True
 
     def _set_determinate(self, value: float) -> None:
+        """Установить determinate-значение прогресс-бара."""
         if self._indeterminate:
             self.progress_bar.stop()
             self.progress_bar.configure(mode="determinate")

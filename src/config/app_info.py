@@ -48,6 +48,8 @@ HELP_SEARCH = (
     "Two lists: compare files between two sets.\n"
     "Exact duplicate: compare file content by hash.\n"
     "Same filename: compare file names only.\n"
+    "Include masks: if set, only matching files are scanned (e.g. *.jpg, *.png).\n"
+    "Exclude masks: skip matching files (e.g. *.tmp, Thumbs.db, */.git/*).\n"
     "Deleted files are moved to the Recycle Bin."
 )
 
@@ -59,9 +61,13 @@ HELP_TWO_LISTS = (
 HELP_RESULTS = (
     "Top list shows duplicate sets.\n"
     "Select a set to see files in the table.\n"
+    "Click a column header to sort (click again to reverse).\n"
+    "Click the checkbox column to mark files for deletion.\n"
     "Two-list modes:\n"
     "  Custom — clear all marks, then select manually.\n"
     "  Delete from File List 1/2 — clear all, mark that list.\n"
     "Press Next to move selected files to Recycle Bin.\n"
+    "Optional: clean all empty folders under search paths after delete "
+    "(or alone, with no files selected).\n"
     "Right-click a file for Rename / Open folder."
 )

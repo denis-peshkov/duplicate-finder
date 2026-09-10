@@ -53,13 +53,13 @@ jobs:
         include:
           - target: x86_64-pc-windows-msvc
             os: windows-latest
-            exe: DuplicateFinder.exe
+            exe: duplicate-finder.exe
           - target: aarch64-apple-darwin
             os: macos-latest
-            exe: DuplicateFinder
+            exe: duplicate-finder
           - target: x86_64-apple-darwin
             os: macos-15-intel
-            exe: DuplicateFinder
+            exe: duplicate-finder
     permissions:
       contents: read
       actions: write

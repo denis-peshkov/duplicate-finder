@@ -39,7 +39,7 @@ Published by `publish-release`:
 | Asset | Platform |
 |-------|----------|
 | `duplicate-finder-{version}-src.tar.gz` | Full source (Homebrew) |
-| `duplicate-finder-{version}-x86_64-pc-windows-msvc.zip` | Windows x64 (`DuplicateFinder.exe`) |
+| `duplicate-finder-{version}-x86_64-pc-windows-msvc.zip` | Windows x64 (`duplicate-finder.exe`) |
 | `duplicate-finder-{version}-aarch64-apple-darwin.tar.gz` | macOS Apple Silicon |
 | `duplicate-finder-{version}-x86_64-apple-darwin.tar.gz` | macOS Intel |
 | `SHA256SUMS` | Checksums |
@@ -52,7 +52,9 @@ choco install duplicate-finder
 
 Package id: `duplicate-finder`. Template: [`distribution/chocolatey/duplicate-finder/`](../distribution/chocolatey/duplicate-finder/).
 
-CI embeds `DuplicateFinder.exe` and registers PATH shim `duplicate-finder` via `Install-BinFile`.
+CI embeds `duplicate-finder.exe` and registers PATH shim `duplicate-finder` via `Install-BinFile`.
+
+On **`master`**, `VERIFICATION.txt` cites the GitHub Release zip and `SHA256SUMS`. `iconUrl` uses jsDelivr from `master` (`cdn.jsdelivr.net/gh/...@master/...`), not `raw.githubusercontent.com`.
 
 Secret: `CHOCOLATEY_API_KEY`.
 

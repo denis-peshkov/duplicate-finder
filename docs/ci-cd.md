@@ -56,7 +56,7 @@ flowchart TD
 | `publish-release` | ubuntu-22.04 | push `master` | GitHub Release + checksums |
 | `publish-homebrew` | macos-latest | after release on `master` | homebrew-core PR / bump |
 
-On release builds (`publish_artifacts=true`), CI patches `pyproject.toml` and `APP_VERSION` in `src/config/app_info.py` before PyInstaller.
+Before PyInstaller, CI patches `pyproject.toml` and `APP_VERSION` in `src/config/app_info.py` from the `version` job only when packaging release artifacts (`publish_artifacts=true` on push to `master` / `release/*` / `hotfix/*`). Pull requests build with the repo version as-is and do not publish Chocolatey or Homebrew.
 
 ---
 
