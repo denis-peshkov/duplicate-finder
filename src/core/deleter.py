@@ -189,7 +189,13 @@ def remove_empty_folders(
         seen_roots.add(root_res)
 
         try:
-            walker = os.walk(root_res, topdown=False)
+            def on_walk_error(exc: OSError) -> None:
+                """Записать ошибку scandir при обходе в failed."""
+                path = Path(getattr(exc, "filename", None) or root_res)
+                failed.append((path, str(exc)))
+                logger.error("Failed to walk %s: %s", path, exc)
+
+            walker = os.walk(root_res, topdown=False, onerror=on_walk_error)
         except OSError as exc:
             failed.append((root_res, str(exc)))
             logger.error("Failed to walk %s: %s", root_res, exc)

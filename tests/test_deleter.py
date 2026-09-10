@@ -180,3 +180,29 @@ def test_remove_empty_folders_records_trash_failure(tmp_path: Path) -> None:
     assert len(failed) == 1
     assert failed[0][0] == empty
     assert "busy" in failed[0][1]
+
+
+def test_remove_empty_folders_records_walk_errors(tmp_path: Path) -> None:
+    import os
+
+    root = tmp_path / "scan_root"
+    root.mkdir()
+    (root / "empty").mkdir()
+    real_walk = os.walk
+
+    def walk_with_error(top, topdown=True, onerror=None, followlinks=False):
+        if onerror is not None:
+            onerror(PermissionError(13, "permission denied", str(root / "blocked")))
+        yield from real_walk(top, topdown=topdown, onerror=None, followlinks=followlinks)
+
+    def fake_trash(path: str) -> None:
+        Path(path).rmdir()
+
+    with patch("src.core.deleter.os.walk", side_effect=walk_with_error):
+        with patch("src.core.deleter.send2trash", side_effect=fake_trash):
+            removed, failed = remove_empty_folders(roots=[root])
+
+    assert (root / "empty") in removed
+    assert len(failed) == 1
+    assert failed[0][0] == root / "blocked"
+    assert "permission denied" in failed[0][1]
