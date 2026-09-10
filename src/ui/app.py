@@ -41,7 +41,7 @@ class DuplicateFinderApp(ctk.CTk):
 
         self.title(APP_NAME)
         self.geometry(f"{self.settings.window_width}x{self.settings.window_height}")
-        self.minsize(900, 640)
+        self.minsize(900, 800)
 
         self.container = ctk.CTkFrame(self)
         self.container.pack(fill="both", expand=True)
@@ -54,6 +54,7 @@ class DuplicateFinderApp(ctk.CTk):
         )
         self.page_results = PageResults(
             self.container,
+            settings=self.settings,
             on_back=self._show_search_page,
             on_cancel=self._on_close,
         )
@@ -176,5 +177,6 @@ class DuplicateFinderApp(ctk.CTk):
             if self._progress_window is not None:
                 self._progress_window.request_cancel()
         self.page_search.save_to_settings()
+        self.page_results.save_to_settings()
         save_settings(self.settings)
         self.destroy()

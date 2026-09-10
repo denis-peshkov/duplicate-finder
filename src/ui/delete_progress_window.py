@@ -22,6 +22,8 @@ class DeleteProgressWindow(ctk.CTkToplevel):
         parent: ctk.CTk | ctk.CTkToplevel,
         total: int,
         on_cancel: Optional[Callable[[], None]] = None,
+        *,
+        initial_phase: str = "files",
     ):
         super().__init__(parent)
         self.title("Deleting...")
@@ -31,6 +33,8 @@ class DeleteProgressWindow(ctk.CTkToplevel):
         self._canceled = False
         self._on_cancel_callback = on_cancel
         self._total = max(total, 1)
+        self._phase = initial_phase
+        self._indeterminate = False
 
         self._started_at = time.monotonic()
         self._last_counter: int | None = None
@@ -58,17 +62,27 @@ class DeleteProgressWindow(ctk.CTkToplevel):
         frame = ctk.CTkFrame(self)
         frame.pack(side="top", fill="both", expand=True, padx=16, pady=(16, 8))
 
+        phase_text = (
+            "Cleaning empty folders..."
+            if initial_phase == "folders"
+            else "Moving files to Recycle Bin..."
+        )
         self.phase_label = ctk.CTkLabel(
             frame,
-            text="Moving files to Recycle Bin...",
+            text=phase_text,
             font=ctk.CTkFont(size=15, weight="bold"),
             anchor="w",
         )
         self.phase_label.pack(fill="x", padx=10, pady=(10, 6))
 
+        status_text = (
+            "Removed: 0  |  Scanned: 0"
+            if initial_phase == "folders"
+            else f"0 / {format_count(total)}"
+        )
         self.status_label = ctk.CTkLabel(
             frame,
-            text=f"0 / {format_count(total)}",
+            text=status_text,
             anchor="w",
             text_color="gray80",
         )
@@ -91,6 +105,9 @@ class DeleteProgressWindow(ctk.CTkToplevel):
 
         self.path_display = PathDisplay(frame, height=120)
         self.path_display.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+
+        if initial_phase == "folders":
+            self._start_indeterminate()
 
         self.after(50, self._activate_modal)
 
@@ -115,6 +132,27 @@ class DeleteProgressWindow(ctk.CTkToplevel):
         self.cancel_btn.configure(text="Canceling...", state="disabled")
         if self._on_cancel_callback:
             self._on_cancel_callback()
+
+    def _start_indeterminate(self) -> None:
+        if self._indeterminate:
+            return
+        self._indeterminate = True
+        try:
+            self.progress_bar.configure(mode="indeterminate")
+            self.progress_bar.start()
+        except Exception:  # noqa: BLE001
+            self.progress_bar.set(0.15)
+        self.percent_label.configure(text="")
+
+    def _stop_indeterminate(self) -> None:
+        if not self._indeterminate:
+            return
+        self._indeterminate = False
+        try:
+            self.progress_bar.stop()
+            self.progress_bar.configure(mode="determinate")
+        except Exception:  # noqa: BLE001
+            pass
 
     def _update_timing(self, current: int, total: int) -> None:
         """Elapsed/Estimated; elapsed пересчитывается при смене каунтера."""
@@ -147,6 +185,26 @@ class DeleteProgressWindow(ctk.CTkToplevel):
             self.phase_label.configure(text="Canceling...")
             return
 
+        if progress.phase == "folders":
+            self._phase = "folders"
+            self.phase_label.configure(text="Cleaning empty folders...")
+            self._start_indeterminate()
+            self._elapsed_seconds = time.monotonic() - self._started_at
+            self.time_label.configure(
+                text=f"Elapsed: {format_duration(self._elapsed_seconds)}  |  Estimated: —"
+            )
+            self.status_label.configure(
+                text=(
+                    f"Removed: {format_count(progress.folders_removed)}  |  "
+                    f"Scanned: {format_count(progress.folders_scanned)}"
+                )
+            )
+            self.path_display.set_path(progress.current_path or "")
+            return
+
+        self._stop_indeterminate()
+        self._phase = "files"
+        self.phase_label.configure(text="Moving files to Recycle Bin...")
         total = max(progress.total, 1)
         ratio = progress.current / total
         self.progress_bar.set(max(0.0, min(1.0, ratio)))
@@ -165,5 +223,6 @@ class DeleteProgressWindow(ctk.CTkToplevel):
             self.grab_release()
         except Exception:  # noqa: BLE001
             pass
+        self._stop_indeterminate()
         self.progress_bar.set(1.0)
         self.cancel_btn.configure(state="disabled")

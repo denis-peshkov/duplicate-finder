@@ -15,6 +15,7 @@ from src.core.enumerator import parse_list_item
 from src.core.models import SearchConfig
 from src.ui.about_window import show_about
 from src.ui.components.file_list_panel import FileListPanel
+from src.ui.components.mask_list_panel import MaskListPanel
 from src.ui.info_dialog import show_info_dialog
 
 
@@ -155,7 +156,17 @@ class PageSearch(ctk.CTkFrame):
             self.match_section,
             text="Find images only",
             variable=self.images_only_var,
-        ).pack(anchor="w", pady=(8, 8))
+        ).pack(anchor="w", pady=(8, 4))
+
+        masks_row = ctk.CTkFrame(main, fg_color="transparent")
+        masks_row.pack(fill="x", padx=8, pady=(4, 8))
+        masks_row.grid_columnconfigure(0, weight=1)
+        masks_row.grid_columnconfigure(1, weight=1)
+
+        self.include_panel = MaskListPanel(masks_row, label="Include masks:")
+        self.include_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 4))
+        self.exclude_panel = MaskListPanel(masks_row, label="Exclude masks:")
+        self.exclude_panel.grid(row=0, column=1, sticky="nsew", padx=(4, 0))
 
         self._on_mode_change()
 
@@ -185,6 +196,8 @@ class PageSearch(ctk.CTkFrame):
         self.list2_panel.set_items(self.settings.list2_paths)
         self.list1_panel.set_include_subfolders(self.settings.include_subfolders1)
         self.list2_panel.set_include_subfolders(self.settings.include_subfolders2)
+        self.include_panel.set_masks(self.settings.include_masks)
+        self.exclude_panel.set_masks(self.settings.exclude_masks)
         self._on_mode_change()
 
     def save_to_settings(self) -> None:
@@ -196,6 +209,8 @@ class PageSearch(ctk.CTkFrame):
         self.settings.list2_paths = self.list2_panel.get_items()
         self.settings.include_subfolders1 = self.list1_panel.get_include_subfolders()
         self.settings.include_subfolders2 = self.list2_panel.get_include_subfolders()
+        self.settings.include_masks = self.include_panel.get_masks()
+        self.settings.exclude_masks = self.exclude_panel.get_masks()
 
     def build_config(self) -> SearchConfig | None:
         """Собрать SearchConfig с валидацией."""
@@ -221,6 +236,8 @@ class PageSearch(ctk.CTkFrame):
             include_subfolders2=self.list2_panel.get_include_subfolders(),
             match_type=self.match_var.get(),  # type: ignore[arg-type]
             images_only=bool(self.images_only_var.get()),
+            include_masks=self.include_panel.get_masks(),
+            exclude_masks=self.exclude_panel.get_masks(),
         )
 
     def _handle_search(self) -> None:

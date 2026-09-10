@@ -44,4 +44,4 @@ def setup_logging(
     logging.basicConfig(level=level, handlers=handlers, force=True)
 
     logger = logging.getLogger(__name__)
-    logger.info("Логирование настроено: уровень=%s, файл=%s", logging.getLevelName(level), log_file)
+    logger.info("Logging configured: level=%s, file=%s", logging.getLevelName(level), log_file)
