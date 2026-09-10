@@ -27,6 +27,9 @@ from src.utils.formatters import format_count
 logger = logging.getLogger(__name__)
 
 FILE_FONT_SIZE = 14
+FILE_FONT_FAMILY = "Segoe UI"
+TREE_STYLE = "Results.Treeview"
+TREE_HEADING_STYLE = "Results.Treeview.Heading"
 CHECK_ON = "☑"
 CHECK_OFF = "☐"
 COL_CHECK = "check"
@@ -160,7 +163,7 @@ class PageResults(ctk.CTkFrame):
             selectforeground="#ffffff",
             highlightthickness=0,
             borderwidth=0,
-            font=("Segoe UI", FILE_FONT_SIZE),
+            font=(FILE_FONT_FAMILY, FILE_FONT_SIZE),
             height=10,
         )
         self.sets_list.pack(side="left", fill="both", expand=True)
@@ -230,7 +233,7 @@ class PageResults(ctk.CTkFrame):
             columns=(COL_CHECK, COL_NAME, COL_SIZE, COL_PATH),
             show="headings",
             selectmode="browse",
-            style="Results.Treeview",
+            style=TREE_STYLE,
         )
         self.files_tree.heading(
             COL_CHECK,
@@ -282,29 +285,29 @@ class PageResults(ctk.CTkFrame):
         except Exception:  # noqa: BLE001
             pass
         style.configure(
-            "Results.Treeview",
+            TREE_STYLE,
             background="#1a1a1a",
             foreground="#e8e8e8",
             fieldbackground="#1a1a1a",
             borderwidth=0,
             rowheight=28,
-            font=("Segoe UI", FILE_FONT_SIZE),
+            font=(FILE_FONT_FAMILY, FILE_FONT_SIZE),
         )
         style.configure(
-            "Results.Treeview.Heading",
+            TREE_HEADING_STYLE,
             background="#2b2b2b",
             foreground="#e8e8e8",
             relief="flat",
             borderwidth=0,
-            font=("Segoe UI", FILE_FONT_SIZE, "bold"),
+            font=(FILE_FONT_FAMILY, FILE_FONT_SIZE, "bold"),
         )
         style.map(
-            "Results.Treeview",
+            TREE_STYLE,
             background=[("selected", "#3a3a3a")],
             foreground=[("selected", "#ffffff")],
         )
         style.map(
-            "Results.Treeview.Heading",
+            TREE_HEADING_STYLE,
             background=[("active", "#3a3a3a")],
         )
 
