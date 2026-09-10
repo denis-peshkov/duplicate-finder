@@ -70,7 +70,7 @@ Download binaries from [Releases](https://github.com/denis-peshkov/duplicate-fin
 
 | Asset | Platform |
 |-------|----------|
-| `duplicate-finder-{version}-x86_64-pc-windows-msvc.zip` | Windows x64 (`DuplicateFinder.exe`) |
+| `duplicate-finder-{version}-x86_64-pc-windows-msvc.zip` | Windows x64 (`duplicate-finder.exe`) |
 | `duplicate-finder-{version}-aarch64-apple-darwin.tar.gz` | macOS Apple Silicon |
 | `duplicate-finder-{version}-x86_64-apple-darwin.tar.gz` | macOS Intel |
 | `duplicate-finder-{version}-src.tar.gz` | Source archive |
@@ -106,8 +106,8 @@ pip install pyinstaller
 pyinstaller duplicate_finder.spec
 ```
 
-- Windows: `dist/DuplicateFinder.exe`
-- macOS: `dist/DuplicateFinder`
+- Windows: `dist/duplicate-finder.exe`
+- macOS: `dist/duplicate-finder`
 
 ## Versioning
 
