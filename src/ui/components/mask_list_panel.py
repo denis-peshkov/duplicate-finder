@@ -18,6 +18,7 @@ class MaskListPanel(ctk.CTkFrame):
         label: str = "Exclude masks:",
         on_change: Optional[Callable[[], None]] = None,
     ):
+        """Создать панель списка масок с полем ввода и кнопками Add/Remove."""
         super().__init__(parent)
         self.on_change = on_change
         self._masks: list[str] = []
@@ -77,10 +78,12 @@ class MaskListPanel(ctk.CTkFrame):
         self._notify_change()
 
     def _notify_change(self) -> None:
+        """Вызвать колбэк on_change при изменении списка."""
         if self.on_change:
             self.on_change()
 
     def _refresh_listbox(self) -> None:
+        """Перерисовать список масок и состояние Remove."""
         self.listbox.configure(state="normal")
         self.listbox.delete("1.0", "end")
         for index, mask in enumerate(self._masks):
@@ -92,6 +95,7 @@ class MaskListPanel(ctk.CTkFrame):
         )
 
     def _on_list_click(self, event: object) -> None:
+        """Выделить маску по клику в списке."""
         try:
             index = int(self.listbox.index(f"@{event.x},{event.y}").split(".")[0]) - 1  # type: ignore[attr-defined]
         except Exception:  # noqa: BLE001
@@ -101,6 +105,7 @@ class MaskListPanel(ctk.CTkFrame):
             self._refresh_listbox()
 
     def _add_mask(self) -> None:
+        """Добавить маску из поля ввода в список."""
         mask = self.mask_entry.get().strip()
         if not mask:
             return
@@ -112,6 +117,7 @@ class MaskListPanel(ctk.CTkFrame):
         self._notify_change()
 
     def _remove_selected(self) -> None:
+        """Удалить выделенную маску из списка."""
         if self._selected_index is None:
             return
         if 0 <= self._selected_index < len(self._masks):

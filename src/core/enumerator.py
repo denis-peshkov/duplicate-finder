@@ -45,6 +45,7 @@ def format_list_item(path: Path, is_folder: bool) -> str:
 
 
 def _is_image(path: Path) -> bool:
+    """Проверить, что расширение файла относится к изображениям."""
     return path.suffix.lower() in IMAGE_EXTENSIONS
 
 
@@ -71,6 +72,7 @@ def matches_exclude_mask(path: Path, masks: Iterable[str]) -> bool:
 
 
 def _normalize_masks(masks: Iterable[str] | None) -> list[str]:
+    """Нормализовать список масок: trim и отбросить пустые."""
     return [mask.strip() for mask in (masks or []) if mask and mask.strip()]
 
 
@@ -169,6 +171,7 @@ def _walk_directory(
     include_masks: list[str],
     exclude_masks: list[str],
 ) -> None:
+    """Обойти каталог и добавить подходящие файлы в entries."""
     if include_subfolders:
         iterator = directory.rglob("*")
     else:
@@ -193,6 +196,7 @@ def _walk_directory(
 
 
 def _make_entry(path: Path, source: ListSource) -> FileEntry:
+    """Создать FileEntry по пути и источнику списка."""
     stat = path.stat()
     return FileEntry(
         path=path.resolve(),

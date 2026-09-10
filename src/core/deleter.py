@@ -87,6 +87,7 @@ def delete_to_recycle_bin(
 
 
 def _resolve_path(path: Path) -> Path:
+    """Вернуть абсолютный путь или исходный при ошибке resolve."""
     try:
         return path.resolve()
     except OSError:
@@ -144,6 +145,7 @@ def remove_empty_folders(
     last_emit_at = 0.0
 
     def emit(folder: Path, *, force: bool = False) -> None:
+        """Отправить throttled-прогресс очистки пустых папок."""
         nonlocal last_emit_at
         if not progress_callback:
             return

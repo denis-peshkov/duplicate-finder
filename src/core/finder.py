@@ -26,6 +26,7 @@ class DuplicateFinder:
         progress_callback: Callable[[ScanProgress], None] | None = None,
         cancel_check: Callable[[], bool] | None = None,
     ):
+        """Создать поисковик с конфигом и опциональными колбэками прогресса/отмены."""
         self.config = config
         self.progress_callback = progress_callback
         self.cancel_check = cancel_check
@@ -45,6 +46,7 @@ class DuplicateFinder:
         total_files_scanned: int = 0,
         canceled: bool = False,
     ) -> ScanResult:
+        """Собрать ScanResult с корнями поиска из конфига."""
         roots = list(self.config.list1_paths)
         if self.config.mode == "two_lists":
             roots.extend(self.config.list2_paths)
@@ -57,9 +59,11 @@ class DuplicateFinder:
         )
 
     def _is_canceled(self) -> bool:
+        """Проверить флаг отмены сканирования."""
         return bool(self.cancel_check and self.cancel_check())
 
     def _emit(self, *, force: bool = False, **kwargs: object) -> None:
+        """Отправить throttled-снимок прогресса в UI-колбэк."""
         for key, value in kwargs.items():
             setattr(self._progress, key, value)
 
@@ -88,6 +92,7 @@ class DuplicateFinder:
         source: str,
         list_label: str,
     ) -> list[FileEntry]:
+        """Перечислить файлы одного списка путей с масками."""
         self._emit(
             force=True,
             phase="enumerating",
@@ -97,6 +102,7 @@ class DuplicateFinder:
         )
 
         def on_file(entry: FileEntry) -> None:
+            """Обновить прогресс при обнаружении очередного файла."""
             self._progress.files_scanned += 1
             self._emit(
                 current_path=str(entry.path),
@@ -122,6 +128,7 @@ class DuplicateFinder:
         return entries
 
     def _scan_filename(self) -> ScanResult:
+        """Найти дубликаты по имени файла."""
         list1 = self._collect_list(
             [str(path) for path in self.config.list1_paths],
             self.config.include_subfolders1,
@@ -157,6 +164,7 @@ class DuplicateFinder:
         entries: list[FileEntry],
         min_count: int,
     ) -> list[DuplicateGroup]:
+        """Сгруппировать файлы с одинаковым именем."""
         buckets: dict[str, list[FileEntry]] = defaultdict(list)
         for entry in entries:
             if self._is_canceled():
@@ -175,6 +183,7 @@ class DuplicateFinder:
         list1: list[FileEntry],
         list2: list[FileEntry],
     ) -> list[DuplicateGroup]:
+        """Сопоставить одноимённые файлы между двумя списками."""
         names_in_list2: dict[str, list[FileEntry]] = defaultdict(list)
         for entry in list2:
             names_in_list2[entry.path.name.lower()].append(entry)
@@ -199,6 +208,7 @@ class DuplicateFinder:
         return groups
 
     def _scan_exact(self) -> ScanResult:
+        """Найти exact-дубликаты по размеру и хешу."""
         list1 = self._collect_list(
             [str(path) for path in self.config.list1_paths],
             self.config.include_subfolders1,
@@ -242,6 +252,7 @@ class DuplicateFinder:
         return self._make_result(groups=groups, total_files_scanned=len(all_entries))
 
     def _hash_entries(self, entries: list[FileEntry]) -> list[FileEntry]:
+        """Отобрать кандидатов и посчитать для них хеши."""
         candidates = self._select_hash_candidates(entries)
 
         self._emit(
@@ -335,6 +346,7 @@ class DuplicateFinder:
         entries: list[FileEntry],
         min_count: int,
     ) -> list[DuplicateGroup]:
+        """Сгруппировать файлы с одинаковым полным хешем."""
         buckets: dict[str, list[FileEntry]] = defaultdict(list)
         for entry in entries:
             if entry.hash_value:
@@ -352,6 +364,7 @@ class DuplicateFinder:
         list1: list[FileEntry],
         list2: list[FileEntry],
     ) -> list[DuplicateGroup]:
+        """Сопоставить хеш-группы между двумя списками."""
         hashes_in_list2: dict[str, list[FileEntry]] = defaultdict(list)
         for entry in list2:
             if entry.hash_value:

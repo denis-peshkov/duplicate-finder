@@ -29,6 +29,7 @@ class PageSearch(ctk.CTkFrame):
         on_search: Optional[Callable[[SearchConfig], None]] = None,
         on_cancel: Optional[Callable[[], None]] = None,
     ):
+        """Создать страницу настройки поиска и загрузить значения из settings."""
         super().__init__(parent, fg_color="transparent")
         self.settings = settings
         self.on_search = on_search
@@ -38,6 +39,7 @@ class PageSearch(ctk.CTkFrame):
         self._load_from_settings()
 
     def _create_widgets(self) -> None:
+        """Создать виджеты страницы настройки поиска."""
         # Footer снизу, контент сверху — чтобы доп. список не уезжал под кнопки
         footer = ctk.CTkFrame(self, fg_color="transparent")
         footer.pack(side="bottom", fill="x", padx=12, pady=(0, 12))
@@ -189,6 +191,7 @@ class PageSearch(ctk.CTkFrame):
             self.list1_panel.set_list_height(120)
 
     def _load_from_settings(self) -> None:
+        """Заполнить UI значениями из settings."""
         self.mode_var.set(self.settings.search_mode)
         self.match_var.set(self.settings.match_type)
         self.images_only_var.set(self.settings.images_only)
@@ -241,6 +244,7 @@ class PageSearch(ctk.CTkFrame):
         )
 
     def _handle_search(self) -> None:
+        """Собрать конфиг и запустить поиск."""
         config = self.build_config()
         if config is None:
             return
@@ -249,14 +253,18 @@ class PageSearch(ctk.CTkFrame):
             self.on_search(config)
 
     def _handle_cancel(self) -> None:
+        """Закрыть приложение со страницы поиска."""
         if self.on_cancel:
             self.on_cancel()
 
     def _show_about(self) -> None:
+        """Открыть окно About."""
         show_about(self)
 
     def _show_search_help(self) -> None:
+        """Показать справку по настройке поиска."""
         show_info_dialog(self, "Search", HELP_SEARCH, width=520)
 
     def _show_two_lists_help(self) -> None:
+        """Показать справку по режиму двух списков."""
         show_info_dialog(self, "Two lists", HELP_TWO_LISTS, width=520)

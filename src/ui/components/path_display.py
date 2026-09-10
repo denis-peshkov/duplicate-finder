@@ -11,6 +11,7 @@ class PathDisplay(ctk.CTkTextbox):
     """Многострочное поле для длинных путей с автопереносом."""
 
     def __init__(self, master: ctk.CTkBaseClass, height: int = 96, **kwargs):
+        """Создать виджет многострочного отображения пути."""
         super().__init__(
             master,
             height=height,

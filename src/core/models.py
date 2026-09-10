@@ -49,6 +49,7 @@ class DuplicateGroup:
     keep_suggestion: Path | None = None
 
     def __post_init__(self) -> None:
+        """Предложить к сохранению файл с самым ранним mtime."""
         if self.files and self.keep_suggestion is None:
             oldest = min(self.files, key=lambda entry: entry.mtime)
             self.keep_suggestion = oldest.path
@@ -80,10 +81,12 @@ class ScanResult:
 
     @property
     def duplicate_file_count(self) -> int:
+        """Число лишних копий (все файлы групп минус по одному keep)."""
         return sum(max(0, len(group.files) - 1) for group in self.groups)
 
     @property
     def reclaimable_bytes(self) -> int:
+        """Суммарный размер файлов, которые можно удалить как дубликаты."""
         total = 0
         for group in self.groups:
             if group.keep_suggestion is None:

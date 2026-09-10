@@ -25,6 +25,7 @@ class DeleteProgressWindow(ctk.CTkToplevel):
         *,
         initial_phase: str = "files",
     ):
+        """Открыть модальное окно прогресса удаления файлов или пустых папок."""
         super().__init__(parent)
         self.title("Deleting...")
         self.geometry("560x360")
@@ -112,6 +113,7 @@ class DeleteProgressWindow(ctk.CTkToplevel):
         self.after(50, self._activate_modal)
 
     def _activate_modal(self) -> None:
+        """Поднять окно удаления и захватить фокус."""
         try:
             self.lift()
             self.focus_force()
@@ -121,9 +123,11 @@ class DeleteProgressWindow(ctk.CTkToplevel):
 
     @property
     def canceled(self) -> bool:
+        """True, если пользователь запросил отмену удаления."""
         return self._canceled
 
     def request_cancel(self) -> None:
+        """Отменить удаление и уведомить колбэк on_cancel."""
         if self._canceled:
             return
         self._canceled = True
@@ -134,6 +138,7 @@ class DeleteProgressWindow(ctk.CTkToplevel):
             self._on_cancel_callback()
 
     def _start_indeterminate(self) -> None:
+        """Включить неопределённый режим прогресс-бара."""
         if self._indeterminate:
             return
         self._indeterminate = True
@@ -145,6 +150,7 @@ class DeleteProgressWindow(ctk.CTkToplevel):
         self.percent_label.configure(text="")
 
     def _stop_indeterminate(self) -> None:
+        """Вернуть прогресс-бар в determinate-режим."""
         if not self._indeterminate:
             return
         self._indeterminate = False
@@ -181,6 +187,7 @@ class DeleteProgressWindow(ctk.CTkToplevel):
         )
 
     def update_progress(self, progress: DeleteProgress) -> None:
+        """Обновить фазу, счётчики и текущий путь по DeleteProgress."""
         if self._canceled and not progress.canceled:
             self.phase_label.configure(text="Canceling...")
             return
@@ -219,6 +226,7 @@ class DeleteProgressWindow(ctk.CTkToplevel):
         self.path_display.set_path(progress.current_path or "")
 
     def finish(self) -> None:
+        """Завершить отображение прогресса и отключить Cancel."""
         try:
             self.grab_release()
         except Exception:  # noqa: BLE001
