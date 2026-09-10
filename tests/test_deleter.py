@@ -116,3 +116,67 @@ def test_remove_empty_folders_keeps_folder_with_files(tmp_path: Path) -> None:
     assert failed == []
     assert mocked.call_count == 0
     assert (folder / "stay.txt").exists()
+
+
+def test_delete_records_failures(tmp_path: Path) -> None:
+    path = tmp_path / "blocked.txt"
+    path.write_text("x", encoding="utf-8")
+
+    with patch("src.core.deleter.send2trash", side_effect=OSError("denied")):
+        result = delete_to_recycle_bin([path])
+
+    assert result.deleted == []
+    assert len(result.failed) == 1
+    assert result.failed[0][0] == path
+    assert "denied" in result.failed[0][1]
+
+
+def test_remove_empty_folders_no_roots() -> None:
+    removed, failed = remove_empty_folders(roots=[])
+    assert removed == []
+    assert failed == []
+
+
+def test_remove_empty_folders_skips_non_dir_and_duplicates(tmp_path: Path) -> None:
+    root = tmp_path / "scan_root"
+    (root / "empty").mkdir(parents=True)
+    missing = tmp_path / "missing_root"
+
+    def fake_trash(path: str) -> None:
+        Path(path).rmdir()
+
+    with patch("src.core.deleter.send2trash", side_effect=fake_trash):
+        removed, failed = remove_empty_folders(roots=[root, root, missing])
+
+    assert not failed
+    assert (root / "empty") in removed
+
+
+def test_remove_empty_folders_can_cancel(tmp_path: Path) -> None:
+    root = tmp_path / "scan_root"
+    (root / "a").mkdir(parents=True)
+    (root / "b").mkdir(parents=True)
+
+    with patch("src.core.deleter.send2trash") as mocked:
+        removed, failed = remove_empty_folders(
+            roots=[root],
+            cancel_check=lambda: True,
+        )
+
+    assert removed == []
+    assert failed == []
+    assert mocked.call_count == 0
+
+
+def test_remove_empty_folders_records_trash_failure(tmp_path: Path) -> None:
+    root = tmp_path / "scan_root"
+    empty = root / "empty"
+    empty.mkdir(parents=True)
+
+    with patch("src.core.deleter.send2trash", side_effect=OSError("busy")):
+        removed, failed = remove_empty_folders(roots=[root])
+
+    assert removed == []
+    assert len(failed) == 1
+    assert failed[0][0] == empty
+    assert "busy" in failed[0][1]

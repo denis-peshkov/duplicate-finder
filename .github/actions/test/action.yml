@@ -42,6 +42,7 @@ runs:
           -Dsonar.sources=src
           -Dsonar.tests=tests
           -Dsonar.python.coverage.reportPaths=TestResults/coverage.xml
+          -Dsonar.coverage.exclusions=src/ui/**
           -Dsonar.verbose=true
       env:
         GITHUB_TOKEN: ${{ github.token }}
