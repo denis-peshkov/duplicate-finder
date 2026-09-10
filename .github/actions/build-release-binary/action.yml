@@ -27,10 +27,12 @@ runs:
         python-version: '3.12'
 
     - name: Set application version
+      if: inputs.publish_artifacts == 'true'
       shell: bash
       run: |
         set -euo pipefail
         VERSION="${{ inputs.version }}"
+        echo "Application version: ${VERSION}"
         perl -pi -e "s/^version = \".*\"/version = \"${VERSION}\"/" pyproject.toml
         perl -pi -e "s/^APP_VERSION = \".*\"/APP_VERSION = \"${VERSION}\"/" src/config/app_info.py
 
