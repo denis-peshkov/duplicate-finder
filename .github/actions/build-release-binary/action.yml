@@ -27,7 +27,6 @@ runs:
         python-version: '3.12'
 
     - name: Set application version
-      if: inputs.publish_artifacts == 'true'
       shell: bash
       run: |
         set -euo pipefail

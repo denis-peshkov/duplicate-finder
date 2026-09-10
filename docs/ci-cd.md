@@ -56,7 +56,7 @@ flowchart TD
 | `publish-release` | ubuntu-22.04 | push `master` | GitHub Release + checksums |
 | `publish-homebrew` | macos-latest | after release on `master` | homebrew-core PR / bump |
 
-On release builds (`publish_artifacts=true`), CI patches `pyproject.toml` and `APP_VERSION` in `src/config/app_info.py` before PyInstaller.
+Before PyInstaller, CI always patches `pyproject.toml` and `APP_VERSION` in `src/config/app_info.py` from the `version` job. Packaging/upload of `release-binary-*` still runs only when `publish_artifacts=true`.
 
 ---
 

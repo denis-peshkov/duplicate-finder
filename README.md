@@ -120,7 +120,7 @@ pyinstaller duplicate_finder.spec
 
 Preview branches publish Chocolatey and the Homebrew preview tap (no git tags). **Git tags** and **GitHub Release** run on **`master` only**. Details: [docs/ci-cd.md](docs/ci-cd.md).
 
-On release binary builds, CI substitutes `version` in `pyproject.toml` and `APP_VERSION` in `src/config/app_info.py` before PyInstaller.
+Before PyInstaller, CI always substitutes `version` in `pyproject.toml` and `APP_VERSION` in `src/config/app_info.py` from the `version` job.
 
 ## Settings
 
