@@ -94,32 +94,12 @@ jobs:
           minor: ${{ needs.version.outputs.minor }}
           tagtoken: ${{ secrets.TAGTOKEN }}
 
-  publish-release:
-    name: Publish Release
-    needs:
-      - version
-      - release-binaries
-      - push-tags
-    if: ${{ !failure() && !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/master' && needs.release-binaries.result == 'success' && needs.push-tags.result == 'success' }}
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: write
-      actions: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/publish-release
-        with:
-          version: ${{ needs.version.outputs.version }}
-          version_commit: ${{ needs.version.outputs.version_commit }}
-          prerelease: ${{ needs.version.outputs.prerelease }}
-
   publish-chocolatey:
     name: Publish Chocolatey
     needs:
       - version
       - release-binaries
-      - publish-release
-    if: ${{ !cancelled() && needs.release-binaries.result == 'success' && github.event_name == 'push' && ((github.ref == 'refs/heads/master' && needs.publish-release.result == 'success') || ((startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')) && needs.publish-release.result != 'failure')) }}
+    if: ${{ !failure() && !cancelled() && needs.release-binaries.result == 'success' && github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')) }}
     runs-on: windows-latest
     permissions:
       contents: read
@@ -149,6 +129,25 @@ jobs:
           version: ${{ needs.version.outputs.version }}
           commit_sha: ${{ needs.version.outputs.version_commit }}
           tagtoken: ${{ secrets.TAGTOKEN }}
+
+  publish-release:
+    name: Publish Release
+    needs:
+      - version
+      - release-binaries
+      - push-tags
+    if: ${{ !failure() && !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/master' && needs.release-binaries.result == 'success' && needs.push-tags.result == 'success' }}
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/publish-release
+        with:
+          version: ${{ needs.version.outputs.version }}
+          version_commit: ${{ needs.version.outputs.version_commit }}
+          prerelease: ${{ needs.version.outputs.prerelease }}
 
   publish-homebrew:
     name: Publish Homebrew

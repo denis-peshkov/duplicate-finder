@@ -11,9 +11,9 @@ Orchestrator: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
 On each **push** to `master`, `release/*`, or `hotfix/*`:
 
 - **`push-tags`** — **`master` only**
-- **`publish-release`** — after tags on **`master`**
-- **`publish-chocolatey`** — after GitHub Release on **`master`**; directly after binaries on release/hotfix
+- **`publish-chocolatey`** — master / release / hotfix
 - **`publish-homebrew-tap`** — release / hotfix only
+- **`publish-release`** — after tags on **`master`**
 - **`publish-homebrew`** — after GitHub Release on **`master`**
 
 | Composite action | What it publishes |
@@ -54,7 +54,7 @@ Package id: `duplicate-finder`. Template: [`distribution/chocolatey/duplicate-fi
 
 CI embeds `DuplicateFinder.exe` and registers PATH shim `duplicate-finder` via `Install-BinFile`.
 
-On **`master`**, Chocolatey publishes only after the matching GitHub Release exists, so `VERIFICATION.txt` can cite the release zip and `SHA256SUMS`. `iconUrl` uses jsDelivr with the release tag (`cdn.jsdelivr.net/gh/...@v{version}/...`), not `raw.githubusercontent.com`.
+On **`master`**, `VERIFICATION.txt` cites the GitHub Release zip and `SHA256SUMS`. `iconUrl` uses jsDelivr from `master` (`cdn.jsdelivr.net/gh/...@master/...`), not `raw.githubusercontent.com`.
 
 Secret: `CHOCOLATEY_API_KEY`.
 

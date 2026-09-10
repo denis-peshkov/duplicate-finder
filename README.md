@@ -115,10 +115,10 @@ pyinstaller duplicate_finder.spec
 
 | Branch | SemVer (example) | Git tags | GitHub Release | Chocolatey | Homebrew |
 |--------|------------------|----------|----------------|------------|----------|
-| `master` | `1.0.15` (stable) | `v1.0.15`, `v1.0`, `v1` | **Release** (binaries + source) | push after Release | core PR / bump |
+| `master` | `1.0.15` (stable) | `v1.0.15`, `v1.0`, `v1` | **Release** (binaries + source) | push (stable) | core PR / bump |
 | `release/*`, `hotfix/*` | `1.0.15-preview.3` | — | — | push (prerelease) | preview tap (`homebrew-preview-tap`) |
 
-Preview branches publish Chocolatey and the Homebrew preview tap (no git tags). **Git tags** and **GitHub Release** run on **`master` only**; on `master`, Chocolatey waits for that Release so `VERIFICATION.txt` URLs resolve. Details: [docs/ci-cd.md](docs/ci-cd.md).
+Preview branches publish Chocolatey and the Homebrew preview tap (no git tags). **Git tags** and **GitHub Release** run on **`master` only**. Details: [docs/ci-cd.md](docs/ci-cd.md).
 
 On release binary builds, CI substitutes `version` in `pyproject.toml` and `APP_VERSION` in `src/config/app_info.py` before PyInstaller.
 
