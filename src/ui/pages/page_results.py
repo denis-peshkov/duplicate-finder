@@ -679,6 +679,8 @@ class PageResults(ctk.CTkFrame):
                 )
                 result.folders_removed = folders_removed
                 result.folders_failed = folders_failed
+                if self._delete_cancel.is_set():
+                    result.canceled = True
             self._delete_queue.put(("done", result))
         except Exception as exc:
             logger.exception("Delete failed")
