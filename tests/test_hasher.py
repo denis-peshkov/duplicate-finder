@@ -11,10 +11,14 @@ def test_partial_and_full_hash_stable(tmp_path: Path) -> None:
     path = tmp_path / "data.bin"
     path.write_bytes(b"abc" * 100)
 
-    assert partial_hash(path) == partial_hash(path)
-    assert full_hash(path) == hash_file(path)
-    assert partial_hash(path)
-    assert hash_file(path)
+    first_partial = partial_hash(path)
+    second_partial = partial_hash(path)
+    assert first_partial
+    assert first_partial == second_partial
+
+    full = full_hash(path)
+    assert full
+    assert full == hash_file(path)
 
 
 def test_partial_hash_reads_tail_for_large_file(tmp_path: Path) -> None:
