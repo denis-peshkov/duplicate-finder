@@ -109,10 +109,12 @@ class MaskListPanel(ctk.CTkFrame):
         mask = self.mask_entry.get().strip()
         if not mask:
             return
-        if mask not in self._masks:
+        if mask in self._masks:
+            self._selected_index = self._masks.index(mask)
+        else:
             self._masks.append(mask)
+            self._selected_index = len(self._masks) - 1
         self.mask_entry.delete(0, "end")
-        self._selected_index = len(self._masks) - 1
         self._refresh_listbox()
         self._notify_change()
 
