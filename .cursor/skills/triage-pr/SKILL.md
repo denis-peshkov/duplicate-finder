@@ -133,7 +133,7 @@ Default: refresh remote base; **fail** if fetch cannot run. **`offline`** (user 
 
 ```bash
 BASE="${BASE:-master}"          # or: dev
-BRANCH="${BRANCH:-HEAD}"        # local: HEAD; named: hotfix/foo (origin/hotfix/foo → stripped to hotfix/foo)
+BRANCH="${BRANCH:-HEAD}"        # local: HEAD; named: foo | origin/foo (explicit origin/ kept as remote)
 OFFLINE=0                       # 1 when user passed "offline"
 
 if [[ "$OFFLINE" -eq 0 ]]; then
@@ -162,12 +162,16 @@ fi
 if [[ "$BRANCH" == "HEAD" ]]; then
   BRANCH_REF="HEAD"
 else
-  # Strip leading origin/ so fetch/ref never become origin/origin/…
-  BRANCH="${BRANCH#origin/}"
-  if git rev-parse --verify "$BRANCH" >/dev/null 2>&1; then
+  WANT_REMOTE=0
+  if [[ "$BRANCH" == origin/* ]]; then
+    # Explicit origin/foo → always remote tip (do not prefer a divergent local foo).
+    WANT_REMOTE=1
+    BRANCH="${BRANCH#origin/}"
+  fi
+  if [[ "$WANT_REMOTE" -eq 0 ]] && git rev-parse --verify "$BRANCH" >/dev/null 2>&1; then
     BRANCH_REF="$BRANCH"
   else
-    # Named branch not local — must resolve origin/<branch>. Do not swallow fetch errors.
+    # Remote tip (explicit origin/… or unprefixed name not found locally).
     if [[ "$OFFLINE" -eq 0 ]]; then
       if ! git fetch origin "$BRANCH"; then
         echo "error: git fetch origin $BRANCH failed — fix network/auth or retry with offline" >&2
