@@ -16,6 +16,7 @@
 - `2026-10-13` · pasted finding (pr-message/triage-pr fetch swallow) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
 - `2026-10-13` · pasted finding (resolve-target-version.sh:111–114 tag fallback) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
 - `2026-10-13` · pasted finding (update-changelog.mjs:191 isLibraryPath .py) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (update-changelog.test.mjs:110–114 v2.3.0) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
 
 **PR:** [#1](https://github.com/denis-peshkov/duplicate-finder/pull/1) (`BREAKING:` exe rename / `LICENSE.md` / `icon.png` / SemVer 2 / `clean_empty_folders` default).
 
@@ -68,6 +69,7 @@
 
 | # | Суть |
 |---|---|
+| ✅ #M7 collectDelta test tag | happy-path → существующий `v1.0.14` (не `v2.3.0`) |
 | ✅ #M6 isLibraryPath .py | `update-changelog.mjs`: Library включает `.py` (+ .NET extensions) |
 | ✅ #M5 resolve-target-version tag fallback | без preview-fallback; нет stable → `from_version=0.0.0` (+ changelog empty-tree) |
 | ✅ #M4 Skills silent git fetch | pr-message + triage-pr named branch: fail fetch unless `offline` |

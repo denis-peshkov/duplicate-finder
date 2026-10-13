@@ -108,7 +108,8 @@ describe('collectDelta', () => {
   });
 
   it('returns paths/subjects when baseline tag exists', () => {
-    const delta = collectDelta('2.3.0');
+    // Use a stable tag that exists in this repository (not a fictional SemVer).
+    const delta = collectDelta('1.0.14');
     assert.ok(Array.isArray(delta.paths));
     assert.ok(Array.isArray(delta.subjects));
   });
