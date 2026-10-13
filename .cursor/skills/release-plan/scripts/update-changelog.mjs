@@ -188,7 +188,7 @@ function isLibraryPath(path) {
   const top = path.split('/')[0] || '';
   if (/^(Sample|samples?|demo|examples?)/i.test(top)) return false;
   if (path.startsWith('docs/') || path.startsWith('.github/') || path.startsWith('.cursor/')) return false;
-  return /\.(cs|csproj|fs|fsproj|vb|vbproj|nuspec)$/i.test(path);
+  return /\.(py|cs|csproj|fs|fsproj|vb|vbproj|nuspec)$/i.test(path);
 }
 
 /**
