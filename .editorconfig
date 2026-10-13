@@ -6,11 +6,16 @@ root = true
 # Don't use tabs for indentation.
 [*]
 indent_style = space
-charset = utf-8-bom
+# utf-8 without BOM — safe for shebang scripts (*.sh) and most text.
+charset = utf-8
 end_of_line = lf
 trim_trailing_whitespace = true
 insert_final_newline = true
 # (Please don't specify an indent_size here; that has too many unintended consequences.)
+
+# .NET: UTF-8 with BOM (repo convention for .cs / .csproj / .sln)
+[*.{cs,csproj,sln}]
+charset = utf-8-bom
 
 # Code files
 [*.cs]
