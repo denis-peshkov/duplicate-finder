@@ -40,6 +40,7 @@ Published by `publish-release`:
 |-------|----------|
 | `duplicate-finder-{version}-src.tar.gz` | Full source (Homebrew) |
 | `duplicate-finder-{version}-x86_64-pc-windows-msvc.zip` | Windows x64 (`duplicate-finder.exe`) |
+| `duplicate-finder-{version}-x86_64-unknown-linux-gnu.tar.gz` | Linux x64 |
 | `duplicate-finder-{version}-aarch64-apple-darwin.tar.gz` | macOS Apple Silicon |
 | `duplicate-finder-{version}-x86_64-apple-darwin.tar.gz` | macOS Intel |
 | `SHA256SUMS` | Checksums |

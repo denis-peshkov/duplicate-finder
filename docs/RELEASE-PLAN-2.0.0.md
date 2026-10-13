@@ -8,7 +8,7 @@
 >
 > **Предыдущий план:** —
 >
-> Дельта: `origin/master...HEAD` — **36** коммита · **111** файлов · **+10158 / −362**. Open: C0 H1 M2 L1
+> Дельта: `origin/master...HEAD` — **53** коммита · **118** файлов · **+10688 / −368**. Open: C0 H0 M2 L1
 
 **CodeRabbit:**
 - `2026-10-13` · pasted finding (GitVersion.yml:102 BranchName) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
@@ -37,10 +37,6 @@
 ---
 
 ## Высокий (логика / licensing / auth model)
-
-### ⬜ H1. Version substitution всё ещё за `publish_artifacts`
-
-В `.github/actions/build-release-binary/action.yml` шаг **Set application version** остаётся под `if: inputs.publish_artifacts == 'true'`, хотя коммит/README заявляют подстановку **всегда** перед PyInstaller. `docs/ci-cd.md` описывает старое поведение. Нужно либо снять `if` у шага версии, либо вернуть README в соответствие с action.
 
 ---
 
@@ -81,6 +77,7 @@
 
 | # | Суть |
 |---|---|
+| ✅ #H1 version always before PyInstaller | `Set application version` без `publish_artifacts`; docs/ci-cd.md = README |
 | ✅ #H2 breaking-gate fork write | `pull_request_target` + checkout base only; fetch `pull/*/head` for diff; approval logic unchanged |
 | ✅ #L3 rulesets README push-secrets | draft-only; fallback → secret scanning / push protection (не .gitignore / branch-policy) |
 | ✅ #M15 push-tags TAGTOKEN vs checkout | `persist-credentials: false` + unset `.extraheader` before TAGTOKEN remote (как backmerge) |
@@ -104,6 +101,8 @@
 | ✅ Exe / Chocolatey rename | `duplicate_finder.spec`, `chocolateyinstall.ps1`, README assets → `duplicate-finder` |
 | ✅ LICENSE.md / icon.png | `LICENSE`→`LICENSE.md`, `duplicate-finder-icon.png`→`icon.png`, nuspec URLs |
 | ✅ GitVersion 6 / next 2.0.0 | Конфиг GV6, `next-version: 2.0.0`, digits в имени ветки игнорируются |
+| ✅ Linux x64 release matrix | CI matrix + PyInstaller: `x86_64-unknown-linux-gnu` (ubuntu-latest, `python3-tk` deps); README / ci-cd / CHANGELOG / distribution (WT) |
+| ✅ Upstream branch create restrict | ruleset: contributors cannot push arbitrary upstream branches |
 | ✅ CI hygiene | rulesets, breaking-gate, triage workflow, labels, issue/PR templates, backmerge |
 | ✅ Test coverage | Расширены `test_deleter` / `test_enumerator` / `test_finder` / `test_hasher` / `test_settings` |
 
@@ -115,13 +114,13 @@
 - Корни cleanup не удаляются; обход `os.walk(..., topdown=False)`; ошибки walk пишутся в `folders_failed`.
 - Settings: неизвестные ключи TOML игнорируются; новые поля имеют defaults.
 - Recycle Bin через `send2trash` и для файлов, и для пустых папок.
+- Release binaries: Win / Linux x64 / macOS arm64+x64 (matrix ×4).
 
 ---
 
 ## Приоритет фиксов
 
-1. **H1** — согласовать version substitution (action ↔ README ↔ ci-cd.md).
-2. **M1** / **M2** — обновить README (SemVer-примеры + Settings keys).
-3. **L1** — alias `matches_exclude_mask` (по желанию в этом релизе).
+1. **M1** / **M2** — обновить README (SemVer-примеры + Settings keys).
+2. **L1** — alias `matches_exclude_mask` (по желанию в этом релизе).
 
 Кросс-релизная очередь: [`docs/TO-DO.md`](TO-DO.md).

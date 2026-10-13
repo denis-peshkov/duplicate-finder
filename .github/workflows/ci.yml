@@ -54,6 +54,9 @@ jobs:
           - target: x86_64-pc-windows-msvc
             os: windows-latest
             exe: duplicate-finder.exe
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            exe: duplicate-finder
           - target: aarch64-apple-darwin
             os: macos-latest
             exe: duplicate-finder

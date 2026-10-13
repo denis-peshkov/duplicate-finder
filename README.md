@@ -71,6 +71,7 @@ Download binaries from [Releases](https://github.com/denis-peshkov/duplicate-fin
 | Asset | Platform |
 |-------|----------|
 | `duplicate-finder-{version}-x86_64-pc-windows-msvc.zip` | Windows x64 (`duplicate-finder.exe`) |
+| `duplicate-finder-{version}-x86_64-unknown-linux-gnu.tar.gz` | Linux x64 |
 | `duplicate-finder-{version}-aarch64-apple-darwin.tar.gz` | macOS Apple Silicon |
 | `duplicate-finder-{version}-x86_64-apple-darwin.tar.gz` | macOS Intel |
 | `duplicate-finder-{version}-src.tar.gz` | Source archive |
@@ -85,7 +86,7 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 ```
 
-On macOS you also need Tk: `brew install python-tk@3.12`.
+On macOS you also need Tk: `brew install python-tk@3.12`. On Linux: `sudo apt install python3-tk` (or the equivalent for your distro).
 
 ## Run
 

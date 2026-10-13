@@ -12,7 +12,8 @@ GitHub Releases: https://github.com/denis-peshkov/duplicate-finder/releases
 - GitHub rulesets for `master`, `dev`, `release`/`hotfix`, release tags, secret push-block, and `homebrew-preview-tap`.
 - Added `breaking-gate`, `branch-policy`, `backmerge-master-to-dev`, and automated PR triage workflows.
 - Issue/PR templates, label snapshot (`LABELS.yml` / `LABELS.md`), and Chocolatey publish/verification path updates for `duplicate-finder` / `icon.png`.
-- PyInstaller artifact name standardized to `duplicate-finder` (Windows `.exe` / macOS binary).
+- PyInstaller artifact name standardized to `duplicate-finder` (Windows `.exe` / Linux / macOS binary).
+- CI release matrix includes Linux x64 (`x86_64-unknown-linux-gnu` tar.gz on GitHub Releases).
 
 ### Versioning
 

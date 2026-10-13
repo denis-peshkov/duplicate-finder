@@ -19,10 +19,11 @@ flowchart TD
   V["version<br/>GitVersion"]
   TEST["test<br/>pytest"]
 
-  subgraph matrix["release-binaries (matrix x 3)"]
+  subgraph matrix["release-binaries (matrix x 4)"]
     M1["windows-msvc · windows-latest"]
-    M2["aarch64-macos · macos-latest"]
-    M3["x86_64-macos · macos-15-intel"]
+    M2["linux-gnu · ubuntu-latest"]
+    M3["aarch64-macos · macos-latest"]
+    M4["x86_64-macos · macos-15-intel"]
   end
 
   PT["push-tags<br/>master only"]
@@ -49,14 +50,14 @@ flowchart TD
 |-----|--------|------|------|
 | `version` | ubuntu-latest | always | GitVersion → `version`, `channel`, `prerelease` |
 | `test` | ubuntu-latest | after version | `pytest` + SonarCloud scan |
-| `release-binaries` | matrix Win/macOS | after test | PyInstaller; upload `release-binary-*` on push to release branches |
+| `release-binaries` | matrix Win/Linux/macOS | after test | PyInstaller; upload `release-binary-*` on push to release branches |
 | `push-tags` | ubuntu-22.04 | push `master` | tags `v{version}`, `v{X.Y}`, `v{X}` |
 | `publish-chocolatey` | windows-latest | push master/release/hotfix | pack + push `.nupkg` |
 | `publish-homebrew-tap` | ubuntu-22.04 | push release/hotfix | branch `homebrew-preview-tap` |
 | `publish-release` | ubuntu-22.04 | push `master` | GitHub Release + checksums |
 | `publish-homebrew` | macos-latest | after release on `master` | homebrew-core PR / bump |
 
-Before PyInstaller, CI patches `pyproject.toml` and `APP_VERSION` in `src/config/app_info.py` from the `version` job only when packaging release artifacts (`publish_artifacts=true` on push to `master` / `release/*` / `hotfix/*`). Pull requests build with the repo version as-is and do not publish Chocolatey or Homebrew.
+Before PyInstaller, CI always patches `pyproject.toml` and `APP_VERSION` in `src/config/app_info.py` from the `version` job (including pull requests). Packaging and upload of `release-binary-*` artifacts (`publish_artifacts=true`) still run only on push to `master` / `release/*` / `hotfix/*`. Pull requests do not publish Chocolatey or Homebrew.
 
 ---
 
