@@ -77,6 +77,8 @@ class ScanResult:
     total_files_scanned: int = 0
     canceled: bool = False
     search_mode: SearchMode = "single_list"
+    list1_roots: list[Path] = field(default_factory=list)
+    list2_roots: list[Path] = field(default_factory=list)
     search_roots: list[Path] = field(default_factory=list)
 
     @property

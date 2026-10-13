@@ -9,11 +9,42 @@ import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Iterable
 
 from send2trash import send2trash
 
 logger = logging.getLogger(__name__)
+
+
+def resolve_empty_folder_roots(
+    *,
+    search_mode: str,
+    list1_roots: list[Path],
+    list2_roots: list[Path],
+    delete_mode: str,
+    selected_sources: Iterable[str] | None = None,
+) -> list[Path]:
+    """
+    Корни для очистки пустых папок.
+
+    Один список — только File List 1.
+    Два списка — List 1/2 по radio; Custom — списки отмеченных файлов.
+    """
+    if search_mode != "two_lists":
+        return list(list1_roots)
+
+    if delete_mode == "list1":
+        return list(list1_roots)
+    if delete_mode == "list2":
+        return list(list2_roots)
+
+    sources = set(selected_sources or ())
+    roots: list[Path] = []
+    if "list1" in sources:
+        roots.extend(list1_roots)
+    if "list2" in sources:
+        roots.extend(list2_roots)
+    return roots
 
 
 @dataclass

@@ -47,15 +47,20 @@ class DuplicateFinder:
         canceled: bool = False,
     ) -> ScanResult:
         """Собрать ScanResult с корнями поиска из конфига."""
-        roots = list(self.config.list1_paths)
-        if self.config.mode == "two_lists":
-            roots.extend(self.config.list2_paths)
+        list1_roots = list(self.config.list1_paths)
+        list2_roots = (
+            list(self.config.list2_paths)
+            if self.config.mode == "two_lists"
+            else []
+        )
         return ScanResult(
             groups=groups or [],
             total_files_scanned=total_files_scanned,
             canceled=canceled,
             search_mode=self.config.mode,
-            search_roots=roots,
+            list1_roots=list1_roots,
+            list2_roots=list2_roots,
+            search_roots=list1_roots + list2_roots,
         )
 
     def _is_canceled(self) -> bool:

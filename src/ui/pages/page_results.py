@@ -22,8 +22,9 @@ from src.core.deleter import (
     DeleteResult,
     delete_to_recycle_bin,
     remove_empty_folders,
+    resolve_empty_folder_roots,
 )
-from src.core.models import DuplicateGroup, FileEntry, ScanResult
+from src.core.models import DuplicateGroup, FileEntry, ListSource, ScanResult
 from src.ui.about_window import show_about
 from src.ui.delete_progress_window import DeleteProgressWindow
 from src.ui.info_dialog import show_info_dialog
@@ -711,6 +712,36 @@ class PageResults(ctk.CTkFrame):
         """Все отмеченные файлы по всем сетам."""
         return sorted(self._checked_paths, key=lambda p: str(p).lower())
 
+    def _sources_for_paths(
+        self,
+        paths: list[Path],
+    ) -> set[ListSource]:
+        """Источники (list1/list2) для отмеченных путей."""
+        if not self._result or not paths:
+            return set()
+        wanted = set(paths)
+        sources: set[ListSource] = set()
+        for group in self._result.groups:
+            for entry in group.files:
+                if entry.path in wanted:
+                    sources.add(entry.source)
+        return sources
+
+    def _empty_folder_roots_for_cleanup(
+        self,
+        selected: list[Path],
+    ) -> list[Path]:
+        """Корни очистки пустых папок по режиму и выбранному списку."""
+        if not self._result:
+            return []
+        return resolve_empty_folder_roots(
+            search_mode=self._result.search_mode,
+            list1_roots=self._result.list1_roots,
+            list2_roots=self._result.list2_roots,
+            delete_mode=self._delete_mode.get(),
+            selected_sources=self._sources_for_paths(selected),
+        )
+
     def _handle_next(self) -> None:
         """Запустить удаление выбранных дубликатов."""
         if not self._result:
@@ -728,6 +759,17 @@ class PageResults(ctk.CTkFrame):
             )
             return
 
+        empty_roots: list[Path] = []
+        if clean_empty:
+            empty_roots = self._empty_folder_roots_for_cleanup(selected)
+            if not empty_roots:
+                messagebox.showinfo(
+                    "Duplicate Finder",
+                    "Choose Delete from File List 1 or 2, or select "
+                    "files from a list, to clean empty folders.",
+                )
+                return
+
         if selected:
             preview = "\n".join(str(path) for path in selected[:10])
             extra = (
@@ -736,7 +778,8 @@ class PageResults(ctk.CTkFrame):
                 else ""
             )
             clean_note = (
-                "\n\nEmpty folders under search paths will also be cleaned."
+                "\n\nEmpty folders under the target list "
+                "will also be cleaned."
                 if clean_empty
                 else ""
             )
@@ -751,24 +794,30 @@ class PageResults(ctk.CTkFrame):
         else:
             confirmed = messagebox.askyesno(
                 "Confirm cleanup",
-                "Clean empty folders under all search paths?",
+                "Clean empty folders under the target list path(s)?",
             )
         if not confirmed:
             return
 
-        self._start_delete(selected, clean_empty=clean_empty)
+        self._start_delete(
+            selected,
+            clean_empty=clean_empty,
+            empty_roots=empty_roots,
+        )
 
     def _start_delete(
         self,
         selected: list[Path],
         *,
         clean_empty: bool,
+        empty_roots: list[Path] | None = None,
     ) -> None:
         """Запустить фоновое удаление с окном прогресса."""
         self._delete_cancel.clear()
         self.next_btn.configure(state="disabled")
         self.back_btn.configure(state="disabled")
 
+        roots = list(empty_roots or [])
         self._delete_progress = DeleteProgressWindow(
             self.winfo_toplevel(),
             total=max(len(selected), 1),
@@ -783,7 +832,7 @@ class PageResults(ctk.CTkFrame):
 
         self._delete_thread = threading.Thread(
             target=self._delete_worker,
-            args=(selected, clean_empty),
+            args=(selected, clean_empty, roots),
             daemon=True,
             name="duplicate-delete",
         )
@@ -793,6 +842,7 @@ class PageResults(ctk.CTkFrame):
         self,
         selected: list[Path],
         clean_empty: bool,
+        empty_roots: list[Path],
     ) -> None:
         """Воркер удаления файлов и пустых папок."""
         try:
@@ -812,10 +862,9 @@ class PageResults(ctk.CTkFrame):
             else:
                 result = DeleteResult(deleted=[], failed=[], canceled=False)
 
-            if clean_empty and not result.canceled:
-                roots = self._result.search_roots if self._result else []
+            if clean_empty and empty_roots and not result.canceled:
                 folders_removed, folders_failed = remove_empty_folders(
-                    roots=roots,
+                    roots=empty_roots,
                     progress_callback=progress_callback,
                     cancel_check=self._delete_cancel.is_set,
                 )

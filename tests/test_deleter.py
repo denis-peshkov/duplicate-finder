@@ -5,7 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
 
-from src.core.deleter import DeleteProgress, delete_to_recycle_bin, remove_empty_folders
+from src.core.deleter import (
+    DeleteProgress,
+    delete_to_recycle_bin,
+    remove_empty_folders,
+    resolve_empty_folder_roots,
+)
 
 
 def test_delete_reports_progress(
@@ -247,3 +252,58 @@ def test_remove_empty_folders_records_walk_errors(
     assert len(failed) == 1
     assert failed[0][0] == root / "blocked"
     assert "permission denied" in failed[0][1]
+
+
+def test_resolve_empty_folder_roots_single_list() -> None:
+    list1 = [Path("/a"), Path("/b")]
+    list2 = [Path("/c")]
+    assert resolve_empty_folder_roots(
+        search_mode="single_list",
+        list1_roots=list1,
+        list2_roots=list2,
+        delete_mode="custom",
+        selected_sources={"list2"},
+    ) == list1
+
+
+def test_resolve_empty_folder_roots_two_lists_by_mode() -> None:
+    list1 = [Path("/a")]
+    list2 = [Path("/b"), Path("/c")]
+    assert resolve_empty_folder_roots(
+        search_mode="two_lists",
+        list1_roots=list1,
+        list2_roots=list2,
+        delete_mode="list1",
+    ) == list1
+    assert resolve_empty_folder_roots(
+        search_mode="two_lists",
+        list1_roots=list1,
+        list2_roots=list2,
+        delete_mode="list2",
+    ) == list2
+
+
+def test_resolve_empty_folder_roots_custom_uses_selected_sources() -> None:
+    list1 = [Path("/a")]
+    list2 = [Path("/b")]
+    assert resolve_empty_folder_roots(
+        search_mode="two_lists",
+        list1_roots=list1,
+        list2_roots=list2,
+        delete_mode="custom",
+        selected_sources=set(),
+    ) == []
+    assert resolve_empty_folder_roots(
+        search_mode="two_lists",
+        list1_roots=list1,
+        list2_roots=list2,
+        delete_mode="custom",
+        selected_sources={"list2"},
+    ) == list2
+    assert resolve_empty_folder_roots(
+        search_mode="two_lists",
+        list1_roots=list1,
+        list2_roots=list2,
+        delete_mode="custom",
+        selected_sources={"list1", "list2"},
+    ) == list1 + list2

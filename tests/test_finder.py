@@ -85,6 +85,9 @@ def test_exact_two_lists(
     assert len(result.groups) == 1
     sources = {entry.source for entry in result.groups[0].files}
     assert sources == {"list1", "list2"}
+    assert result.list1_roots == [list1]
+    assert result.list2_roots == [list2]
+    assert result.search_roots == [list1, list2]
 
 
 def test_exact_two_lists_skips_unique_sizes(
@@ -160,6 +163,8 @@ def test_exact_respects_include_and_exclude_masks(
     assert len(result.groups) == 1
     names = {entry.path.name for entry in result.groups[0].files}
     assert names == {"keep.bin", "also.bin"}
+    assert result.list1_roots == [root]
+    assert result.list2_roots == []
     assert result.search_roots == [root]
 
 
