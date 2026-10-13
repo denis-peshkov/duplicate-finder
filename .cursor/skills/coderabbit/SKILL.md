@@ -11,7 +11,8 @@ description: >-
   or quotes a CodeRabbit finding / agent review (incl. «объясни», footer nudge
   «After applying the fix…», docs.coderabbit.ai/cli, utm_source=ghpr): read this
   skill immediately; Phase 3 open C/H/M/L in the SAME turn as any explanation —
-  never explain-only without a plan row; fix = Phase 4 same turn (no silent code-only).
+  never explain-only without a plan row; code fix only on explicit «фикси»/fix →
+  Phase 4 (pasted finding alone does not authorize code changes).
 ---
 
 # CodeRabbit vs master
@@ -25,8 +26,9 @@ description: >-
   (`After applying the fix, consider running \`coderabbit review --agent\``,
   `docs.coderabbit.ai/cli`, `utm_source=ghpr`) — **read this skill immediately**
 - **Same turn:** Phase **3** (open C/H/M/L in RELEASE-PLAN) **before or with** any
-  explanation; Phase **4** when fixing. **Forbidden:** explain-only / chat-only
-  without writing the finding into the current plan
+  explanation. Phase **4** only on explicit «фикси» / fix / dismiss / close —
+  **not** on paste / «объясни» / footer alone. **Forbidden:** explain-only /
+  chat-only without writing the finding into the current plan
 
 ## Defaults
 
@@ -160,8 +162,18 @@ Rules:
 
 ### Phase 4 — Close / dismiss / fix (same turn — never code-only)
 
-**This skill owns quiet-fix prevention for CR findings** — not `release-plan`.  
-When the user closes, rejects, dismisses, **or asks to fix** («фикси», «fix», pasted CR finding / `utm_source=ghpr`):
+**This skill owns quiet-fix prevention for CR findings** — not `release-plan`.
+
+**Triggers (explicit only):**
+- Close / reject / dismiss a plan item (or «не надо» / won’t-fix).
+- Ask to fix code: «фикси», «fix», «правь», «apply the fix», etc.
+
+**Not Phase 4 triggers** (these are Phase **3** only — plan sync ± explain):
+- Pasting / quoting a CR finding or agent review alone.
+- «объясни» / explain / «что это» without a fix request.
+- Footer nudge (`After applying the fix…`, `docs.coderabbit.ai/cli`, `utm_source=ghpr`) alone.
+
+When a Phase **4** trigger applies:
 
 1. Skill [`release-plan`](../release-plan/SKILL.md) → **Ensure current RELEASE-PLAN** / **Re-check** (plan file + id rules only).
 2. **First** allocate/reuse id (open ⬜ optional if fixed immediately).
@@ -191,6 +203,6 @@ When the user closes, rejects, dismisses, **or asks to fix** («фикси», «
 - [ ] **Current** `docs/RELEASE-PLAN-X.Y.Z.md` updated in the same turn (open C/H/M/L); **not** `TO-DO.md` for CR findings
 - [ ] Header `**CodeRabbit:**` — **appended** new `-` bullet; previous kept; до `→` только дата/log/counts (без open/skipped ids); после `→` CURRENT synced on all bullets
 - [ ] **Did not** open a C/H/M/L row for CHANGELOG «looks published before tag» (dated `## vX.Y.Z` is by design)
-- [ ] Pasted finding + «объясни» → open C/H/M/L row written **before/with** the explanation (not explain-only)
+- [ ] Pasted finding + «объясни» → open C/H/M/L row written **before/with** the explanation (not explain-only); **no** code change unless user explicitly asked to fix
 - [ ] Any dismissed/closed/**fixed** item → `✅ #Id …` in this plan’s «Закрыто» **in the same turn as the code change** (no quiet fixes)
 - [ ] Any dismissed/closed item → `✅ #Id …` in this plan’s «Закрыто» before removal from open sections
