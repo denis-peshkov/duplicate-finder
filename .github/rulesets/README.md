@@ -29,6 +29,7 @@ Until rulesets are imported and set to **Active**, keep enforcing policy via `.g
 | [`03-protect-release-hotfix.json`](03-protect-release-hotfix.json) | `release/*`, `hotfix/*` | Create/update/delete only via admin bypass |
 | [`04-protect-release-tags.json`](04-protect-release-tags.json) | tags `v*` | Protect GitVersion / Release tags; create via admin / `TAGTOKEN` CI |
 | [`05-push-block-secrets.json`](05-push-block-secrets.json) | push (repo-wide) | **Often org-only** — may fail import on personal repos |
+| [`06-protect-homebrew-preview-tap.json`](06-protect-homebrew-preview-tap.json) | `homebrew-preview-tap` | CI-only formula branch; create/update/delete via admin / `TAGTOKEN` (no PR) |
 
 ## Bypass actors
 
@@ -42,9 +43,9 @@ Until rulesets are imported and set to **Active**, keep enforcing policy via `.g
 Error importing ruleset: The ruleset you are importing contains an invalid actor
 ```
 
-Back-merge and tag push must use `secrets.TAGTOKEN` (owner PAT with `repo` scope), not `GITHUB_TOKEN`. Plain `GITHUB_TOKEN` is blocked by Protect-dev / Protect release tags (`GH013`).
+Back-merge, tag push, and **homebrew-preview-tap** formula push must use `secrets.TAGTOKEN` (owner PAT with `repo` scope), not `GITHUB_TOKEN`. Plain `GITHUB_TOKEN` is blocked by Protect-dev / Protect release tags / Protect homebrew-preview-tap (`GH013`).
 
-**Tag push gotcha (same as back-merge):** `actions/checkout` can persist `GITHUB_TOKEN` as `http.https://github.com/.extraheader`, which overrides `git remote set-url` with `TAGTOKEN`. Tag push / back-merge use `persist-credentials: false` and unset that header before pushing with `TAGTOKEN`.
+**Tag / tap push gotcha (same as back-merge):** `actions/checkout` can persist `GITHUB_TOKEN` as `http.https://github.com/.extraheader`, which overrides `git remote set-url` with `TAGTOKEN`. Tag push / back-merge / preview-tap publish use `TAGTOKEN` (clone with token or `persist-credentials: false`) so the push authenticates as the owner PAT.
 
 ## After import
 
@@ -52,7 +53,8 @@ Back-merge and tag push must use `secrets.TAGTOKEN` (owner PAT with `repo` scope
 2. Confirm non-admin cannot push to `master` / create `release/foo`.
 3. Ensure Actions secret **`TAGTOKEN`** is set (owner PAT, `repo` scope) — same secret as `push-tags` / Homebrew / back-merge.
 4. Run **Back-merge master to dev** once — must push to `dev` via `TAGTOKEN` (admin bypass; no PR, no build wait).
-5. Optionally keep `branch-policy.yml` as a secondary signal.
+5. Confirm non-admin cannot push to `homebrew-preview-tap`; a push from `release/*` CI (`publish-homebrew-tap` + `TAGTOKEN`) still updates the formula.
+6. Optionally keep `branch-policy.yml` as a secondary signal.
 
 ## Not encoded in rulesets
 
