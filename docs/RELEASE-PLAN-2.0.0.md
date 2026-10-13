@@ -66,6 +66,7 @@
 
 | # | Суть |
 |---|---|
+| ✅ #L4 .coderabbit.yaml for Python | к shared path_instructions добавлены `**/*.py` и `tests/**` |
 | ✅ #L1 matches_exclude_mask alias | удалён; тесты на `matches_mask` (path pattern) |
 | ✅ #M2 README Settings keys | dismissed: ключи масок/cleanup не в README; UI + путь к `settings.toml` |
 | ✅ #M1 README SemVer examples | секция `## Versioning` убрана из README (для пользователей не нужна; каналы → `docs/ci-cd.md`) |

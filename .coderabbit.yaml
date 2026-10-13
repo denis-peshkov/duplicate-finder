@@ -35,6 +35,14 @@ reviews:
         Before posting a finding, check docs/TO-DO.md (open backlog). If the same
         theme is already listed there (by meaning, not exact wording), do not raise
         it again — treat it as tracked outside this PR. Prefer new issues only.
+    - path: "**/*.py"
+      instructions: |
+        Prefer findings on scan correctness (enumerator masks, hasher/finder),
+        delete / Recycle Bin / empty-folder cleanup (target roots by list mode),
+        and settings persistence. Follow .cursor/rules/python-pep8.mdc
+        (line length 120, one-arg-per-line defs). Require docstrings on public
+        APIs; do not require them on private helpers or tests. Prefer
+        logging.exception only inside except blocks.
     - path: "**/*.cs"
       instructions: |
         Prefer findings on EF integration: AddEntityFrameworkIntegration,
@@ -59,6 +67,11 @@ reviews:
         behavior and contracts over style/doc nits. Prefer pipeline/integration
         coverage when registration, behaviors, or ExactTransaction change — not
         only direct handler calls.
+    - path: "tests/**"
+      instructions: |
+        Do not require docstrings on tests. Prefer behavior and contracts over
+        style/doc nits. Prefer coverage for masks, empty-folder walk/cancel/
+        failures, and two-list hash candidates — not only happy paths.
     - path: ".cursor/**"
       instructions: |
         Skills and Cursor rules may use Russian section names / bilingual docs by design.
