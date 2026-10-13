@@ -1,0 +1,87 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# Shared defaults + shared folder path_instructions (globs, not product names).
+#
+# =============================================================================
+# How to trigger CodeRabbit on a GitHub PR (bot — not the local CLI)
+# =============================================================================
+# Comment on the PR:
+#
+#   @coderabbitai full review
+#
+# Full pass over the entire PR from scratch (not incremental).
+#
+# | Command | What it does |
+# |---|---|
+# | @coderabbitai full review | full review |
+# | @coderabbitai review | only new changes since last review |
+#
+# Ack status: "Full review triggered" → "Full review finished".
+# Docs: https://docs.coderabbit.ai/reference/review-commands
+#
+# Local CLI (`coderabbit` / .cursor/skills/coderabbit) is a separate run and does
+# not talk to the GitHub bot.
+#
+# auto_pause_after_reviewed_commits: 1 — after one auto review on this PR,
+# further pushes do not auto-review until you comment @coderabbitai review
+# or @coderabbitai full review (saves rate-limit quota).
+# =============================================================================
+language: en-US
+reviews:
+  profile: chill
+  path_instructions:
+    - path: "**/*"
+      instructions: |
+        Before posting a finding, check docs/TO-DO.md (open backlog). If the same
+        theme is already listed there (by meaning, not exact wording), do not raise
+        it again — treat it as tracked outside this PR. Prefer new issues only.
+    - path: "**/*.cs"
+      instructions: |
+        Prefer findings on EF integration: AddEntityFrameworkIntegration,
+        UnifiedTransactionBehavior (commands only), ExactTransactionAttribute,
+        TransactionBehaviorOptions / TransactionBehaviorEnum / isolation mapping,
+        IDbContextProvider, and EfLicenseProductInfo.
+        Flag stale XML remarks (e.g. IQueryableFilter, wrong behavior orders).
+        Require XML docs only on public host-facing contracts. Do not require
+        docstrings/XML on internal helpers or private members.
+        Library code must use ConfigureAwait(false) where CA2007 applies;
+        SampleWebApp and tests may suppress CA2007 via NoWarn.
+    - path: "**/*.{csproj,nuspec}"
+      instructions: |
+        Prefer findings on multi-targeting (net6.0–net10.0): TargetFrameworks /
+        lib groups / dependency groups must stay aligned between Cross.CQRS.EF.csproj
+        and config.nuspec (Cross.CQRS, EF Core, EF Relational versions per TFM).
+        Do not reintroduce removed Paginated APIs without an explicit product
+        decision and docs sync.
+    - path: "**/*Tests*/**"
+      instructions: |
+        Do not require docstrings or XML documentation on tests. Prefer asserting
+        behavior and contracts over style/doc nits. Prefer pipeline/integration
+        coverage when registration, behaviors, or ExactTransaction change — not
+        only direct handler calls.
+    - path: ".cursor/**"
+      instructions: |
+        Skills and Cursor rules may use Russian section names / bilingual docs by design.
+        Do not escalate RU vs EN, trailing whitespace, or formatting nits to Major.
+        Prefer actionable correctness of agent workflows over prose translation.
+    - path: "docs/RELEASE-PLAN*.md"
+      instructions: |
+        Version plans and TO-DO may be Russian by repo convention. Do not treat RU body or
+        formatting as Major. Focus on correctness of open/closed items vs the release delta.
+    - path: "docs/TO-DO.md"
+      instructions: |
+        This file is the open cross-release backlog. Do not propose re-adding items
+        that are already listed. Do not treat RU prose or EN-translation requests as
+        blocking; language choice is tracked separately if at all. Prefer clarity of
+        existing open C/H/M/L items over new duplicate findings.
+  auto_review:
+    auto_pause_after_reviewed_commits: 1
+  pre_merge_checks:
+    docstrings:
+      mode: "warning"
+      threshold: 80
+    title:
+      mode: "warning"
+      requirements: >
+        Prefer a concise descriptive title. Prefix with BREAKING: when the PR ships a breaking
+        consumer change that belongs in docs/BREAKING.md (newest-first section).

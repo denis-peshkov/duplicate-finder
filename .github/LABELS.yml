@@ -1,0 +1,73 @@
+﻿# Cross.DataFilter — GitHub labels snapshot
+# Source of truth for repo labels (sync to GitHub with --force).
+# Human-readable table: LABELS.md
+# Restore: gh label create "NAME" --color COLOR --description "DESC" --force
+# Compatible with crazy-max/ghaction-github-labeler (list of maps).
+
+- name: "breaking-approved"
+  color: "0e8a16"
+  description: "Owner approved consumer-breaking change (unblocks breaking-gate)"
+
+- name: "breaking-changes"
+  color: "b60205"
+  description: "Consumer-breaking signals detected (BREAKING: title and/or docs/BREAKING.md)"
+
+- name: "bug"
+  color: "e8372a"
+  description: "Something is broken"
+
+- name: "chore"
+  color: "1d76db"
+  description: "Build, CI, tooling, deps"
+
+- name: "docs"
+  color: "006b75"
+  description: "Improvements or additions to documentation"
+
+- name: "duplicate"
+  color: "ffffff"
+  description: "This issue or pull request already exists"
+
+- name: "enhancement"
+  color: "a2eeef"
+  description: "Polish, perf, or DX without new public contract"
+
+- name: "feature"
+  color: "0e8a16"
+  description: "New API or behavior"
+
+- name: "help wanted"
+  color: "008672"
+  description: "Extra attention is needed"
+
+- name: "invalid"
+  color: "fef2c0"
+  description: "This doesn't seem right"
+
+- name: "priority:critical"
+  color: "b60205"
+  description: "Triage priority: critical"
+
+- name: "priority:high"
+  color: "d93f0b"
+  description: "Triage priority: high"
+
+- name: "priority:low"
+  color: "fbca04"
+  description: "Triage priority: low"
+
+- name: "priority:medium"
+  color: "fb8500"
+  description: "Triage priority: medium"
+
+- name: "question"
+  color: "d876e3"
+  description: "Further information is requested"
+
+- name: "security"
+  color: "5319e7"
+  description: "🔒 Secrets, licensing, PII, or unsafe filter/query handling"
+
+- name: "wontfix"
+  color: "080808"
+  description: "This will not be worked on"

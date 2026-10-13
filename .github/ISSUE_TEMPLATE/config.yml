@@ -1,0 +1,18 @@
+﻿blank_issues_enabled: false
+
+contact_links:
+  - name: Read CONTRIBUTING.md
+    url: https://github.com/denis-peshkov/Cross.CQRS.EF/blob/master/CONTRIBUTING.md
+    about: Branching, tests, PR process, security notes, and scope for Cross.CQRS.EF.
+  - name: Open a pull request
+    url: https://github.com/denis-peshkov/Cross.CQRS.EF/compare
+    about: Ready to contribute a fix or feature? See CONTRIBUTING.md.
+  - name: NuGet package
+    url: https://www.nuget.org/packages/Cross.CQRS.EF/
+    about: Check the latest published version before reporting a regression.
+  - name: Core library (Cross.CQRS)
+    url: https://github.com/denis-peshkov/Cross.CQRS
+    about: Issues in MediatR pipeline / AddCQRS / core licensing belong in the sibling repo.
+  - name: Commercial license (Peshkov)
+    url: https://peshkov.biz/license
+    about: Licensing questions for production use — not for posting secrets in public issues.

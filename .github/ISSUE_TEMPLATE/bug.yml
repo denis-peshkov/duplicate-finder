@@ -1,0 +1,124 @@
+﻿name: Bug report
+description: Reproducible defect in Cross.CQRS.EF (transactions, ExactTransaction, registration, licensing).
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We may close this issue without comment if required fields are empty or verification boxes are not checked honestly.
+
+        **Never paste** license keys, passwords, or live JWT tokens. Redact or use placeholders.
+
+        Core CQRS / `AddCQRS` defects → [Cross.CQRS issues](https://github.com/denis-peshkov/Cross.CQRS/issues).
+
+  - type: input
+    id: package-version
+    attributes:
+      label: Cross.CQRS.EF NuGet version
+      description: e.g. `11.0.0` from [nuget.org](https://www.nuget.org/packages/Cross.CQRS.EF/)
+      placeholder: "x.y.z"
+    validations:
+      required: true
+
+  - type: input
+    id: core-version
+    attributes:
+      label: Cross.CQRS (core) NuGet version
+      description: Version of the sibling package used with this EF extension
+      placeholder: "x.y.z"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: target-framework
+    attributes:
+      label: Target framework (TFM)
+      options:
+        - net6.0
+        - net7.0
+        - net8.0
+        - net9.0
+        - net10.0
+        - Other (describe below)
+    validations:
+      required: true
+
+  - type: input
+    id: host
+    attributes:
+      label: Host / integration surface
+      description: e.g. ASP.NET Core Minimal API, SampleWebApp, unit test only
+      placeholder: "ASP.NET Core + AddCQRS + AddEntityFrameworkIntegration"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: verification
+    attributes:
+      label: Verification
+      description: Please verify before submitting. If you cannot check these honestly, use the **Question** template instead.
+      options:
+        - label: I searched [open and closed issues](https://github.com/denis-peshkov/Cross.CQRS.EF/issues?q=is%3Aissue) and did not find a duplicate.
+          required: true
+        - label: I am on the latest **Cross.CQRS.EF** version listed on NuGet (or the issue also reproduces on the latest).
+          required: true
+        - label: I can reproduce this with a **minimal** setup (not only in a large private app), or I attached the smallest repro I can share.
+          required: true
+        - label: I removed secrets from logs, config snippets, and stack traces in this report.
+          required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: What were you trying to do (and why)?
+      description: Command handler, registration snippet, or transaction surface involved.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened?
+      description: Actual behavior, exceptions, log excerpts (redacted).
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Step-by-step reproduction
+      description: |
+        Include EF registration (AddEntityFrameworkIntegration-style), DbContext wiring, and the command under test if applicable.
+      render: shell
+      placeholder: |
+        services.AddCQRS(cfg => cfg.RegisterFromAssemblies(typeof(Program).Assembly));
+        // AddEntityFrameworkIntegration / options / ExactTransaction on the handler
+        await mediator.Send(new SomeCommand());
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area (if known)
+      options:
+        - Unknown
+        - Registration / DI / AddEntityFrameworkIntegration
+        - UnifiedTransactionBehavior / transactions
+        - ExactTransaction (per-handler)
+        - Isolation / TransactionBehaviorOptions
+        - DbContext provider
+        - Licensing (EF slot / hosted validator)
+        - SampleWebApp / hosting
+        - Packaging / multi-targeting
+        - Documentation
+    validations:
+      required: true

@@ -1,0 +1,164 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+name: .NET
+
+on:
+  push:
+    branches:
+      - master
+      - release/*
+      - hotfix/*
+      - dev
+      - feature/*
+      - fix/*
+      - chore/*
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - master
+      - release/*
+      - hotfix/*
+      - dev
+  workflow_dispatch: # allows manual runs from the Actions tab
+
+jobs:
+  build:
+    permissions: # https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#defining-access-for-the-github_token-scopes
+      contents: write
+      id-token: write
+
+    env:
+      BUILD_CONFIG: 'Release'
+      SOLUTION: 'Cross.CQRS.EF.slnx'
+      QUALITY_GATE_WAIT: ${{ github.event_name == 'pull_request' }}
+
+    runs-on: ubuntu-22.04 # ubuntu-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Disabling shallow clones is recommended for improving the relevancy of reporting
+          # Avoid persisting GITHUB_TOKEN so tag push can authenticate as TAGTOKEN (admin ruleset bypass).
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            6.0.x
+            7.0.x
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2.0.0
+
+      - name: Setup GitVersion
+        # v1.x only allows GV >=5.2 <6.1; 6.8.x needs actions v4.7.x
+        # https://github.com/GitTools/actions/blob/main/docs/versions.md
+        uses: gittools/actions/gitversion/setup@v4.7.0
+        with:
+          versionSpec: 6.8.2
+
+      - name: Determine Version
+        uses: gittools/actions/gitversion/execute@v4.7.0
+        # defaults to configFilePath: GitVersion.yml (useConfigFile removed in v3+/v4)
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: |
+          dotnet build "$SOLUTION" --configuration "$BUILD_CONFIG" --no-restore \
+            -p:Configuration=$BUILD_CONFIG \
+            -p:Version=${GitVersion_SemVer} \
+            -p:AssemblyVersion=${GitVersion_AssemblySemVer} \
+            -p:FileVersion=${GitVersion_AssemblySemFileVer} \
+            -p:InformationalVersion="${GitVersion_InformationalVersion}" \
+            -p:Company="Denis Peshkov" \
+            -p:Product="Cross.CQRS.EF" \
+            -p:Description="Simple .NET MediatR base EF Transactional Behavior for Cross.CQRS. Published on Nuget at https://www.nuget.org/packages/Cross.CQRS.EF" \
+            -p:RepositoryUrl="https://github.com/denis-peshkov/Cross.CQRS.EF.git" \
+            -p:RepositoryType=git \
+            -p:CLSCompliant=true \
+            -p:NeutralLanguage=en
+
+      - name: Run tests
+        run: >
+          dotnet test /p:Configuration=$BUILD_CONFIG
+          --no-restore
+          --no-build
+          --verbosity normal
+          --collect:"XPlat Code Coverage"
+          --results-directory ./TestResults
+          --
+          DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarcloud-github-action@v5 # Ex: v4.0.0, See the latest version at https://github.com/marketplace/actions/sonarcloud-scan
+        with:
+          args: >
+            -Dsonar.organization=denis-peshkov
+            -Dsonar.projectKey=Cross.CQRS.EF
+            -Dsonar.projectName=Cross.CQRS.EF
+            -Dsonar.cs.opencover.reportsPaths=TestResults/**/coverage.opencover.xml
+            -Dsonar.sources=Cross.CQRS.EF/
+            -Dsonar.tests=Cross.CQRS.EF.Tests/
+            -Dsonar.qualitygate.wait=${{ env.QUALITY_GATE_WAIT }}
+            -Dsonar.verbose=true
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Update nuspec version
+        uses: denis-peshkov/update-nuspec-action@v2
+
+      - name: Nuget Pack
+        run: nuget pack Cross.CQRS.EF/config.nuspec -Symbols -Version ${{ env.semVer }}
+
+      # Git tags: only stable SemVer on master/release/hotfix.
+      - name: Create git Tag
+        if: >
+          !contains(env.semVer, '-') &&
+          (
+            github.ref == 'refs/heads/master' ||
+            startsWith(github.ref, 'refs/heads/release/') ||
+            startsWith(github.ref, 'refs/heads/hotfix/')
+          )
+        run: |
+          git tag v${{ env.semVer }}
+
+      - name: Push git Tag
+        if: >
+          !contains(env.semVer, '-') &&
+          (
+            github.ref == 'refs/heads/master' ||
+            startsWith(github.ref, 'refs/heads/release/') ||
+            startsWith(github.ref, 'refs/heads/hotfix/')
+          )
+        run: |
+          git config --global user.name 'Denis Peshkov'
+          git config --global user.email 'denis.peshkov@outlook.com'
+          git remote set-url origin https://x-access-token:${{ secrets.TAGTOKEN }}@github.com/${{ github.repository }}
+          git push origin v${{ env.semVer }}
+
+      - name: NuGet login (OIDC → temp API key)
+        if: >
+          github.ref == 'refs/heads/master' ||
+          startsWith(github.ref, 'refs/heads/release/') ||
+          startsWith(github.ref, 'refs/heads/hotfix/') ||
+          github.ref == 'refs/heads/dev'
+        uses: NuGet/login@v1
+        id: nuget-login
+        with:
+          user: peshkov
+
+      - name: Nuget Push
+        if: >
+          github.ref == 'refs/heads/master' ||
+          startsWith(github.ref, 'refs/heads/release/') ||
+          startsWith(github.ref, 'refs/heads/hotfix/') ||
+          github.ref == 'refs/heads/dev'
+        run: nuget push **/Cross.CQRS.EF.${{ env.semVer }}.symbols.nupkg -ApiKey ${{ steps.nuget-login.outputs.NUGET_API_KEY }} -Source "https://api.nuget.org/v3/index.json" -SkipDuplicate

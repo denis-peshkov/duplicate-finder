@@ -1,0 +1,20 @@
+{
+  "name": "triage-ci",
+  "private": true,
+  "type": "module",
+  "description": "CI triage runner via Cursor SDK",
+  "scripts": {
+    "triage": "node run-ci-triage.mjs",
+    "pr-triage": "node post-pr-triage.mjs",
+    "test": "node --test apply-pr-labels.test.mjs pr-scope.test.mjs flatten-paginated.test.mjs load-review-rules.test.mjs"
+  },
+  "dependencies": {
+    "@cursor/sdk": "^1.0.22"
+  },
+  "resolutions": {
+    "undici": "6.28.0"
+  },
+  "engines": {
+    "node": "20.19.4"
+  }
+}

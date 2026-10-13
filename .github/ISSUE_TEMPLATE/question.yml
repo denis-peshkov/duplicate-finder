@@ -1,0 +1,47 @@
+﻿name: Question
+description: Usage question, EF integration help, or unclear behavior — not a confirmed bug.
+labels:
+  - question
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template when you are **not sure** the behavior is a bug, or you need guidance integrating Cross.CQRS.EF.
+
+        If you have a **reproducible defect**, use **Bug report** instead.
+
+        Core CQRS / `AddCQRS` questions → [Cross.CQRS](https://github.com/denis-peshkov/Cross.CQRS).
+
+        **Do not post** secrets, license keys, or live tokens.
+
+  - type: checkboxes
+    id: verification
+    attributes:
+      label: Verification
+      options:
+        - label: I searched [issues](https://github.com/denis-peshkov/Cross.CQRS.EF/issues?q=is%3Aissue) and the [README](https://github.com/denis-peshkov/Cross.CQRS.EF/blob/master/README.md) first.
+          required: true
+
+  - type: input
+    id: package-version
+    attributes:
+      label: Cross.CQRS.EF NuGet version (if applicable)
+      placeholder: "x.y.z"
+    validations:
+      required: false
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What are you trying to achieve? Include TFM and registration snippet if relevant.
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What you already tried
+      description: Config keys (redacted values), docs links, code snippets.
+    validations:
+      required: false

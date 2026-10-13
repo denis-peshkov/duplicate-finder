@@ -1,0 +1,75 @@
+# Direct back-merge: merge `master` into `dev` and push (no PR, no build wait).
+#
+# Protect-dev requires PR + build for normal actors. Owner PAT (TAGTOKEN) is on
+# the ruleset admin bypass list — but only if git actually authenticates as that PAT.
+#
+# Critical: actions/checkout persists GITHUB_TOKEN as
+#   http.https://github.com/.extraheader AUTHORIZATION: basic …
+# That header wins over `git remote set-url` with TAGTOKEN, so push still runs as
+# github-actions[bot] and gets GH013. Fix: persist-credentials: false, then
+# push only with TAGTOKEN (same idea as tag push in dotnet.yml).
+
+name: Back-merge master to dev
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backmerge-master-to-dev
+  cancel-in-progress: false
+
+jobs:
+  back-merge:
+    name: Merge master into dev
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Merge master into dev and push
+        env:
+          TAGTOKEN: ${{ secrets.TAGTOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${TAGTOKEN}" ]; then
+            echo "::error::Secret TAGTOKEN is missing or empty. Create an owner classic PAT (repo scope) and add it as Actions secret TAGTOKEN."
+            exit 1
+          fi
+
+          # Drop any leftover checkout auth header (should be none with persist-credentials: false)
+          git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
+
+          git remote set-url origin "https://x-access-token:${TAGTOKEN}@github.com/${{ github.repository }}.git"
+          git fetch origin master dev
+
+          if git merge-base --is-ancestor origin/master origin/dev; then
+            echo "dev already contains master — nothing to back-merge."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout -B dev origin/dev
+
+          SHORT_SHA="$(git rev-parse --short origin/master)"
+
+          if ! git merge --no-ff --no-edit -m "chore: back-merge master (${SHORT_SHA}) into dev" origin/master; then
+            git merge --abort || true
+            echo "::error::Back-merge master → dev has conflicts. Resolve locally and push to dev, or open a manual PR."
+            exit 1
+          fi
+
+          git push origin dev
+
+          echo "Back-merged master (${SHORT_SHA}) into dev and pushed."
