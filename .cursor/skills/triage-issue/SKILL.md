@@ -136,12 +136,30 @@ Comment template: `templates/issue-comment.md`.
 
 ## Comment specifics
 
-For bug reports request:
+For bug reports: **detect the stack from the repo** (markers below), then ask only for what applies — **both** stacks if both are present.
+
+| Marker (any) | Stack |
+|---|---|
+| `*.csproj` / `*.sln` / `*.fsproj` / `Directory.Build.props` | .NET |
+| `pyproject.toml` / `requirements*.txt` / `setup.py` / `src/**/*.py` / `*.spec` (PyInstaller) | Python |
+
+Always useful:
 
 - App / Package / NuGet version or git commit
-- Target framework (e.g. net8.0)
+- OS (Windows / macOS Apple Silicon / macOS Intel / Linux) when desktop/CLI
 - Area (from README / folder layout)
-- Reproduction steps without real secrets/tokens/license keys
+- Reproduction steps without real secrets/tokens/license keys / private paths
+
+If **.NET** (also ask when dual-stack):
+
+- NuGet / package version if relevant
+- Target framework(s) (e.g. `net8.0`)
+
+If **Python** (also ask when dual-stack):
+
+- App version (`--version` / About / release channel: zip, Chocolatey, Homebrew, from source)
+- Install channel when useful
+- Repro context for the product (e.g. scan/masks/delete/UI — from README)
 
 ## Edge cases
 

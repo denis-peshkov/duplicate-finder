@@ -18,6 +18,7 @@
 - `2026-10-13` · pasted finding (update-changelog.mjs:191 isLibraryPath .py) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
 - `2026-10-13` · pasted finding (update-changelog.test.mjs:110–114 v2.3.0) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
 - `2026-10-13` · pasted finding (triage-issue/SKILL.md:65 collaborators fallback) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (triage .NET leftovers → Python app) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
 
 **PR:** [#1](https://github.com/denis-peshkov/duplicate-finder/pull/1) (`BREAKING:` exe rename / `LICENSE.md` / `icon.png` / SemVer 2 / `clean_empty_folders` default).
 
@@ -71,6 +72,7 @@
 
 | # | Суть |
 |---|---|
+| ✅ #M9 triage polyglot templates | issue/PR triage: detect .NET and/or Python; ask/review both when present |
 | ✅ #M8 triage collaborators fallback | dismissed: merged PR author = collaborator для triage |
 | ✅ #M7 collectDelta test tag | happy-path → существующий `v1.0.14` (не `v2.3.0`) |
 | ✅ #M6 isLibraryPath .py | `update-changelog.mjs`: Library включает `.py` (+ .NET extensions) |

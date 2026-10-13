@@ -19,13 +19,14 @@ GitHub comments — **in English**. Resolve `{repository_name}` / `{repository_u
 
 ### Missing Information
 
-To move forward, we need:
+To move forward, we need (agent: include bullets that match the repo stack — .NET and/or Python; omit the rest):
 
 - **App / Package / NuGet version** or git commit
-- **OS** (Windows / macOS Apple Silicon / macOS Intel / Linux)
-- **Target framework** (e.g. net8.0)
+- **OS** (Windows / macOS Apple Silicon / macOS Intel / Linux) — if desktop/CLI
+- **.NET:** NuGet/package version if relevant; **target framework(s)** (e.g. net8.0)
+- **Python:** install channel (Release zip / Chocolatey / Homebrew / from source); product repro context (from README)
 - **Area** if relevant (from README / folder layout)
-- **Reproduction steps** (no real passwords, tokens, or PII)
+- **Reproduction steps** (no real passwords, tokens, PII, or private paths)
 
 ### Next Steps
 
