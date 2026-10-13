@@ -130,7 +130,7 @@ pyinstaller duplicate_finder.spec
 | `distribution/homebrew-core/` | homebrew-core formula draft |
 | `distribution/homebrew-preview/` | Preview tap formula + README |
 | `.github/workflows/ci.yml` | CI orchestrator — [docs/ci-cd.md](docs/ci-cd.md) |
-| `.github/actions/` | Composite actions (version, test, build, publish-*) |
+| `.github/actions/` | Composite actions (version, test, sonar, build, publish-*) |
 | `.github/scripts/` | Pack / Chocolatey / Homebrew helpers |
 | `docs/` | [ci-cd.md](docs/ci-cd.md), [distribution.md](docs/distribution.md) |
 | `icon.png` | Project / Chocolatey icon |

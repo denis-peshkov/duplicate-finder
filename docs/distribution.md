@@ -29,7 +29,8 @@ Upstream:
 | Composite action | Role |
 |------------------|------|
 | [`version`](../.github/actions/version/action.yml) | GitVersion |
-| [`test`](../.github/actions/test/action.yml) | pytest |
+| [`test`](../.github/actions/test/action.yml) | pytest + coverage |
+| [`sonar`](../.github/actions/sonar/action.yml) | SonarCloud scan |
 | [`build-release-binary`](../.github/actions/build-release-binary/action.yml) | PyInstaller matrix; `release-binary-*` artifacts |
 
 ## GitHub Release assets

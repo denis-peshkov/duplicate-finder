@@ -1,18 +1,9 @@
 name: Test
-description: Run pytest and SonarCloud scan
-
-inputs:
-  sonar_token:
-    description: SonarCloud token (if set, runs SonarCloud scan)
-    required: true
+description: Run pytest with coverage (opencover-style XML for Sonar)
 
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
@@ -31,19 +22,3 @@ runs:
         set -euo pipefail
         mkdir -p TestResults
         pytest -q --cov=src --cov-report=xml:TestResults/coverage.xml
-
-    - name: SonarCloud Scan
-      uses: SonarSource/sonarqube-scan-action@v5
-      with:
-        args: >
-          -Dsonar.organization=denis-peshkov
-          -Dsonar.projectKey=duplicate-finder
-          -Dsonar.projectName=DuplicateFinder
-          -Dsonar.sources=src
-          -Dsonar.tests=tests
-          -Dsonar.python.coverage.reportPaths=TestResults/coverage.xml
-          -Dsonar.coverage.exclusions=src/ui/**
-          -Dsonar.verbose=true
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-        SONAR_TOKEN: ${{ inputs.sonar_token }}

@@ -17,7 +17,7 @@ flowchart TD
   end
 
   V["version<br/>GitVersion"]
-  TEST["test<br/>pytest"]
+  TEST["test<br/>pytest + sonar"]
 
   subgraph matrix["release-binaries (matrix x 4)"]
     M1["windows-msvc · windows-latest"]
@@ -49,7 +49,7 @@ flowchart TD
 | Job | Runner | When | Role |
 |-----|--------|------|------|
 | `version` | ubuntu-latest | always | GitVersion → `version`, `channel`, `prerelease` |
-| `test` | ubuntu-latest | after version | `pytest` + SonarCloud scan |
+| `test` | ubuntu-latest | after version | `test` + `sonar` actions (`qualitygate.wait` on pull_request) |
 | `release-binaries` | matrix Win/Linux/macOS | after test | PyInstaller; upload `release-binary-*` on push to release branches |
 | `push-tags` | ubuntu-22.04 | push `master` | tags `v{version}`, `v{X.Y}`, `v{X}` |
 | `publish-chocolatey` | windows-latest | push master/release/hotfix | pack + push `.nupkg` |
@@ -68,6 +68,6 @@ flowchart TD
 | `TAGTOKEN` | `push-tags`, Homebrew fork / preview tap |
 | `CHOCOLATEY_API_KEY` | `publish-chocolatey` |
 | `HOMEBREW_GITHUB_API_KEY` | `publish-homebrew` (`brew bump-formula-pr` / PR) |
-| `SONAR_TOKEN` | `test` (SonarCloud scan) |
+| `SONAR_TOKEN` | `sonar` action in `test` job |
 
 Pipeline distribution details: [distribution.md](distribution.md).

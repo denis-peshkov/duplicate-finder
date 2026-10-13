@@ -1,0 +1,31 @@
+name: SonarCloud Scan
+description: Run SonarCloud analysis (expects TestResults/coverage.xml from test)
+
+inputs:
+  sonar_token:
+    description: SonarCloud token
+    required: true
+  coverage_report:
+    description: Path to coverage.xml from pytest-cov
+    required: false
+    default: TestResults/coverage.xml
+
+runs:
+  using: composite
+  steps:
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarqube-scan-action@v5
+      with:
+        args: >
+          -Dsonar.organization=denis-peshkov
+          -Dsonar.projectKey=duplicate-finder
+          -Dsonar.projectName=DuplicateFinder
+          -Dsonar.sources=src
+          -Dsonar.tests=tests
+          -Dsonar.python.coverage.reportPaths=${{ inputs.coverage_report }}
+          -Dsonar.coverage.exclusions=src/ui/**
+          -Dsonar.qualitygate.wait=${{ github.event_name == 'pull_request' }}
+          -Dsonar.verbose=true
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        SONAR_TOKEN: ${{ inputs.sonar_token }}
