@@ -246,7 +246,7 @@ python main.py
 
 ## License
 
-Code is under the [MIT License](LICENSE). By contributing, you agree that contributions are licensed under the same terms.
+Code is under the [MIT License](LICENSE.md). By contributing, you agree that contributions are licensed under the same terms.
 
 There is no separate CLA — merging a PR means agreement with the repository license.
 

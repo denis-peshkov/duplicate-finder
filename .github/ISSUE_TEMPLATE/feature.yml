@@ -1,32 +1,28 @@
 ﻿name: Feature request
-description: Propose new behavior, transaction option, or public API for Cross.CQRS.EF.
+description: Propose new behavior or UX for Duplicate Finder.
 labels:
   - enhancement
 body:
   - type: markdown
     attributes:
       value: |
-        Feature requests help shape the EF extension. Registration and transaction contracts are **public API** — breaking changes need a migration path.
-
-        For small doc fixes or typos, a pull request is often faster than an issue.
-
-        Core CQRS features → [Cross.CQRS](https://github.com/denis-peshkov/Cross.CQRS).
+        Feature requests help shape the app. For small doc fixes or typos, a pull request is often faster than an issue.
 
   - type: checkboxes
     id: verification
     attributes:
       label: Verification
       options:
-        - label: I searched [existing issues](https://github.com/denis-peshkov/Cross.CQRS.EF/issues) and did not find this request already open.
+        - label: I searched [existing issues](https://github.com/denis-peshkov/duplicate-finder/issues) and did not find this request already open.
           required: true
-        - label: I read the [README](https://github.com/denis-peshkov/Cross.CQRS.EF/blob/master/README.md) and this is not already supported.
+        - label: I read the [README](https://github.com/denis-peshkov/duplicate-finder/blob/master/README.md) and this is not already supported.
           required: true
 
   - type: textarea
     id: problem
     attributes:
       label: Problem or use case
-      description: What problem does this solve for NuGet consumers?
+      description: What problem does this solve for users finding/removing duplicates?
     validations:
       required: true
 
@@ -34,7 +30,7 @@ body:
     id: proposal
     attributes:
       label: Proposed solution
-      description: API shape, new behavior, configuration option, etc.
+      description: UI change, new option, CLI behavior, packaging, etc.
     validations:
       required: true
 
@@ -42,14 +38,14 @@ body:
     id: alternatives
     attributes:
       label: Alternatives considered
-      description: Workarounds in the host app, or different designs.
+      description: Workarounds or different designs.
     validations:
       required: false
 
   - type: dropdown
     id: breaking
     attributes:
-      label: Would this require a breaking change for existing consumers?
+      label: Would this require a breaking change for existing users (settings, CLI, install paths)?
       options:
         - "No"
         - "Maybe — needs discussion"
@@ -61,6 +57,6 @@ body:
     id: extra
     attributes:
       label: Additional context
-      description: Links, diagrams, related PRs, SampleWebApp scenarios.
+      description: Links, screenshots, related PRs.
     validations:
       required: false

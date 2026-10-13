@@ -1,4 +1,4 @@
-[![License](https://img.shields.io/github/license/denis-peshkov/duplicate-finder)](LICENSE)
+[![License](https://img.shields.io/github/license/denis-peshkov/duplicate-finder)](LICENSE.md)
 [![GitHub Release Date](https://img.shields.io/github/release-date/denis-peshkov/duplicate-finder?label=released)](https://github.com/denis-peshkov/duplicate-finder/releases)
 [![Chocolatey](https://img.shields.io/chocolatey/v/duplicate-finder)](https://community.chocolatey.org/packages/duplicate-finder)
 [![Chocolatey](https://img.shields.io/chocolatey/dt/duplicate-finder)](https://community.chocolatey.org/packages/duplicate-finder)
@@ -146,7 +146,7 @@ Before PyInstaller, CI always substitutes `version` in `pyproject.toml` and `APP
 | `.github/scripts/` | Pack / Chocolatey / Homebrew helpers |
 | `docs/` | [ci-cd.md](docs/ci-cd.md), [distribution.md](docs/distribution.md) |
 | `duplicate-finder-icon.png` | Project / Chocolatey icon |
-| `LICENSE` | MIT |
+| `LICENSE.md` | MIT |
 
 ### Local CLI after install
 
@@ -156,4 +156,4 @@ duplicate-finder --version
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE.md](LICENSE.md).

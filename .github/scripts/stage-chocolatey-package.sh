@@ -28,7 +28,7 @@ fi
 
 TEMPLATE_DIR="${REPO_ROOT}/distribution/chocolatey/duplicate-finder"
 NUSPEC_TEMPLATE="${TEMPLATE_DIR}/duplicate-finder.nuspec"
-LICENSE_SRC="${REPO_ROOT}/LICENSE"
+LICENSE_SRC="${REPO_ROOT}/LICENSE.md"
 
 if [[ ! -f "${NUSPEC_TEMPLATE}" ]]; then
   echo "Chocolatey template not found: ${NUSPEC_TEMPLATE}" >&2
@@ -36,7 +36,7 @@ if [[ ! -f "${NUSPEC_TEMPLATE}" ]]; then
 fi
 
 if [[ ! -f "${LICENSE_SRC}" ]]; then
-  echo "LICENSE not found: ${LICENSE_SRC}" >&2
+  echo "LICENSE.md not found: ${LICENSE_SRC}" >&2
   exit 1
 fi
 

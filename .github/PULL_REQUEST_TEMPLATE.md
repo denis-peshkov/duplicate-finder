@@ -10,7 +10,7 @@ Closes: #0000
 
 ## Changes
 
-<!-- Extend `path/to/file.cs` — numbered list; optional scope line at the end. -->
+<!-- Extend `path/to/file.py` — numbered list; optional scope line at the end. -->
 
 1. …
 2. …
@@ -24,14 +24,14 @@ Closes: #0000
 <!-- How you verified the change — check off before merge. -->
 
 - [ ] New or updated tests cover the changed behavior
-- [ ] `dotnet build Cross.CQRS.EF.slnx` — green locally
-- [ ] `dotnet test Cross.CQRS.EF.Tests/Cross.CQRS.EF.Tests.csproj` — green locally
+- [ ] `pytest` — green locally
+- [ ] Manual UI check (if UI changed) — scan / results / delete as applicable
 
 ---
 
 ## Risks / notes
 
-<!-- Required for licensing, DI registration, transactions, or breaking changes. Otherwise write "N/A". -->
+<!-- Required for delete/Recycle Bin behavior, packaging, or breaking changes. Otherwise write "N/A". -->
 
 N/A
 
@@ -40,12 +40,12 @@ N/A
 ## Checklist
 
 - [ ] I have read and followed [CONTRIBUTING.md](../CONTRIBUTING.md).
-- [ ] There is no other open [pull request](https://github.com/denis-peshkov/Cross.CQRS.EF/pulls) for the same fix or feature.
+- [ ] There is no other open [pull request](https://github.com/denis-peshkov/duplicate-finder/pulls) for the same fix or feature.
 - [ ] **One PR = one feature or one fix** — no unrelated refactors or drive-by formatting.
-- [ ] `.editorconfig` respected; no secrets committed.
-- [ ] If this PR changes public API or registration, update README / XML docs as needed.
-- [ ] If this PR is breaking for NuGet consumers, update [`docs/BREAKING.md`](../docs/BREAKING.md) (nuspec keeps a link, not a duplicate list) and prefix the **PR title** with `BREAKING:`.
-- [ ] If this PR touches licensing or transactions, the risks are described above and the diff contains no secrets.
+- [ ] `.editorconfig` / project Python style respected; no secrets committed.
+- [ ] If this PR changes user-facing behavior or install docs, update README / `docs/` as needed.
+- [ ] If this PR is breaking for users (settings, CLI, install paths), update [`docs/BREAKING.md`](../docs/BREAKING.md) when present and prefix the **PR title** with `BREAKING:`.
+- [ ] If this PR touches delete / empty-folder cleanup or packaging, the risks are described above.
 
 ---
 
@@ -55,4 +55,4 @@ N/A
 
 ---
 
-**License:** By opening this PR, you agree that contributions are under [RPL 1.5](../LICENSE.md) (or [Peshkov commercial license](https://peshkov.biz/license) where applicable).
+**License:** By opening this PR, you agree that contributions are under the [MIT License](../LICENSE.md).
