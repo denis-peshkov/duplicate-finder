@@ -147,11 +147,16 @@ else
   if git rev-parse --verify "$BRANCH" >/dev/null 2>&1; then
     BRANCH_REF="$BRANCH"
   else
+    # Named branch not local — must resolve origin/<branch>. Do not swallow fetch errors.
     if [[ "$OFFLINE" -eq 0 ]]; then
-      git fetch origin "$BRANCH" 2>/dev/null || true
+      if ! git fetch origin "$BRANCH"; then
+        echo "error: git fetch origin $BRANCH failed — fix network/auth or retry with offline" >&2
+        exit 1
+      fi
     fi
     if git rev-parse --verify "origin/$BRANCH" >/dev/null 2>&1; then
       BRANCH_REF="origin/$BRANCH"
+      # If offline: report must note remote tip may be stale
     else
       echo "error: branch '$BRANCH' not found (local or origin/)" >&2
       exit 1

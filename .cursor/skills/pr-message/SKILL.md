@@ -23,6 +23,7 @@ description: >-
 | Template | [`.github/PULL_REQUEST_TEMPLATE.md`](../../../.github/PULL_REQUEST_TEMPLATE.md) |
 | Base | `origin/dev` for `feature/*` `fix/*` `chore/*`; `origin/master` for `release/*` `hotfix/*` (override if user names base) |
 | Head | current branch, or `branch <name>` if given |
+| Offline | only if user passed **`offline`** — skip `git fetch`; warn that base may be stale |
 | Language | English (GitHub-facing) |
 | Output | title + full body in one markdown block; do **not** open the PR unless asked |
 | Shell | least privilege: default sandbox; elevate only when needed (`network` / `full_network` / `git_write` / `all`), smallest scope |
@@ -32,11 +33,20 @@ description: >-
 ### Phase 1 — Context
 
 1. Read `.github/PULL_REQUEST_TEMPLATE.md` (source of truth for section order and wording).
-2. Resolve `BASE` / `HEAD`. Local `git` read/diff — sandbox. `git fetch` / `gh` — request `network` or `full_network` (smallest that works); do **not** use `all` unless those fail for a concrete sandbox reason:
+2. Resolve `BASE` / `HEAD`. Local `git` read/diff — sandbox. `git fetch` / `gh` — request `network` or `full_network` (smallest that works); do **not** use `all` unless those fail for a concrete sandbox reason.
+
+   Default: **refresh** remote refs; **do not** swallow fetch failures. If `git fetch` fails and the user did **not** pass `offline` → **stop** and ask them to fix network/auth or re-run with **`offline`** (explicit stale-base mode). Never continue silently on a failed fetch.
 
 ```bash
 git rev-parse --abbrev-ref HEAD
-git fetch origin 2>/dev/null || true
+# OFFLINE=1 only when user passed "offline"
+if [[ "${OFFLINE:-0}" -eq 0 ]]; then
+  if ! git fetch origin; then
+    echo "error: git fetch origin failed — fix network/auth or retry with offline" >&2
+    exit 1
+  fi
+fi
+# If offline: note in the draft that BASE may be stale
 git log --oneline "$BASE..$HEAD" | head -40
 git diff --stat "$BASE...$HEAD"
 git diff --name-status "$BASE...$HEAD"
