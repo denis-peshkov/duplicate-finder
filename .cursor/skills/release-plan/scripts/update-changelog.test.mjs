@@ -65,7 +65,7 @@ describe('buildGroupedBullets', () => {
   it('groups paths into changelog categories', () => {
     const groups = buildGroupedBullets({
       paths: [
-        '.github/workflows/dotnet.yml',
+        '.github/workflows/ci.yml',
         'GitVersion.yml',
         'CONTRIBUTING.md',
         '.cursor/skills/gitversion-strategy/scripts/run-matrix.mjs',
@@ -84,14 +84,14 @@ describe('buildGroupedBullets', () => {
   });
 
   it('pathBullet stays path-neutral (no hardcoded release claims)', () => {
-    const ci = pathBullet('CI / release process', new Set(['.github/workflows/dotnet.yml']));
+    const ci = pathBullet('CI / release process', new Set(['.github/workflows/ci.yml']));
     const ver = pathBullet('Versioning', new Set(['GitVersion.yml']));
     const tool = pathBullet('Repository tooling', new Set([
       '.cursor/skills/gitversion-strategy/scripts/run-matrix.mjs',
     ]));
     const docs = pathBullet('Documentation', new Set(['CONTRIBUTING.md']));
     const all = [...ci, ...ver, ...tool, ...docs].join('\n');
-    assert.match(ci[0], /dotnet\.yml/);
+    assert.match(ci[0], /ci\.yml/);
     assert.match(ver[0], /GitVersion\.yml/);
     assert.match(tool[0], /gitversion-strategy/);
     assert.match(docs[0], /CONTRIBUTING\.md/);

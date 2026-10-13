@@ -20,7 +20,7 @@ Cross-ref skills: [`triage-issue`](../triage-issue/SKILL.md), [`triage-pr`](../t
 
 ## When to use
 
-- Weekly or before NuGet release → **GitHub** mode
+- Weekly or before App / Package / NuGet release → **GitHub** mode
 - Before sprint planning → **GitHub** mode
 - After CI `triage.yml` → interpret artifacts (**GitHub**)
 - Review **current branch vs master** before opening a PR → **Local** mode

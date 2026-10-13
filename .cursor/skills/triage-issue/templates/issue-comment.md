@@ -15,13 +15,14 @@ GitHub comments — **in English**. Resolve `{repository_name}` / `{repository_u
 
 ### Assessment
 
-{1-2 sentences about the issue and why it matters for this library.}
+{1-2 sentences about the issue and why it matters for this app / library.}
 
 ### Missing Information
 
 To move forward, we need:
 
-- **Package / NuGet version** or git commit
+- **App / Package / NuGet version** or git commit
+- **OS** (Windows / macOS Apple Silicon / macOS Intel / Linux)
 - **Target framework** (e.g. net8.0)
 - **Area** if relevant (from README / folder layout)
 - **Reproduction steps** (no real passwords, tokens, or PII)

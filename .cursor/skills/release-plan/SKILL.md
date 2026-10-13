@@ -16,6 +16,10 @@ description: >-
 
 # Release plan по delta ветки
 
+> **Этот репозиторий:** Python desktop app `duplicate-finder` (pytest, PyInstaller, Chocolatey/Homebrew).
+> Канон CI/релиза: [`docs/ci-cd.md`](../../../docs/ci-cd.md), [`docs/distribution.md`](../../../docs/distribution.md).
+> Файлы `docs/RELEASE-PLAN-*`, `docs/TO-DO.md`, `docs/BREAKING.md`, `docs/CHANGELOG.md` могут отсутствовать — создавать только по явной просьбе.
+
 ## Когда использовать
 
 - Пользователь просит **release notes / RELEASE-PLAN** для текущей ветки относительно `master`
@@ -40,7 +44,7 @@ Skill [`release-plan`](SKILL.md) → **Section** · domain hint
 | **Re-check** | закрыть open-пункт в version plan |
 | **Finalize version plan** | ship / leftovers → TO-DO |
 | **Previous plans published/closed** | `(closed)` → `(published / closed)` если есть tag |
-| **Локальный `dotnet test`** | локальный прогон тестов |
+| **Локальный `pytest`** | локальный прогон тестов |
 
 Из sibling skills — относительная ссылка: `[`release-plan`](../release-plan/SKILL.md)`.
 
@@ -334,7 +338,7 @@ node .cursor/skills/release-plan/scripts/update-changelog.mjs --write
 |---|---|
 | `RELEASE-PLAN.md` (корень репо) | Аудит библиотеки / hardening backlog |
 | `docs/RELEASE-PLAN-to-master.md` | Исторические readiness-чеклисты → `master` |
-| `docs/BREAKING.md` | Breaking changes для NuGet-потребителей |
+| `docs/BREAKING.md` | Breaking changes для пользователей / пакетов |
 
 Version plans (`docs/RELEASE-PLAN-X.Y.Z.md`) и `docs/TO-DO.md` — см. выше. **Не** подменять чеклист to-master version plan’ом.
 
@@ -386,14 +390,11 @@ Workflow новых секций: **`docs/BREAKING.md`** (этот skill).
 
 Другие skills: **Cross-skill references** (ссылка одной строкой; без дублирования скриптов или prose про layout).
 
-## Локальный `dotnet test`
-
-Если в test `.csproj` есть свойство `SkipNetCoreApp31Tests` — к `dotnet test` добавлять `-p:SkipNetCoreApp31Tests=true` (без x64 3.1 host VSTest зависает на Darwin Arm64). Иначе не добавлять.
-
-Целевой csproj: из PR template / discovery (`**/*Tests*.csproj`), **не** хардкодить имя продукта.
+## Локальный `pytest`
 
 ```bash
-dotnet test <TestProject>/<TestProject>.csproj -p:SkipNetCoreApp31Tests=true
+pip install -e ".[dev]"
+pytest
 ```
 
 ## Quality bar

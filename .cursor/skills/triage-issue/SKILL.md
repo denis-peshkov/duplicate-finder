@@ -138,7 +138,7 @@ Comment template: `templates/issue-comment.md`.
 
 For bug reports request:
 
-- Package / NuGet version or git commit
+- App / Package / NuGet version or git commit
 - Target framework (e.g. net8.0)
 - Area (from README / folder layout)
 - Reproduction steps without real secrets/tokens/license keys
