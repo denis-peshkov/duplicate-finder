@@ -1,4 +1,4 @@
-﻿# Cross.DataFilter — лейблы GitHub
+﻿# Лейблы GitHub
 
 Снимок настроенных лейблов репозитория. Машиночитаемый файл: [`LABELS.yml`](LABELS.yml).
 
@@ -64,5 +64,5 @@ Priority (`critical`…`low`) — **отдельная ось**, не путат
 | `priority:low` | `#fbca04` | Triage priority: low | Приоритет triage: низкий | priority |
 | `priority:medium` | `#fb8500` | Triage priority: medium | Приоритет triage: средний | priority |
 | `question` | `#d876e3` | Further information is requested | Нужны уточнения / вопрос | — |
-| `security` | `#5319e7` | 🔒 Secrets, licensing, PII, or unsafe filter/query handling | Безопасность: секреты, лицензия, ПДн, опасные фильтры | category |
+| `security` | `#5319e7` | 🔒 Secrets, licensing, PII, unsafe filter/query handling, or unsafe handling of user paths/data | Безопасность: секреты, лицензия, ПДн, опасные фильтры, небезопасная работа с путями/данными | category |
 | `wontfix` | `#080808` | This will not be worked on | Не будем делать | — |
