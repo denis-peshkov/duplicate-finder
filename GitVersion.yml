@@ -16,7 +16,7 @@ commit-message-incrementing: Disabled
 # Fallback when Inherit cannot resolve a parent (direct push / at-tag / merge from develop).
 increment: Patch
 
-next-version: 10.0.0 #
+next-version: 2.0.0 #
 
 # Never treat branch-name digits as a SemVer (release/11.0.0-… must match release/test).
 version-in-branch-pattern: '(?<version>DO_NOT_MATCH_VERSION_IN_BRANCH_NAME)'
