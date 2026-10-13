@@ -76,14 +76,6 @@ def matches_mask(
     return False
 
 
-def matches_exclude_mask(
-    path: Path,
-    masks: Iterable[str],
-) -> bool:
-    """Совместимость: то же, что matches_mask."""
-    return matches_mask(path, masks)
-
-
 def _normalize_masks(
     masks: Iterable[str] | None,
 ) -> list[str]:

@@ -110,19 +110,6 @@ pyinstaller duplicate_finder.spec
 - Windows: `dist/duplicate-finder.exe`
 - macOS: `dist/duplicate-finder`
 
-## Versioning
-
-[GitVersion](https://gitversion.net/) (`GitVersion.yml`) on push:
-
-| Branch | SemVer (example) | Git tags | GitHub Release | Chocolatey | Homebrew |
-|--------|------------------|----------|----------------|------------|----------|
-| `master` | `1.0.15` (stable) | `v1.0.15`, `v1.0`, `v1` | **Release** (binaries + source) | push (stable) | core PR / bump |
-| `release/*`, `hotfix/*` | `1.0.15-preview.3` | — | — | push (prerelease) | preview tap (`homebrew-preview-tap`) |
-
-Preview branches publish Chocolatey and the Homebrew preview tap (no git tags). **Git tags** and **GitHub Release** run on **`master` only**. Details: [docs/ci-cd.md](docs/ci-cd.md).
-
-Before PyInstaller, CI always substitutes `version` in `pyproject.toml` and `APP_VERSION` in `src/config/app_info.py` from the `version` job.
-
 ## Settings
 
 - Config: `%USERPROFILE%\.duplicate-finder\settings.toml` (Windows) / `~/.duplicate-finder/settings.toml` (macOS)

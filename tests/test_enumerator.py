@@ -134,16 +134,16 @@ def test_enumerate_include_then_exclude(
     assert names == {"keep.jpg"}
 
 
-def test_matches_exclude_mask_path_pattern(
+def test_matches_mask_path_pattern(
     tmp_path: Path,
 ) -> None:
-    from src.core.enumerator import matches_exclude_mask
+    from src.core.enumerator import matches_mask
 
     nested = tmp_path / ".git" / "config"
     nested.parent.mkdir(parents=True)
     nested.write_text("x", encoding="utf-8")
-    assert matches_exclude_mask(nested, ["*/.git/*"]) is True
-    assert matches_exclude_mask(tmp_path / "a.txt", ["*/.git/*"]) is False
+    assert matches_mask(nested, ["*/.git/*"]) is True
+    assert matches_mask(tmp_path / "a.txt", ["*/.git/*"]) is False
 
 
 def test_matches_mask_skips_blank_and_name_patterns(

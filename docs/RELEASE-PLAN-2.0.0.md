@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.0.0` · **ветка:** `release/big-improvements` · **база:** `origin/master` · **дата:** `2026-10-13`
+> **Версия:** `2.0.0` (closed) · **ветка:** `release/big-improvements` · **база:** `origin/master` · **дата:** `2026-10-13`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/duplicate-finder/releases/tag/v2.0.0
 >
@@ -8,25 +8,25 @@
 >
 > **Предыдущий план:** —
 >
-> Дельта: `origin/master...HEAD` — **53** коммита · **118** файлов · **+10688 / −368**. Open: C0 H0 M2 L1
+> Дельта: `origin/master...HEAD` — **54** коммита · **118** файлов · **+10710 / −375**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
-- `2026-10-13` · pasted finding (GitVersion.yml:102 BranchName) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
-- `2026-10-13` · pasted finding (coderabbit/SKILL.md:164 Phase 4 trigger) · 1 finding (0 Critical, 0 Major, 0 Minor; 1 Info) → Open: C0 H1 M2 L1
-- `2026-10-13` · pasted finding (pr-message/triage-pr fetch swallow) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
-- `2026-10-13` · pasted finding (resolve-target-version.sh:111–114 tag fallback) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
-- `2026-10-13` · pasted finding (update-changelog.mjs:191 isLibraryPath .py) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
-- `2026-10-13` · pasted finding (update-changelog.test.mjs:110–114 v2.3.0) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
-- `2026-10-13` · pasted finding (triage-issue/SKILL.md:65 collaborators fallback) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
-- `2026-10-13` · pasted finding (triage .NET leftovers → Python app) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
-- `2026-10-13` · pasted finding (triage-pr/SKILL.md:85 statusCheckRollup) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
-- `2026-10-13` · pasted finding (triage-pr/SKILL.md:145–148 origin/ strip) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
-- `2026-10-13` · pasted finding (.editorconfig:9 utf-8-bom vs shebang) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
-- `2026-10-13` · pasted finding (PULL_REQUEST_TEMPLATE.md relative links) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
-- `2026-10-13` · pasted finding (rulesets required checks breaking-gate) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
-- `2026-10-13` · pasted finding (protect-tags / push-tags TAGTOKEN vs GITHUB_TOKEN) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
-- `2026-10-13` · pasted finding (rulesets README push-secrets fallback) · 1 finding (0 Critical, 0 Major, 0 Minor; 1 Info) → Open: C0 H1 M2 L1
-- `2026-10-13` · pasted finding (breaking-gate.yml fork PR write token) · 1 finding (0 Critical, 1 Major, 0 Minor) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (GitVersion.yml:102 BranchName) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open C/H/M/L пустые.
+- `2026-10-13` · pasted finding (coderabbit/SKILL.md:164 Phase 4 trigger) · 1 finding (0 Critical, 0 Major, 0 Minor; 1 Info) → Open C/H/M/L пустые.
+- `2026-10-13` · pasted finding (pr-message/triage-pr fetch swallow) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open C/H/M/L пустые.
+- `2026-10-13` · pasted finding (resolve-target-version.sh:111–114 tag fallback) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open C/H/M/L пустые.
+- `2026-10-13` · pasted finding (update-changelog.mjs:191 isLibraryPath .py) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open C/H/M/L пустые.
+- `2026-10-13` · pasted finding (update-changelog.test.mjs:110–114 v2.3.0) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open C/H/M/L пустые.
+- `2026-10-13` · pasted finding (triage-issue/SKILL.md:65 collaborators fallback) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open C/H/M/L пустые.
+- `2026-10-13` · pasted finding (triage .NET leftovers → Python app) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open C/H/M/L пустые.
+- `2026-10-13` · pasted finding (triage-pr/SKILL.md:85 statusCheckRollup) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open C/H/M/L пустые.
+- `2026-10-13` · pasted finding (triage-pr/SKILL.md:145–148 origin/ strip) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open C/H/M/L пустые.
+- `2026-10-13` · pasted finding (.editorconfig:9 utf-8-bom vs shebang) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open C/H/M/L пустые.
+- `2026-10-13` · pasted finding (PULL_REQUEST_TEMPLATE.md relative links) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open C/H/M/L пустые.
+- `2026-10-13` · pasted finding (rulesets required checks breaking-gate) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open C/H/M/L пустые.
+- `2026-10-13` · pasted finding (protect-tags / push-tags TAGTOKEN vs GITHUB_TOKEN) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open C/H/M/L пустые.
+- `2026-10-13` · pasted finding (rulesets README push-secrets fallback) · 1 finding (0 Critical, 0 Major, 0 Minor; 1 Info) → Open C/H/M/L пустые.
+- `2026-10-13` · pasted finding (breaking-gate.yml fork PR write token) · 1 finding (0 Critical, 1 Major, 0 Minor) → Open C/H/M/L пустые.
 
 **PR:** [#1](https://github.com/denis-peshkov/duplicate-finder/pull/1) (`BREAKING:` exe rename / `LICENSE.md` / `icon.png` / SemVer 2 / `clean_empty_folders` default).
 
@@ -42,21 +42,9 @@
 
 ## Средний (противоречия / баги контрактов)
 
-### ⬜ M1. README SemVer-примеры устарели
-
-Таблица Versioning в `README.md` всё ещё показывает `1.0.15` / `1.0.15-preview.3`, тогда как `GitVersion.yml` задаёт `next-version: 2.0.0` и целевой релиз — `2.0.0`.
-
-### ⬜ M2. README Settings не описывает новые ключи
-
-В дельте появились `include_masks`, `exclude_masks`, `clean_empty_folders` (defaults + UI + persistence), но секция Settings в README по-прежнему только путь к `settings.toml` / логу — без ключей и семантики масок / cleanup.
-
 ---
 
 ## Низкий (техдолг / несогласованности)
-
-### ⬜ L1. `matches_exclude_mask` — тонкий alias
-
-`matches_exclude_mask` в `src/core/enumerator.py` полностью делегирует в `matches_mask` («совместимость»). Либо убрать/свести вызовы, либо явно зафиксировать зачем нужен отдельный символ.
 
 ---
 
@@ -70,6 +58,7 @@
 - `resolve-target-version.sh`: `from_version` только stable `vX.Y.Z`; иначе синтетический `0.0.0` (не git tag); prerelease-fallback вырезан.
 - triage-issue: при 403/404 collaborators fallback = авторы merged PR — осознанно (смерженный вклад = collaborator для triage).
 - PR template: relative `../CONTRIBUTING.md` / BREAKING / LICENSE — оставляем (won't-fix абсолютные URL).
+- README Settings — только путь к `settings.toml` / логу; ключи TOML не дублируем (настройка через UI).
 
 ---
 
@@ -77,6 +66,9 @@
 
 | # | Суть |
 |---|---|
+| ✅ #L1 matches_exclude_mask alias | удалён; тесты на `matches_mask` (path pattern) |
+| ✅ #M2 README Settings keys | dismissed: ключи масок/cleanup не в README; UI + путь к `settings.toml` |
+| ✅ #M1 README SemVer examples | секция `## Versioning` убрана из README (для пользователей не нужна; каналы → `docs/ci-cd.md`) |
 | ✅ #H1 version always before PyInstaller | `Set application version` без `publish_artifacts`; docs/ci-cd.md = README |
 | ✅ #H2 breaking-gate fork write | `pull_request_target` + checkout base only; fetch `pull/*/head` for diff; approval logic unchanged |
 | ✅ #L3 rulesets README push-secrets | draft-only; fallback → secret scanning / push protection (не .gitignore / branch-policy) |
@@ -120,7 +112,4 @@
 
 ## Приоритет фиксов
 
-1. **M1** / **M2** — обновить README (SemVer-примеры + Settings keys).
-2. **L1** — alias `matches_exclude_mask` (по желанию в этом релизе).
-
-Кросс-релизная очередь: [`docs/TO-DO.md`](TO-DO.md).
+_(пусто — релиз `2.0.0` опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md).)_
