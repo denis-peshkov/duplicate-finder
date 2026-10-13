@@ -17,6 +17,7 @@
 - `2026-10-13` · pasted finding (resolve-target-version.sh:111–114 tag fallback) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
 - `2026-10-13` · pasted finding (update-changelog.mjs:191 isLibraryPath .py) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
 - `2026-10-13` · pasted finding (update-changelog.test.mjs:110–114 v2.3.0) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (triage-issue/SKILL.md:65 collaborators fallback) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
 
 **PR:** [#1](https://github.com/denis-peshkov/duplicate-finder/pull/1) (`BREAKING:` exe rename / `LICENSE.md` / `icon.png` / SemVer 2 / `clean_empty_folders` default).
 
@@ -62,6 +63,7 @@
 - Логи и часть UI-строк переведены на English.
 - GitVersion `feature`: `label: '{BranchName}'` + capture `(?<BranchName>.+)` в regex (как `useBranchName` в GV5).
 - `resolve-target-version.sh`: `from_version` только stable `vX.Y.Z`; иначе синтетический `0.0.0` (не git tag); prerelease-fallback вырезан.
+- triage-issue: при 403/404 collaborators fallback = авторы merged PR — осознанно (смерженный вклад = collaborator для triage).
 
 ---
 
@@ -69,6 +71,7 @@
 
 | # | Суть |
 |---|---|
+| ✅ #M8 triage collaborators fallback | dismissed: merged PR author = collaborator для triage |
 | ✅ #M7 collectDelta test tag | happy-path → существующий `v1.0.14` (не `v2.3.0`) |
 | ✅ #M6 isLibraryPath .py | `update-changelog.mjs`: Library включает `.py` (+ .NET extensions) |
 | ✅ #M5 resolve-target-version tag fallback | без preview-fallback; нет stable → `from_version=0.0.0` (+ changelog empty-tree) |
