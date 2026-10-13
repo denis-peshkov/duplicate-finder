@@ -34,6 +34,10 @@ runs:
           exit 1
         fi
 
+        # Drop checkout-persisted GITHUB_TOKEN header so TAGTOKEN in the remote URL is used
+        # (otherwise Protect tags returns GH013 for github-actions[bot]).
+        git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
+
         git config user.name 'Denis Peshkov'
         git config user.email 'denis.peshkov@outlook.com'
         git remote set-url origin "https://x-access-token:${TAGTOKEN}@github.com/${GITHUB_REPOSITORY}"

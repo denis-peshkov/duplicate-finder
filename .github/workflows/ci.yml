@@ -86,6 +86,8 @@ jobs:
         with:
           ref: master
           fetch-depth: 0
+          # Protect tags: GITHUB_TOKEN cannot create v*; TAGTOKEN (admin) must win over checkout auth.
+          persist-credentials: false
       - id: push
         uses: ./.github/actions/push-tags
         with:

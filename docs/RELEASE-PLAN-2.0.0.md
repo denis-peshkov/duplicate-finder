@@ -8,23 +8,23 @@
 >
 > **Предыдущий план:** —
 >
-> Дельта: `origin/master...HEAD` — **36** коммита · **111** файлов · **+10158 / −362**. Open: C0 H1 M3 L1
+> Дельта: `origin/master...HEAD` — **36** коммита · **111** файлов · **+10158 / −362**. Open: C0 H1 M2 L1
 
 **CodeRabbit:**
-- `2026-10-13` · pasted finding (GitVersion.yml:102 BranchName) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M3 L1
-- `2026-10-13` · pasted finding (coderabbit/SKILL.md:164 Phase 4 trigger) · 1 finding (0 Critical, 0 Major, 0 Minor; 1 Info) → Open: C0 H1 M3 L1
-- `2026-10-13` · pasted finding (pr-message/triage-pr fetch swallow) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M3 L1
-- `2026-10-13` · pasted finding (resolve-target-version.sh:111–114 tag fallback) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M3 L1
-- `2026-10-13` · pasted finding (update-changelog.mjs:191 isLibraryPath .py) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M3 L1
-- `2026-10-13` · pasted finding (update-changelog.test.mjs:110–114 v2.3.0) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M3 L1
-- `2026-10-13` · pasted finding (triage-issue/SKILL.md:65 collaborators fallback) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M3 L1
-- `2026-10-13` · pasted finding (triage .NET leftovers → Python app) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M3 L1
-- `2026-10-13` · pasted finding (triage-pr/SKILL.md:85 statusCheckRollup) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M3 L1
-- `2026-10-13` · pasted finding (triage-pr/SKILL.md:145–148 origin/ strip) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M3 L1
-- `2026-10-13` · pasted finding (.editorconfig:9 utf-8-bom vs shebang) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M3 L1
-- `2026-10-13` · pasted finding (PULL_REQUEST_TEMPLATE.md relative links) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M3 L1
-- `2026-10-13` · pasted finding (rulesets required checks breaking-gate) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M3 L1
-- `2026-10-13` · pasted finding (protect-tags / push-tags TAGTOKEN vs GITHUB_TOKEN) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M3 L1
+- `2026-10-13` · pasted finding (GitVersion.yml:102 BranchName) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (coderabbit/SKILL.md:164 Phase 4 trigger) · 1 finding (0 Critical, 0 Major, 0 Minor; 1 Info) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (pr-message/triage-pr fetch swallow) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (resolve-target-version.sh:111–114 tag fallback) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (update-changelog.mjs:191 isLibraryPath .py) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (update-changelog.test.mjs:110–114 v2.3.0) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (triage-issue/SKILL.md:65 collaborators fallback) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (triage .NET leftovers → Python app) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (triage-pr/SKILL.md:85 statusCheckRollup) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (triage-pr/SKILL.md:145–148 origin/ strip) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (.editorconfig:9 utf-8-bom vs shebang) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (PULL_REQUEST_TEMPLATE.md relative links) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (rulesets required checks breaking-gate) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (protect-tags / push-tags TAGTOKEN vs GITHUB_TOKEN) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
 
 **PR:** [#1](https://github.com/denis-peshkov/duplicate-finder/pull/1) (`BREAKING:` exe rename / `LICENSE.md` / `icon.png` / SemVer 2 / `clean_empty_folders` default).
 
@@ -51,10 +51,6 @@
 ### ⬜ M2. README Settings не описывает новые ключи
 
 В дельте появились `include_masks`, `exclude_masks`, `clean_empty_folders` (defaults + UI + persistence), но секция Settings в README по-прежнему только путь к `settings.toml` / логу — без ключей и семантики масок / cleanup.
-
-### ⬜ M15. push-tags: checkout auth перекрывает TAGTOKEN
-
-Job `push-tags` в `ci.yml` делает `actions/checkout@v4` без `persist-credentials: false`; `.github/actions/push-tags` ставит `origin` на TAGTOKEN, но не снимает `http.https://github.com/.extraheader`. Header от `GITHUB_TOKEN` побеждает URL → push как `github-actions[bot]` → GH013 на Protect tags. Эталон уже в `backmerge-master-to-dev.yml`. (Путь CR `04-protect-release-tags.json` устарел → `protect-tags.json`; фикс в workflow/action, не в ruleset JSON.)
 
 ---
 
@@ -83,6 +79,7 @@ Job `push-tags` в `ci.yml` делает `actions/checkout@v4` без `persist-c
 
 | # | Суть |
 |---|---|
+| ✅ #M15 push-tags TAGTOKEN vs checkout | `persist-credentials: false` + unset `.extraheader` before TAGTOKEN remote (как backmerge) |
 | ✅ #M14 rulesets breaking-gate required | dismissed/reverted: admin bypass anyway; `breaking-gate` stays workflow-only (not required) |
 | ✅ #M13 PR template relative links | dismissed: абсолютные blob-URL не хотим; relative оставлены |
 | ✅ #M12 editorconfig charset | `[*]=utf-8`; BOM только `*.{cs,csproj,sln}` (shebang-safe) |
@@ -120,8 +117,7 @@ Job `push-tags` в `ci.yml` делает `actions/checkout@v4` без `persist-c
 ## Приоритет фиксов
 
 1. **H1** — согласовать version substitution (action ↔ README ↔ ci-cd.md).
-2. **M15** — push-tags: `persist-credentials: false` + unset `.extraheader` (как backmerge).
-3. **M1** / **M2** — обновить README (SemVer-примеры + Settings keys).
-4. **L1** — alias `matches_exclude_mask` (по желанию в этом релизе).
+2. **M1** / **M2** — обновить README (SemVer-примеры + Settings keys).
+3. **L1** — alias `matches_exclude_mask` (по желанию в этом релизе).
 
 Кросс-релизная очередь: [`docs/TO-DO.md`](TO-DO.md).
