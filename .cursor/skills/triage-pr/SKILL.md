@@ -82,9 +82,29 @@ For each PR (priority — overlap candidates):
 
 **Our PRs**: author in collaborators.
 
-**CI rollup** (`statusCheckRollup.state` from `gh pr list`): `SUCCESS` → clean; `FAILURE` → dirty; `PENDING` / missing / anything else → unstable or unknown.
+**CI rollup** (`statusCheckRollup` from `gh pr list --json`): an **array** of check entries (not one object with `.state`). Classify by aggregating each entry:
 
-**External — ready**: ≤1000 additions, ≤10 files, not CONFLICTING, **CI clean only** (`SUCCESS` — all required checks passed).
+| Per-entry signal | Prefer fields |
+|---|---|
+| Success | `conclusion` / `state` in `SUCCESS` (or `NEUTRAL` / `SKIPPED` if you treat them as non-blocking) |
+| Failed | `FAILURE`, `TIMED_OUT`, `CANCELLED`, `ACTION_REQUIRED`, `ERROR`, `startup_failure` |
+| Pending | `status` in `QUEUED` / `IN_PROGRESS` / `PENDING`, or missing `conclusion` while not terminal |
+
+**Aggregate (order matters):**
+
+1. Empty / missing rollup → **unknown**
+2. Any **failed** → **dirty**
+3. Else any **pending** → **unstable**
+4. Else all success (or only non-blocking neutrals) → **clean**
+
+Preserve pending and failed in collected JSON (do not collapse to a fake overall `.state`). Example jq sketch:
+
+```bash
+# After: gh pr view N --json statusCheckRollup
+# dirty if any failure; unstable if any pending; clean if all success; else unknown
+```
+
+**External — ready**: ≤1000 additions, ≤10 files, not CONFLICTING, **CI clean only** (aggregate = all checks passed).
 
 **External — problematic**: XL, conflict, **CI unstable/dirty/unknown**, overlap.
 
