@@ -145,7 +145,7 @@ Before PyInstaller, CI always substitutes `version` in `pyproject.toml` and `APP
 | `.github/actions/` | Composite actions (version, test, build, publish-*) |
 | `.github/scripts/` | Pack / Chocolatey / Homebrew helpers |
 | `docs/` | [ci-cd.md](docs/ci-cd.md), [distribution.md](docs/distribution.md) |
-| `duplicate-finder-icon.png` | Project / Chocolatey icon |
+| `icon.png` | Project / Chocolatey icon |
 | `LICENSE.md` | MIT |
 
 ### Local CLI after install
