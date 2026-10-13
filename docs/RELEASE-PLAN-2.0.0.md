@@ -11,7 +11,7 @@
 > Дельта: `origin/master...HEAD` — **36** коммита · **111** файлов · **+10158 / −362**. Open: C0 H1 M2 L1
 
 **CodeRabbit:**
-- не запускался.
+- `2026-10-13` · pasted finding (GitVersion.yml:102 BranchName) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
 
 **PR:** [#1](https://github.com/denis-peshkov/duplicate-finder/pull/1) (`BREAKING:` exe rename / `LICENSE.md` / `icon.png` / SemVer 2 / `clean_empty_folders` default).
 
@@ -55,6 +55,7 @@
 - `clean_empty_folders = true` по умолчанию — cleanup пустых папок opt-out, не opt-in.
 - Имя бинарника `DuplicateFinder` → `duplicate-finder` (kebab-case, едино с CLI shim).
 - Логи и часть UI-строк переведены на English.
+- GitVersion `feature`: `label: '{BranchName}'` + capture `(?<BranchName>.+)` в regex (как `useBranchName` в GV5).
 
 ---
 
@@ -62,6 +63,7 @@
 
 | # | Суть |
 |---|---|
+| ✅ #M3 Feature BranchName capture | `regex` + `(?<BranchName>.+)`, `label: '{BranchName}'` |
 | ✅ Include / exclude masks | Сканирование фильтруется `include_masks` / `exclude_masks` (UI `mask_list_panel`, enumerator `should_keep_file`, settings + тесты) |
 | ✅ Empty-folder cleanup | `remove_empty_folders` + `resolve_empty_folder_roots`, прогресс/cancel, independent cleanup без выбранных файлов |
 | ✅ Results Treeview | Кастомная таблица заменена на Treeview: сортировка, resize колонок, ellipsis |

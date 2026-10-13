@@ -36,6 +36,9 @@
         "required_status_checks": [
           {
             "context": "Test"
+          },
+          {
+            "context": "Branch policy"
           }
         ]
       }

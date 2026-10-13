@@ -96,21 +96,23 @@ chore/*   ──┘                              ▲
 | `master` | Stable release; GitVersion, **stable** git tags, GitHub Release, Chocolatey, Homebrew | **Owner only** — direct push and PRs |
 | `release/*` | Release preparation; preview packages; **no** git tags for pre-releases | **Owner only** |
 | `hotfix/*` | Urgent production patches; same rules as `release/*` | **Owner only** |
-| `dev` | Feature integration; **Default PR target** for contributors | Contributors via PR |
-| `feature/*` | New functionality (build/test only) | Contributors |
-| `fix/*` | Bug fixes (build/test only) | Contributors |
-| `chore/*` | CI, deps, docs-only, maintenance | Contributors |
+| `dev` | Feature integration; **Default PR target** for contributors | Contributors via PR from a **fork** |
+| `feature/*` | New functionality (build/test only) | Contributors — **on their fork only** |
+| `fix/*` | Bug fixes (build/test only) | Contributors — **on their fork only** |
+| `chore/*` | CI, deps, docs-only, maintenance | Contributors — **on their fork only** |
 
 Git tags and GitHub Release run on **`master` only**. Preview Chocolatey / Homebrew preview tap: `release/*` / `hotfix/*`. Details: [docs/ci-cd.md](docs/ci-cd.md).
 
-**Access rules (enforced via `.github/workflows/branch-policy.yml`):**
+**Access rules (enforced via `.github/workflows/branch-policy.yml` + [`.github/rulesets/`](.github/rulesets/)):**
 
-- Contributors open PRs **only into `dev`** from `feature/*`, `fix/*`, or `chore/*`.
-- PRs targeting **`master`** — repository owner only (`denis-peshkov`).
+- Contributors work on a **fork** (do not push topic branches to this repository).
+- Contributor PRs go **only into `dev`**, head branch must be `feature/*`, `fix/*`, or `chore/*` on the fork.
+- PRs targeting **`master`**, **`release/*`**, or **`hotfix/*`** — repository owner only (`denis-peshkov`).
 - Pushing to **`master`**, **`release/*`**, or **`hotfix/*`** — owner only.
+- Upstream allows only `master`, `dev`, `release/*`, `hotfix/*`, `homebrew-preview-tap` (other branch create/update/delete — admin bypass).
 - After changes land on **`master`**, CI (`.github/workflows/backmerge-master-to-dev.yml`) **merges `master` into `dev` and pushes** using **`TAGTOKEN`**.
 
-Optional GitHub Rulesets: import recipes from [`.github/rulesets/`](.github/rulesets/).
+Import ruleset recipes from [`.github/rulesets/`](.github/rulesets/) (include `restrict-upstream-branch-creation.json`).
 
 Versioning: **GitVersion** (`GitVersion.yml`). CI package version is `Major.Minor.run_number` (+ preview label on release/hotfix). `commit-message-incrementing: Disabled`.
 
@@ -156,13 +158,20 @@ For breaking changes, include `BREAKING:` in the PR title.
 
 ## Pull request process
 
-### 1. Preparation
+### 1. Preparation (fork)
+
+1. Fork [denis-peshkov/duplicate-finder](https://github.com/denis-peshkov/duplicate-finder) on GitHub.
+2. Clone **your fork** and add upstream:
 
 ```bash
-git checkout dev
-git pull origin dev
-git checkout -b feature/short-description
+git clone https://github.com/<you>/duplicate-finder.git
+cd duplicate-finder
+git remote add upstream https://github.com/denis-peshkov/duplicate-finder.git
+git fetch upstream
+git checkout -b feature/short-description upstream/dev
 ```
+
+Use `fix/…` or `chore/…` instead of `feature/…` when that matches the change. Push to **`origin`** (your fork), not to upstream.
 
 ### 2. Changes
 
@@ -176,7 +185,8 @@ See [Testing](#testing).
 
 ### 4. Open PR
 
-- **Base branch:** `dev` (required for contributors)
+- **Head:** your fork, branch `feature/*` / `fix/*` / `chore/*`
+- **Base:** `denis-peshkov/duplicate-finder` → **`dev`** (required for contributors)
 - **Do not** open PRs into `master`, `release/*`, or `hotfix/*` unless you are the repository owner
 - Description: what, why, how to verify (**English**)
 - Breaking user change → prefix the **PR title** with `BREAKING:`

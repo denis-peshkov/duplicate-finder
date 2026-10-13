@@ -1,5 +1,5 @@
 {
-  "name": "Protect release tags",
+  "name": "Protect tags",
   "target": "tag",
   "source_type": "Repository",
   "enforcement": "active",

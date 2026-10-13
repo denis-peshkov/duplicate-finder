@@ -1,4 +1,7 @@
 # Branch and pull request policy
+#
+# Contributors: fork → feature/*|fix/*|chore/* → PR into dev.
+# Owner-only: push/PR to master, release/*, hotfix/*.
 
 name: Branch policy
 permissions: {}
@@ -8,6 +11,7 @@ on:
     types: [opened, synchronize, reopened, edited]
     branches:
       - master
+      - dev
       - release/*
       - hotfix/*
   push:
@@ -18,7 +22,7 @@ on:
 
 jobs:
   enforce:
-    name: Owner-only branches
+    name: Branch policy
     runs-on: ubuntu-22.04
     steps:
       - name: Enforce repository branch policy
@@ -30,28 +34,61 @@ jobs:
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
           EVENT: ${{ github.event_name }}
           BASE_REF: ${{ github.base_ref }}
-          HEAD_REF: ${{ github.ref_name }}
+          # On pull_request, ref_name is N/merge — use head_ref for the branch name.
+          HEAD_REF: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
 
+          # ── pull_request ──────────────────────────────────────────────
+          # BASE_REF = target branch (master|dev|release/*|hotfix/*)
+          # HEAD_REF = source branch name (not refs/pull/N/merge)
+          # HEAD_REPO vs BASE_REPO = fork PR if they differ
           if [ "$EVENT" = "pull_request" ]; then
-            # Policy is about who opened the PR, not who re-triggered CI (e.g. coderabbitai[bot]).
+            # Owner may target any branch (master / release / hotfix / dev).
+            # Use PR_AUTHOR, not ACTOR — re-runs can be coderabbitai[bot], etc.
             if [ "${PR_AUTHOR:-}" = "$REPO_OWNER" ]; then
               echo "PR author is repository owner ($REPO_OWNER) — branch policy satisfied (actor=$ACTOR)."
               exit 0
             fi
 
             case "$BASE_REF" in
+              # Contributors must not PR into release lines — owner only.
               master|release/*|hotfix/*)
                 echo "::error::Only the repository owner ($REPO_OWNER) may open pull requests targeting $BASE_REF."
                 echo "This PR author is '${PR_AUTHOR:-unknown}' (workflow actor: $ACTOR)."
-                echo "Contributors: open PRs against dev from feature/*, fix/*, or chore/*."
+                echo "Contributors: fork the repo, push feature/*|fix/*|chore/*, open a PR against dev."
                 exit 1
+                ;;
+              # Contributors → only into dev, and only from a fork with a topic prefix.
+              dev)
+                # Same-repo head = pushed a topic branch to upstream (forbidden).
+                if [ -z "${HEAD_REPO:-}" ] || [ "$HEAD_REPO" = "$BASE_REPO" ]; then
+                  echo "::error::Contributor PRs must come from a fork (not a branch on $BASE_REPO)."
+                  echo "Fork https://github.com/$BASE_REPO, push feature/*|fix/*|chore/*, then open a PR into dev."
+                  exit 1
+                fi
+                # Head branch naming on the fork (CONTRIBUTING).
+                case "$HEAD_REF" in
+                  feature/*|fix/*|chore/*)
+                    echo "Fork PR $HEAD_REPO:$HEAD_REF → $BASE_REPO:dev — OK."
+                    exit 0
+                    ;;
+                  *)
+                    echo "::error::Contributor PR head branch must be feature/*, fix/*, or chore/* (got '$HEAD_REF')."
+                    echo "Rename the branch on your fork and update the PR."
+                    exit 1
+                    ;;
+                esac
                 ;;
             esac
           fi
 
+          # ── push (direct, no PR) ───────────────────────────────────────
+          # Only fires for master / release/* / hotfix/* (see on.push.branches).
           if [ "$EVENT" = "push" ]; then
+            # Owner may push; everyone else is blocked on these refs.
             if [ "$ACTOR" = "$REPO_OWNER" ]; then
               echo "Repository owner ($REPO_OWNER) — push policy satisfied."
               exit 0
@@ -61,10 +98,11 @@ jobs:
               master|release/*|hotfix/*)
                 echo "::error::Only the repository owner ($REPO_OWNER) may push to master, release/*, or hotfix/*."
                 echo "Push actor is '$ACTOR'."
-                echo "Contributors: use feature/*, fix/*, or chore/* and merge via PR into dev."
+                echo "Contributors: fork, use feature/*|fix/*|chore/*, merge via PR into dev."
                 exit 1
                 ;;
             esac
           fi
 
+          # Fallback (should be rare — unexpected base/event combo).
           echo "Branch policy satisfied for $EVENT on ${HEAD_REF:-$BASE_REF}."
