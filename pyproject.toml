@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Desktop app for finding and removing duplicate files"
 readme = "README.md"
 requires-python = ">=3.12"
-license = {text = "MIT"}
+license = {file = "LICENSE.md"}
 
 authors = [
     {name = "Denis Peshkov"},
@@ -22,14 +22,18 @@ keywords = [
 ]
 
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: End Users/Desktop",
     "License :: OSI Approved :: MIT License",
-    "Natural Language :: Russian",
-    "Operating System :: OS Independent",
+    "Natural Language :: English",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Topic :: System :: Filesystems",
+    "Topic :: Utilities",
+    "Environment :: MacOS X",
+    "Environment :: Win32 (MS Windows)",
 ]
 
 dependencies = [
@@ -43,13 +47,20 @@ dev = [
     "pytest>=8.0.0",
     "pytest-cov>=6.0.0,<8.0.0",
     "pyinstaller>=6.0.0",
+    "ruff>=0.9.0",
 ]
+
+[project.urls]
+Homepage = "https://peshkov.biz"
+Repository = "https://github.com/denis-peshkov/duplicate-finder"
+Issues = "https://github.com/denis-peshkov/duplicate-finder/issues"
 
 [project.scripts]
 duplicate-finder = "main:main"
 
 [tool.setuptools]
 py-modules = ["main"]
+license-files = ["LICENSE.md"]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -57,3 +68,22 @@ include = ["src", "src.*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 100
