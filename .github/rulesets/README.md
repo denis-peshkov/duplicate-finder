@@ -63,6 +63,8 @@ Back-merge, tag push, and **homebrew-preview-tap** formula push must use `secret
 - Contributor **fork** + head prefix `feature|fix|chore` on PRs into `dev` — `branch-policy.yml` (required check on Protect dev).
 - Topic branches belong on forks; upstream create/update/delete of non-official names — `restrict-upstream-branch-creation.json`.
 
-## Push ruleset — may not import on personal repos
+## Push ruleset — draft only on personal repos
 
-GitHub may reject push rulesets on **personal** repositories. Keep `restrict-push-secrets.json` as a draft for a future org transfer, or rely on `.gitignore` + `branch-policy.yml`.
+GitHub may reject **push** rulesets on **personal** repositories. Treat [`restrict-push-secrets.json`](restrict-push-secrets.json) as a **draft** for a future org transfer — do not treat it as live protection here.
+
+For secrets on this personal repo, use GitHub **[secret scanning](https://docs.github.com/en/code-security/secret-scanning/about-secret-scanning)** and **[push protection](https://docs.github.com/en/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/about-push-protection)** (Settings → Code security). `.gitignore` and `branch-policy.yml` are not push-protection substitutes.

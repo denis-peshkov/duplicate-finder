@@ -25,6 +25,7 @@
 - `2026-10-13` · pasted finding (PULL_REQUEST_TEMPLATE.md relative links) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
 - `2026-10-13` · pasted finding (rulesets required checks breaking-gate) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
 - `2026-10-13` · pasted finding (protect-tags / push-tags TAGTOKEN vs GITHUB_TOKEN) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (rulesets README push-secrets fallback) · 1 finding (0 Critical, 0 Major, 0 Minor; 1 Info) → Open: C0 H1 M2 L1
 
 **PR:** [#1](https://github.com/denis-peshkov/duplicate-finder/pull/1) (`BREAKING:` exe rename / `LICENSE.md` / `icon.png` / SemVer 2 / `clean_empty_folders` default).
 
@@ -79,6 +80,7 @@
 
 | # | Суть |
 |---|---|
+| ✅ #L3 rulesets README push-secrets | draft-only; fallback → secret scanning / push protection (не .gitignore / branch-policy) |
 | ✅ #M15 push-tags TAGTOKEN vs checkout | `persist-credentials: false` + unset `.extraheader` before TAGTOKEN remote (как backmerge) |
 | ✅ #M14 rulesets breaking-gate required | dismissed/reverted: admin bypass anyway; `breaking-gate` stays workflow-only (not required) |
 | ✅ #M13 PR template relative links | dismissed: абсолютные blob-URL не хотим; relative оставлены |
