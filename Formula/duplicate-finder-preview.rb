@@ -3,9 +3,9 @@ class DuplicateFinderPreview < Formula
 
   desc "Preview build: desktop application for finding and removing duplicate files"
   homepage "https://github.com/denis-peshkov/duplicate-finder"
-  version "10.0.34-preview"
-  url "https://github.com/denis-peshkov/duplicate-finder/archive/01a934ae72a2f92cda0782dcf059749c3a15f733.tar.gz"
-  sha256 "62afad8737a6478db94910878617d4f141f73e2b5093776cce9d7a6c12619d29"
+  version "10.0.36-preview"
+  url "https://github.com/denis-peshkov/duplicate-finder/archive/5e4f252c4bda2139425741e7e1cbf5aba88d8605.tar.gz"
+  sha256 "e46a379a7eb30957483e4bf2fa757354a303ea9397e19e12de7378ec34944a50"
   license "MIT"
 
   depends_on "python-tk@3.12"
