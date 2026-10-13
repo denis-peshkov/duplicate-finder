@@ -7,7 +7,7 @@
 #   http.https://github.com/.extraheader AUTHORIZATION: basic …
 # That header wins over `git remote set-url` with TAGTOKEN, so push still runs as
 # github-actions[bot] and gets GH013. Fix: persist-credentials: false, then
-# push only with TAGTOKEN (same idea as tag push in dotnet.yml).
+# push only with TAGTOKEN (same idea as tag push in [dotnet/ci].yml / push-tags).
 
 name: Back-merge master to dev
 
