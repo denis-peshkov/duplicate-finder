@@ -57,7 +57,7 @@ flowchart TD
 | `publish-release` | ubuntu-22.04 | push `master` | GitHub Release + checksums |
 | `publish-homebrew` | macos-latest | after release on `master` | homebrew-core PR / bump |
 
-Before PyInstaller, CI always patches `pyproject.toml` and `APP_VERSION` in `src/config/app_info.py` from the `version` job (including pull requests). Packaging and upload of `release-binary-*` artifacts (`publish_artifacts=true`) still run only on push to `master` / `release/*` / `hotfix/*`. Pull requests do not publish Chocolatey or Homebrew.
+`build-release-binary` installs deps with the repo placeholder version, then always patches `pyproject.toml` and `APP_VERSION` from the `version` job before PyInstaller (including pull requests; PR labels like `-pr1` are not PEP 440, so the patch must run after `pip install -e`). Packaging and upload of `release-binary-*` (`publish_artifacts=true`) still run only on push to `master` / `release/*` / `hotfix/*`. Pull requests do not publish Chocolatey or Homebrew.
 
 ---
 

@@ -69,7 +69,7 @@
 | ✅ #L1 matches_exclude_mask alias | удалён; тесты на `matches_mask` (path pattern) |
 | ✅ #M2 README Settings keys | dismissed: ключи масок/cleanup не в README; UI + путь к `settings.toml` |
 | ✅ #M1 README SemVer examples | секция `## Versioning` убрана из README (для пользователей не нужна; каналы → `docs/ci-cd.md`) |
-| ✅ #H1 version always before PyInstaller | `Set application version` без `publish_artifacts`; docs/ci-cd.md = README |
+| ✅ #H1 version always before PyInstaller | version всегда перед PyInstaller; `pip install -e` до патча (PR `-prN` ≠ PEP440) |
 | ✅ #H2 breaking-gate fork write | `pull_request_target` + checkout base only; fetch `pull/*/head` for diff; approval logic unchanged |
 | ✅ #L3 rulesets README push-secrets | draft-only; fallback → secret scanning / push protection (не .gitignore / branch-policy) |
 | ✅ #M15 push-tags TAGTOKEN vs checkout | `persist-credentials: false` + unset `.extraheader` before TAGTOKEN remote (как backmerge) |
