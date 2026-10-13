@@ -250,11 +250,20 @@ export function collectDelta(fromVersion) {
   if (!fromVersion || typeof fromVersion !== 'string') {
     throw new Error('collectDelta: fromVersion is required');
   }
-  const tag = fromVersion.startsWith('v') ? fromVersion : `v${fromVersion}`;
-  // Fail hard if the baseline tag is missing — never invent an empty delta.
-  run('git', ['rev-parse', '--verify', `${tag}^{commit}`]);
+  const normalized = fromVersion.startsWith('v') ? fromVersion.slice(1) : fromVersion;
+  // Synthetic baseline from resolve-target-version.sh when no stable tag exists.
+  // Git empty tree → all paths/commits reachable from HEAD (no v0.0.0 tag required).
+  const emptyTree = '4b825dc642cb6eb9a060e54bf8d69288fbee4904';
+  let range;
+  if (normalized === '0.0.0') {
+    range = `${emptyTree}..HEAD`;
+  } else {
+    const tag = `v${normalized}`;
+    // Fail hard if the baseline tag is missing — never invent an empty delta.
+    run('git', ['rev-parse', '--verify', `${tag}^{commit}`]);
+    range = `${tag}..HEAD`;
+  }
 
-  const range = `${tag}..HEAD`;
   const names = run('git', ['diff', '--name-only', range]);
   const paths = names.stdout
     .split('\n')

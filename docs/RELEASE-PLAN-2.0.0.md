@@ -14,6 +14,7 @@
 - `2026-10-13` · pasted finding (GitVersion.yml:102 BranchName) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
 - `2026-10-13` · pasted finding (coderabbit/SKILL.md:164 Phase 4 trigger) · 1 finding (0 Critical, 0 Major, 0 Minor; 1 Info) → Open: C0 H1 M2 L1
 - `2026-10-13` · pasted finding (pr-message/triage-pr fetch swallow) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
+- `2026-10-13` · pasted finding (resolve-target-version.sh:111–114 tag fallback) · 1 finding (0 Critical, 0 Major, 1 Minor) → Open: C0 H1 M2 L1
 
 **PR:** [#1](https://github.com/denis-peshkov/duplicate-finder/pull/1) (`BREAKING:` exe rename / `LICENSE.md` / `icon.png` / SemVer 2 / `clean_empty_folders` default).
 
@@ -58,6 +59,7 @@
 - Имя бинарника `DuplicateFinder` → `duplicate-finder` (kebab-case, едино с CLI shim).
 - Логи и часть UI-строк переведены на English.
 - GitVersion `feature`: `label: '{BranchName}'` + capture `(?<BranchName>.+)` в regex (как `useBranchName` в GV5).
+- `resolve-target-version.sh`: `from_version` только stable `vX.Y.Z`; иначе синтетический `0.0.0` (не git tag); prerelease-fallback вырезан.
 
 ---
 
@@ -65,6 +67,7 @@
 
 | # | Суть |
 |---|---|
+| ✅ #M5 resolve-target-version tag fallback | без preview-fallback; нет stable → `from_version=0.0.0` (+ changelog empty-tree) |
 | ✅ #M4 Skills silent git fetch | pr-message + triage-pr named branch: fail fetch unless `offline` |
 | ✅ #L2 CodeRabbit Phase 4 trigger | pasted finding / footer → только Phase 3; фикс только по явной просьбе |
 | ✅ #M3 Feature BranchName capture | `regex` + `(?<BranchName>.+)`, `label: '{BranchName}'` |

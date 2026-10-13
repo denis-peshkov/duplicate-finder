@@ -11,8 +11,8 @@
 #   eval "$(bash .cursor/skills/release-plan/scripts/resolve-target-version.sh --export)"
 #
 # Exit codes:
-#   0 — target version resolved
-#   1 — error (no tags / GitVersion missing or empty)
+#   0 — target version resolved (from_version is 0.0.0 if no stable vX.Y.Z tag)
+#   1 — error (GitVersion missing/empty, or bad --version / base)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
@@ -108,13 +108,11 @@ gitversion_major_minor_patch() {
   GIT_TERMINAL_PROMPT=0 "$gv" /nofetch /showvariable MajorMinorPatch 2>/dev/null | tr -d '\r' | head -n1
 }
 
+# Baseline for BREAKING/changelog only — stable vX.Y.Z. Never fall back to
+# prerelease / suffixed v* tags. No stable tag → synthetic 0.0.0 (docs baseline, not a git tag).
 LATEST="$(latest_published)"
 if [[ -z "$LATEST" ]]; then
-  LATEST="$(git tag -l 'v*' 2>/dev/null | sed 's/^v//' | sort -t. -k1,1n -k2,2n -k3,3n | tail -1 || true)"
-fi
-if [[ -z "$LATEST" ]]; then
-  echo "error: no v* git tags found" >&2
-  exit 1
+  LATEST="0.0.0"
 fi
 
 if [[ -n "$VERSION" ]]; then
