@@ -122,7 +122,11 @@ class AboutWindow(ctk.CTkToplevel):
 
         self.after(50, self._activate_modal)
 
-    def _section_title(self, parent: ctk.CTkBaseClass, text: str) -> None:
+    def _section_title(
+        self,
+        parent: ctk.CTkBaseClass,
+        text: str,
+    ) -> None:
         """Добавить заголовок секции в окно About."""
         ctk.CTkLabel(
             parent,

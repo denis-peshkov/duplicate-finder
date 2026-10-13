@@ -9,12 +9,17 @@ from src.core.finder import DuplicateFinder
 from src.core.models import SearchConfig
 
 
-def _write(path: Path, content: bytes) -> None:
+def _write(
+    path: Path,
+    content: bytes,
+) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(content)
 
 
-def test_exact_duplicate_single_list(tmp_path: Path) -> None:
+def test_exact_duplicate_single_list(
+    tmp_path: Path,
+) -> None:
     dir_a = tmp_path / "a"
     dir_b = tmp_path / "b"
     file1 = dir_a / "one.bin"
@@ -38,7 +43,9 @@ def test_exact_duplicate_single_list(tmp_path: Path) -> None:
     assert len(result.groups[0].files) == 2
 
 
-def test_filename_duplicate_single_list(tmp_path: Path) -> None:
+def test_filename_duplicate_single_list(
+    tmp_path: Path,
+) -> None:
     _write(tmp_path / "dir1" / "photo.jpg", b"a")
     _write(tmp_path / "dir2" / "photo.jpg", b"b")
 
@@ -56,7 +63,9 @@ def test_filename_duplicate_single_list(tmp_path: Path) -> None:
     assert len(result.groups[0].files) == 2
 
 
-def test_exact_two_lists(tmp_path: Path) -> None:
+def test_exact_two_lists(
+    tmp_path: Path,
+) -> None:
     list1 = tmp_path / "list1"
     list2 = tmp_path / "list2"
     _write(list1 / "a.bin", b"duplicate")
@@ -78,7 +87,9 @@ def test_exact_two_lists(tmp_path: Path) -> None:
     assert sources == {"list1", "list2"}
 
 
-def test_exact_two_lists_skips_unique_sizes(tmp_path: Path) -> None:
+def test_exact_two_lists_skips_unique_sizes(
+    tmp_path: Path,
+) -> None:
     """Файлы уникального размера между списками не должны давать ложных групп."""
     list1 = tmp_path / "list1"
     list2 = tmp_path / "list2"
@@ -102,7 +113,9 @@ def test_exact_two_lists_skips_unique_sizes(tmp_path: Path) -> None:
     assert names == {"same.bin", "same2.bin"}
 
 
-def test_filename_two_lists(tmp_path: Path) -> None:
+def test_filename_two_lists(
+    tmp_path: Path,
+) -> None:
     list1 = tmp_path / "list1"
     list2 = tmp_path / "list2"
     _write(list1 / "match.txt", b"1")
@@ -123,7 +136,9 @@ def test_filename_two_lists(tmp_path: Path) -> None:
     assert result.groups[0].key == "match.txt"
 
 
-def test_exact_respects_include_and_exclude_masks(tmp_path: Path) -> None:
+def test_exact_respects_include_and_exclude_masks(
+    tmp_path: Path,
+) -> None:
     root = tmp_path / "root"
     _write(root / "keep.bin", b"same")
     _write(root / "also.bin", b"same")
@@ -148,7 +163,9 @@ def test_exact_respects_include_and_exclude_masks(tmp_path: Path) -> None:
     assert result.search_roots == [root]
 
 
-def test_scan_can_cancel(tmp_path: Path) -> None:
+def test_scan_can_cancel(
+    tmp_path: Path,
+) -> None:
     root = tmp_path / "root"
     for index in range(20):
         _write(root / f"f{index}.bin", b"x" * (index + 1))

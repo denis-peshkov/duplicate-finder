@@ -83,7 +83,10 @@ class FileListPanel(ctk.CTkFrame):
         self._selected_index: int | None = None
         self.listbox.bind("<Button-1>", self._on_list_click)
 
-    def set_list_height(self, height: int) -> None:
+    def set_list_height(
+        self,
+        height: int,
+    ) -> None:
         """Изменить высоту списка (для режима одного/двух списков)."""
         self.listbox.configure(height=height)
 
@@ -91,7 +94,10 @@ class FileListPanel(ctk.CTkFrame):
         """Получить элементы списка в формате отображения."""
         return [format_list_item(Path(path), is_folder) for path, is_folder in self._items]
 
-    def set_items(self, items: list[str]) -> None:
+    def set_items(
+        self,
+        items: list[str],
+    ) -> None:
         """Установить элементы списка."""
         self._items = []
         for item in items:
@@ -104,7 +110,10 @@ class FileListPanel(ctk.CTkFrame):
         """Включён ли обход подпапок."""
         return bool(self.subfolders_var.get())
 
-    def set_include_subfolders(self, value: bool) -> None:
+    def set_include_subfolders(
+        self,
+        value: bool,
+    ) -> None:
         """Установить флаг подпапок."""
         self.subfolders_var.set(value)
 
@@ -122,12 +131,18 @@ class FileListPanel(ctk.CTkFrame):
             line = format_list_item(Path(path), is_folder)
             self.listbox.insert("end", f"{prefix}{line}\n")
         self.listbox.configure(state="disabled")
-        has_selection = self._selected_index is not None and 0 <= self._selected_index < len(self._items)
+        idx = self._selected_index
+        has_selection = (
+            idx is not None and 0 <= idx < len(self._items)
+        )
         state = "normal" if has_selection else "disabled"
         self.remove_btn.configure(state=state)
         self.modify_btn.configure(state=state)
 
-    def _on_list_click(self, _event: object) -> None:
+    def _on_list_click(
+        self,
+        _event: object,
+    ) -> None:
         """Выделить элемент списка по клику."""
         if not self._items:
             return
@@ -190,7 +205,12 @@ class FileListPanel(ctk.CTkFrame):
 class ModifyPathDialog(ctk.CTkToplevel):
     """Диалог изменения пути в списке."""
 
-    def __init__(self, parent: ctk.CTkBaseClass, path: str, is_folder: bool):
+    def __init__(
+        self,
+        parent: ctk.CTkBaseClass,
+        path: str,
+        is_folder: bool,
+    ):
         """Создать диалог редактирования пути списка."""
         super().__init__(parent)
         self.title("Modify path")

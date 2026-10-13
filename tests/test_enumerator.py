@@ -24,7 +24,9 @@ def test_format_list_item_folder() -> None:
     assert format_list_item(Path("data"), True) == f"data{os.sep}*"
 
 
-def test_enumerate_with_subfolders(tmp_path: Path) -> None:
+def test_enumerate_with_subfolders(
+    tmp_path: Path,
+) -> None:
     root = tmp_path / "root"
     sub = root / "sub"
     sub.mkdir(parents=True)
@@ -39,7 +41,9 @@ def test_enumerate_with_subfolders(tmp_path: Path) -> None:
     assert paths == {"a.txt", "b.txt"}
 
 
-def test_enumerate_without_subfolders(tmp_path: Path) -> None:
+def test_enumerate_without_subfolders(
+    tmp_path: Path,
+) -> None:
     root = tmp_path / "root"
     sub = root / "sub"
     sub.mkdir(parents=True)
@@ -52,7 +56,9 @@ def test_enumerate_without_subfolders(tmp_path: Path) -> None:
     assert paths == {"a.txt"}
 
 
-def test_enumerate_images_only(tmp_path: Path) -> None:
+def test_enumerate_images_only(
+    tmp_path: Path,
+) -> None:
     root = tmp_path / "root"
     root.mkdir()
     (root / "photo.jpg").write_bytes(b"jpg")
@@ -64,7 +70,9 @@ def test_enumerate_images_only(tmp_path: Path) -> None:
     assert entries[0].path.name == "photo.jpg"
 
 
-def test_enumerate_exclude_masks(tmp_path: Path) -> None:
+def test_enumerate_exclude_masks(
+    tmp_path: Path,
+) -> None:
     root = tmp_path / "root"
     root.mkdir()
     (root / "keep.txt").write_text("a", encoding="utf-8")
@@ -83,7 +91,9 @@ def test_enumerate_exclude_masks(tmp_path: Path) -> None:
     assert names == {"keep.txt"}
 
 
-def test_enumerate_include_masks(tmp_path: Path) -> None:
+def test_enumerate_include_masks(
+    tmp_path: Path,
+) -> None:
     root = tmp_path / "root"
     root.mkdir()
     (root / "a.txt").write_text("a", encoding="utf-8")
@@ -102,7 +112,9 @@ def test_enumerate_include_masks(tmp_path: Path) -> None:
     assert names == {"b.jpg", "c.png"}
 
 
-def test_enumerate_include_then_exclude(tmp_path: Path) -> None:
+def test_enumerate_include_then_exclude(
+    tmp_path: Path,
+) -> None:
     root = tmp_path / "root"
     root.mkdir()
     (root / "keep.jpg").write_text("a", encoding="utf-8")
@@ -122,7 +134,9 @@ def test_enumerate_include_then_exclude(tmp_path: Path) -> None:
     assert names == {"keep.jpg"}
 
 
-def test_matches_exclude_mask_path_pattern(tmp_path: Path) -> None:
+def test_matches_exclude_mask_path_pattern(
+    tmp_path: Path,
+) -> None:
     from src.core.enumerator import matches_exclude_mask
 
     nested = tmp_path / ".git" / "config"
@@ -132,7 +146,9 @@ def test_matches_exclude_mask_path_pattern(tmp_path: Path) -> None:
     assert matches_exclude_mask(tmp_path / "a.txt", ["*/.git/*"]) is False
 
 
-def test_matches_mask_skips_blank_and_name_patterns(tmp_path: Path) -> None:
+def test_matches_mask_skips_blank_and_name_patterns(
+    tmp_path: Path,
+) -> None:
     from src.core.enumerator import matches_mask, should_keep_file
 
     path = tmp_path / "photo.jpg"
@@ -143,7 +159,9 @@ def test_matches_mask_skips_blank_and_name_patterns(tmp_path: Path) -> None:
     assert should_keep_file(path, include_masks=["*.png"], exclude_masks=None) is False
 
 
-def test_enumerate_single_file_and_missing(tmp_path: Path) -> None:
+def test_enumerate_single_file_and_missing(
+    tmp_path: Path,
+) -> None:
     file_path = tmp_path / "solo.txt"
     file_path.write_text("x", encoding="utf-8")
     missing = tmp_path / "gone.txt"
@@ -160,7 +178,9 @@ def test_enumerate_single_file_and_missing(tmp_path: Path) -> None:
     assert seen == ["solo.txt"]
 
 
-def test_enumerate_can_cancel(tmp_path: Path) -> None:
+def test_enumerate_can_cancel(
+    tmp_path: Path,
+) -> None:
     root = tmp_path / "root"
     root.mkdir()
     for index in range(5):
@@ -168,7 +188,9 @@ def test_enumerate_can_cancel(tmp_path: Path) -> None:
 
     calls = {"n": 0}
 
-    def on_file(_entry) -> None:
+    def on_file(
+        _entry,
+    ) -> None:
         calls["n"] += 1
 
     entries = enumerate_paths(
@@ -182,7 +204,9 @@ def test_enumerate_can_cancel(tmp_path: Path) -> None:
     assert len(entries) == 2
 
 
-def test_enumerate_images_only_single_file(tmp_path: Path) -> None:
+def test_enumerate_images_only_single_file(
+    tmp_path: Path,
+) -> None:
     image = tmp_path / "a.jpg"
     text = tmp_path / "b.txt"
     image.write_bytes(b"jpg")
@@ -198,7 +222,9 @@ def test_enumerate_images_only_single_file(tmp_path: Path) -> None:
     assert entries[0].path.name == "a.jpg"
 
 
-def test_enumerate_dir_without_folder_marker(tmp_path: Path) -> None:
+def test_enumerate_dir_without_folder_marker(
+    tmp_path: Path,
+) -> None:
     root = tmp_path / "root"
     sub = root / "sub"
     sub.mkdir(parents=True)
@@ -217,7 +243,9 @@ def test_enumerate_dir_without_folder_marker(tmp_path: Path) -> None:
     assert names == {"a.txt"}
 
 
-def test_enumerate_single_file_respects_masks(tmp_path: Path) -> None:
+def test_enumerate_single_file_respects_masks(
+    tmp_path: Path,
+) -> None:
     keep = tmp_path / "keep.bin"
     drop = tmp_path / "drop.tmp"
     keep.write_bytes(b"1")

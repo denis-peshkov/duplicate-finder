@@ -4,17 +4,16 @@
 """
 
 from __future__ import annotations
+import sys
+from src.utils.logger import setup_logging
+from src.ui.app import DuplicateFinderApp
+from src.config.settings import load_settings, save_settings
+from src.config.app_info import APP_NAME, APP_VERSION
 
 import logging
-import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-
-from src.config.app_info import APP_NAME, APP_VERSION
-from src.config.settings import load_settings, save_settings
-from src.ui.app import DuplicateFinderApp
-from src.utils.logger import setup_logging
 
 
 def main() -> None:

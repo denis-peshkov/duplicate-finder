@@ -27,7 +27,9 @@ IMAGE_EXTENSIONS = {
 }
 
 
-def parse_list_item(raw_path: str) -> tuple[Path, bool]:
+def parse_list_item(
+    raw_path: str,
+) -> tuple[Path, bool]:
     """Разбор элемента списка: файл или папка с суффиксом *."""
     text = raw_path.strip()
     if text.endswith("*"):
@@ -37,19 +39,27 @@ def parse_list_item(raw_path: str) -> tuple[Path, bool]:
     return Path(text), False
 
 
-def format_list_item(path: Path, is_folder: bool) -> str:
+def format_list_item(
+    path: Path,
+    is_folder: bool,
+) -> str:
     """Форматирование элемента для отображения в списке."""
     if is_folder:
         return f"{path}{os.sep}*"
     return str(path)
 
 
-def _is_image(path: Path) -> bool:
+def _is_image(
+    path: Path,
+) -> bool:
     """Проверить, что расширение файла относится к изображениям."""
     return path.suffix.lower() in IMAGE_EXTENSIONS
 
 
-def matches_mask(path: Path, masks: Iterable[str]) -> bool:
+def matches_mask(
+    path: Path,
+    masks: Iterable[str],
+) -> bool:
     """Проверка пути/имени файла по маскам (fnmatch)."""
     name = path.name
     full = str(path)
@@ -66,12 +76,17 @@ def matches_mask(path: Path, masks: Iterable[str]) -> bool:
     return False
 
 
-def matches_exclude_mask(path: Path, masks: Iterable[str]) -> bool:
+def matches_exclude_mask(
+    path: Path,
+    masks: Iterable[str],
+) -> bool:
     """Совместимость: то же, что matches_mask."""
     return matches_mask(path, masks)
 
 
-def _normalize_masks(masks: Iterable[str] | None) -> list[str]:
+def _normalize_masks(
+    masks: Iterable[str] | None,
+) -> list[str]:
     """Нормализовать список масок: trim и отбросить пустые."""
     return [mask.strip() for mask in (masks or []) if mask and mask.strip()]
 
@@ -195,7 +210,10 @@ def _walk_directory(
             logger.warning("Read error for %s: %s", item, exc)
 
 
-def _make_entry(path: Path, source: ListSource) -> FileEntry:
+def _make_entry(
+    path: Path,
+    source: ListSource,
+) -> FileEntry:
     """Создать FileEntry по пути и источнику списка."""
     stat = path.stat()
     return FileEntry(

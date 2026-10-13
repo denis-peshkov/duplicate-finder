@@ -1,0 +1,113 @@
+---
+description: Python PEP 8 — отступы, длина строк, пробелы, именование
+globs: "**/*.py"
+alwaysApply: false
+---
+
+# Python: PEP 8
+
+При правке любого `.py` в репо.
+
+## Оформление
+
+| Тема | Правило |
+|------|---------|
+| Отступы | **4 пробела** на уровень; не смешивать с Tab |
+| Длина строки | код ≤ **120**; документация/комментарии ≤ **100** |
+| Пробелы | вокруг бинарных операторов (`=`, `+`, `-`, …); после `,` и `:`; **не** перед `,` / `;` |
+| Пустые строки | **2** между top-level функциями/классами; **1** между методами класса |
+
+```python
+# плохо
+x=a+b
+def foo(): ...
+def bar(): ...
+
+# хорошо
+x = a + b
+
+
+def foo():
+    ...
+
+
+def bar():
+    ...
+```
+
+## Объявление функции — построчный перенос
+
+Аргументы каждый на своей строке, отступ **4 пробела**; закрывающая `)` и `:`
+на уровне `def` (левый край).
+
+```python
+# плохо — всё в одну строку / висячая скобка
+def hash_file(path: Path, cancel_check: Callable[[], bool] | None = None) -> str:
+    ...
+
+def hash_file(
+        path: Path,
+        cancel_check: Callable[[], bool] | None = None,
+        ) -> str:
+    ...
+
+# хорошо
+def hash_file(
+    path: Path,
+    cancel_check: Callable[[], bool] | None = None,
+) -> str:
+    """Каждый аргумент с отступом в 4 пробела."""
+    ...
+```
+
+Плюсы: читаемость, просто добавить аргумент, чистые git-диффы.
+
+## Импорты — скобка с новой строки
+
+Многострочный `from … import (`: после `(` сразу перевод строки, имена — с
+отступа; `# noqa` можно оставить на строке со скобкой.
+
+```python
+# плохо
+from enrich_meta_annotation import (html_to_annotation,
+    looks_like_volume_blurb,
+)
+
+# хорошо
+from enrich_meta_annotation import (
+    html_to_annotation,
+    looks_like_volume_blurb,
+)
+```
+
+## Именование
+
+| Что | Стиль | Пример |
+|-----|--------|--------|
+| переменные, функции | `snake_case` | `user_count`, `calculate_total` |
+| классы | `CamelCase` | `UserProfile`, `OrderManager` |
+| константы | `UPPER_SNAKE` | `MAX_CONNECTIONS`, `DEFAULT_TIMEOUT` |
+| модули (`.py`) | короткий `lower_snake` | `my_module.py`, `data_processor.py` |
+| пакеты (каталоги) | короткий lowercase **без** `_` | `myclient`, не `my_client` |
+
+Особые имена: entry — часто `main.py`; инициализация пакета — `__init__.py`.
+
+### Модули / пакеты — избегать
+
+- `CamelCase` / заглавные в именах файлов (это для классов)
+- слишком длинные имена
+- коллизии со stdlib: не называть `math.py`, `json.py`, …
+
+```text
+# плохо
+DataProcessor.py
+MyClient/
+json.py
+
+# хорошо
+data_processor.py
+myclient/
+__init__.py
+```
+
+Публичное vs `_private` внутри skills — см. `python-naming.mdc`.

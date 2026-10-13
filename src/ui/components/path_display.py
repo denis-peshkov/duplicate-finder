@@ -10,7 +10,12 @@ import customtkinter as ctk
 class PathDisplay(ctk.CTkTextbox):
     """Многострочное поле для длинных путей с автопереносом."""
 
-    def __init__(self, master: ctk.CTkBaseClass, height: int = 96, **kwargs):
+    def __init__(
+        self,
+        master: ctk.CTkBaseClass,
+        height: int = 96,
+        **kwargs,
+    ):
         """Создать виджет многострочного отображения пути."""
         super().__init__(
             master,
@@ -25,7 +30,10 @@ class PathDisplay(ctk.CTkTextbox):
         )
         self.configure(state="disabled")
 
-    def set_path(self, path: str) -> None:
+    def set_path(
+        self,
+        path: str,
+    ) -> None:
         """Показать путь целиком с переносом по ширине."""
         self.configure(state="normal")
         self.delete("1.0", "end")

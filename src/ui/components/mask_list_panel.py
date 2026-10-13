@@ -70,7 +70,10 @@ class MaskListPanel(ctk.CTkFrame):
         """Текущий список масок."""
         return list(self._masks)
 
-    def set_masks(self, masks: list[str]) -> None:
+    def set_masks(
+        self,
+        masks: list[str],
+    ) -> None:
         """Установить список масок."""
         self._masks = [mask.strip() for mask in masks if mask and mask.strip()]
         self._selected_index = None
@@ -94,10 +97,14 @@ class MaskListPanel(ctk.CTkFrame):
             state="normal" if self._selected_index is not None else "disabled"
         )
 
-    def _on_list_click(self, event: object) -> None:
+    def _on_list_click(
+        self,
+        event: object,
+    ) -> None:
         """Выделить маску по клику в списке."""
         try:
-            index = int(self.listbox.index(f"@{event.x},{event.y}").split(".")[0]) - 1  # type: ignore[attr-defined]
+            # type: ignore[attr-defined]
+            index = int(self.listbox.index(f"@{event.x},{event.y}").split(".")[0]) - 1
         except Exception:  # noqa: BLE001
             return
         if 0 <= index < len(self._masks):

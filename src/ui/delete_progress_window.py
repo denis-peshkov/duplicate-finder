@@ -160,7 +160,11 @@ class DeleteProgressWindow(ctk.CTkToplevel):
         except Exception:  # noqa: BLE001
             pass
 
-    def _update_timing(self, current: int, total: int) -> None:
+    def _update_timing(
+        self,
+        current: int,
+        total: int,
+    ) -> None:
         """Elapsed/Estimated; elapsed пересчитывается при смене каунтера."""
         if current != self._last_counter:
             self._last_counter = current
@@ -186,7 +190,10 @@ class DeleteProgressWindow(ctk.CTkToplevel):
             text=f"Elapsed: {elapsed_text}  |  Estimated: {estimated_text}"
         )
 
-    def update_progress(self, progress: DeleteProgress) -> None:
+    def update_progress(
+        self,
+        progress: DeleteProgress,
+    ) -> None:
         """Обновить фазу, счётчики и текущий путь по DeleteProgress."""
         if self._canceled and not progress.canceled:
             self.phase_label.configure(text="Canceling...")

@@ -14,7 +14,10 @@ logger = logging.getLogger(__name__)
 PARTIAL_CHUNK_SIZE = 8 * 1024
 
 
-def partial_hash(path: Path, cancel_check: Callable[[], bool] | None = None) -> str:
+def partial_hash(
+    path: Path,
+    cancel_check: Callable[[], bool] | None = None,
+) -> str:
     """Быстрый partial hash: первые и последние 8 KB."""
     try:
         digest = hashlib.blake2b(digest_size=16)
@@ -40,7 +43,10 @@ def partial_hash(path: Path, cancel_check: Callable[[], bool] | None = None) -> 
         return ""
 
 
-def full_hash(path: Path, cancel_check: Callable[[], bool] | None = None) -> str:
+def full_hash(
+    path: Path,
+    cancel_check: Callable[[], bool] | None = None,
+) -> str:
     """Полный hash содержимого файла."""
     digest = hashlib.blake2b(digest_size=16)
 

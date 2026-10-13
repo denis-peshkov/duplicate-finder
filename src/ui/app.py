@@ -26,7 +26,10 @@ logger = logging.getLogger(__name__)
 class DuplicateFinderApp(ctk.CTk):
     """Главное окно приложения."""
 
-    def __init__(self, settings: Optional[Settings] = None):
+    def __init__(
+        self,
+        settings: Optional[Settings] = None,
+    ):
         """Инициализировать главное окно и страницы поиска/результатов."""
         super().__init__()
 
@@ -73,7 +76,10 @@ class DuplicateFinderApp(ctk.CTk):
         self.page_results.pack_forget()
         self.page_search.pack(fill="both", expand=True)
 
-    def _show_results_page(self, result: ScanResult) -> None:
+    def _show_results_page(
+        self,
+        result: ScanResult,
+    ) -> None:
         """Показать страницу результатов сканирования."""
         self.page_search.pack_forget()
         # Результаты удобнее на более широком окне
@@ -82,7 +88,10 @@ class DuplicateFinderApp(ctk.CTk):
         self.page_results.pack(fill="both", expand=True)
         self.page_results.show_results(result)
 
-    def _start_scan(self, config: SearchConfig) -> None:
+    def _start_scan(
+        self,
+        config: SearchConfig,
+    ) -> None:
         """Запустить фоновое сканирование по конфигу."""
         if self._scan_thread and self._scan_thread.is_alive():
             return
@@ -111,10 +120,15 @@ class DuplicateFinderApp(ctk.CTk):
         self._cancel_event.set()
         logger.info("Scan cancel requested by user")
 
-    def _scan_worker(self, config: SearchConfig) -> None:
+    def _scan_worker(
+        self,
+        config: SearchConfig,
+    ) -> None:
         """Фоновый поток сканирования дубликатов."""
         try:
-            def progress_callback(progress: ScanProgress) -> None:
+            def progress_callback(
+                progress: ScanProgress,
+            ) -> None:
                 """Поставить прогресс скана в очередь UI."""
                 # Не забиваем очередь сотнями сообщений
                 if self._msg_queue.qsize() < 32:
@@ -162,7 +176,10 @@ class DuplicateFinderApp(ctk.CTk):
                 pass
             self._progress_window = None
 
-    def _on_scan_done(self, result: ScanResult) -> None:
+    def _on_scan_done(
+        self,
+        result: ScanResult,
+    ) -> None:
         """Обработать успешное завершение скана."""
         self._close_progress()
 
@@ -176,7 +193,10 @@ class DuplicateFinderApp(ctk.CTk):
 
         self._show_results_page(result)
 
-    def _on_scan_error(self, message: str) -> None:
+    def _on_scan_error(
+        self,
+        message: str,
+    ) -> None:
         """Показать ошибку скана и вернуться к поиску."""
         self._close_progress()
         messagebox.showerror("Scan error", message)

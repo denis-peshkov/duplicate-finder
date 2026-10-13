@@ -62,7 +62,12 @@ class DuplicateFinder:
         """Проверить флаг отмены сканирования."""
         return bool(self.cancel_check and self.cancel_check())
 
-    def _emit(self, *, force: bool = False, **kwargs: object) -> None:
+    def _emit(
+        self,
+        *,
+        force: bool = False,
+        **kwargs: object,
+    ) -> None:
         """Отправить throttled-снимок прогресса в UI-колбэк."""
         for key, value in kwargs.items():
             setattr(self._progress, key, value)
@@ -101,7 +106,9 @@ class DuplicateFinder:
             percent=None,
         )
 
-        def on_file(entry: FileEntry) -> None:
+        def on_file(
+            entry: FileEntry,
+        ) -> None:
             """Обновить прогресс при обнаружении очередного файла."""
             self._progress.files_scanned += 1
             self._emit(
@@ -232,7 +239,10 @@ class DuplicateFinder:
                     canceled=True,
                 )
 
-        all_entries = list1 if self.config.mode == "single_list" else list1 + list2
+        if self.config.mode == "single_list":
+            all_entries = list1
+        else:
+            all_entries = list1 + list2
         hashed_entries = self._hash_entries(all_entries)
         if self._is_canceled():
             return self._make_result(
@@ -251,7 +261,10 @@ class DuplicateFinder:
 
         return self._make_result(groups=groups, total_files_scanned=len(all_entries))
 
-    def _hash_entries(self, entries: list[FileEntry]) -> list[FileEntry]:
+    def _hash_entries(
+        self,
+        entries: list[FileEntry],
+    ) -> list[FileEntry]:
         """Отобрать кандидатов и посчитать для них хеши."""
         candidates = self._select_hash_candidates(entries)
 
@@ -266,8 +279,11 @@ class DuplicateFinder:
 
         return self._hash_candidates_pipeline(candidates)
 
-    def _select_hash_candidates(self, entries: list[FileEntry]) -> list[FileEntry]:
-        """Отобрать файлы, которые вообще могут быть дублями по размеру."""
+    def _select_hash_candidates(
+        self,
+        entries: list[FileEntry],
+    ) -> list[FileEntry]:
+        """Отобрать файлы, которые могут быть дублями по размеру."""
         if self.config.mode == "two_lists":
             sizes_list1 = {entry.size for entry in entries if entry.source == "list1"}
             sizes_list2 = {entry.size for entry in entries if entry.source == "list2"}
@@ -284,7 +300,10 @@ class DuplicateFinder:
                 candidates.extend(size_group)
         return candidates
 
-    def _hash_candidates_pipeline(self, candidates: list[FileEntry]) -> list[FileEntry]:
+    def _hash_candidates_pipeline(
+        self,
+        candidates: list[FileEntry],
+    ) -> list[FileEntry]:
         """Quick hash (голова+хвост 64KB) → full hash только у совпавших."""
         partial_buckets: dict[str, list[FileEntry]] = defaultdict(list)
         total = max(len(candidates), 1)
@@ -333,7 +352,10 @@ class DuplicateFinder:
             )
         return hashed
 
-    def _partial_bucket_is_candidate(self, bucket: list[FileEntry]) -> bool:
+    def _partial_bucket_is_candidate(
+        self,
+        bucket: list[FileEntry],
+    ) -> bool:
         """Нужен ли полный hash для группы с одинаковым quick hash."""
         if self.config.mode == "two_lists":
             has_list1 = any(entry.source == "list1" for entry in bucket)

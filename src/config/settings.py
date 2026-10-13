@@ -39,7 +39,9 @@ class Settings:
     clean_empty_folders: bool = True
 
 
-def load_settings(config_path: Optional[Path] = None) -> Settings:
+def load_settings(
+    config_path: Optional[Path] = None,
+) -> Settings:
     """Загрузка настроек из TOML-файла."""
     path = config_path or DEFAULT_CONFIG_PATH
 
@@ -61,7 +63,10 @@ def load_settings(config_path: Optional[Path] = None) -> Settings:
         return Settings()
 
 
-def save_settings(settings: Settings, config_path: Optional[Path] = None) -> None:
+def save_settings(
+    settings: Settings,
+    config_path: Optional[Path] = None,
+) -> None:
     """Сохранение настроек в TOML-файл."""
     path = config_path or DEFAULT_CONFIG_PATH
     path.parent.mkdir(parents=True, exist_ok=True)

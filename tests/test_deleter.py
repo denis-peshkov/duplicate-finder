@@ -8,7 +8,9 @@ from unittest.mock import patch
 from src.core.deleter import DeleteProgress, delete_to_recycle_bin, remove_empty_folders
 
 
-def test_delete_reports_progress(tmp_path: Path) -> None:
+def test_delete_reports_progress(
+    tmp_path: Path,
+) -> None:
     files = [tmp_path / f"a{i}.txt" for i in range(3)]
     for path in files:
         path.write_text("x", encoding="utf-8")
@@ -28,7 +30,9 @@ def test_delete_reports_progress(tmp_path: Path) -> None:
     assert events[-1].total == 3
 
 
-def test_delete_can_cancel(tmp_path: Path) -> None:
+def test_delete_can_cancel(
+    tmp_path: Path,
+) -> None:
     files = [tmp_path / f"b{i}.txt" for i in range(5)]
     for path in files:
         path.write_text("x", encoding="utf-8")
@@ -38,7 +42,9 @@ def test_delete_can_cancel(tmp_path: Path) -> None:
     def cancel_after_two() -> bool:
         return calls["n"] >= 2
 
-    def on_progress(progress: DeleteProgress) -> None:
+    def on_progress(
+        progress: DeleteProgress,
+    ) -> None:
         calls["n"] = progress.current
 
     with patch("src.core.deleter.send2trash"):
@@ -52,7 +58,9 @@ def test_delete_can_cancel(tmp_path: Path) -> None:
     assert len(result.deleted) == 2
 
 
-def test_remove_empty_folders_walks_all_roots(tmp_path: Path) -> None:
+def test_remove_empty_folders_walks_all_roots(
+    tmp_path: Path,
+) -> None:
     root = tmp_path / "scan_root"
     nested = root / "a" / "b"
     nested.mkdir(parents=True)
@@ -62,7 +70,9 @@ def test_remove_empty_folders_walks_all_roots(tmp_path: Path) -> None:
     kept.mkdir()
     (kept / "stay.txt").write_text("y", encoding="utf-8")
 
-    def fake_trash(path: str) -> None:
+    def fake_trash(
+        path: str,
+    ) -> None:
         Path(path).rmdir()
 
     with patch("src.core.deleter.send2trash", side_effect=fake_trash):
@@ -79,14 +89,18 @@ def test_remove_empty_folders_walks_all_roots(tmp_path: Path) -> None:
     assert (kept / "stay.txt").exists()
 
 
-def test_remove_empty_folders_reports_progress(tmp_path: Path) -> None:
+def test_remove_empty_folders_reports_progress(
+    tmp_path: Path,
+) -> None:
     root = tmp_path / "scan_root"
     (root / "a" / "b").mkdir(parents=True)
     (root / "c").mkdir(parents=True)
 
     events: list[DeleteProgress] = []
 
-    def fake_trash(path: str) -> None:
+    def fake_trash(
+        path: str,
+    ) -> None:
         Path(path).rmdir()
 
     with patch("src.core.deleter.send2trash", side_effect=fake_trash):
@@ -103,7 +117,9 @@ def test_remove_empty_folders_reports_progress(tmp_path: Path) -> None:
     assert events[-1].folders_scanned >= len(removed)
 
 
-def test_remove_empty_folders_keeps_folder_with_files(tmp_path: Path) -> None:
+def test_remove_empty_folders_keeps_folder_with_files(
+    tmp_path: Path,
+) -> None:
     root = tmp_path / "scan_root"
     folder = root / "mixed"
     folder.mkdir(parents=True)
@@ -118,7 +134,9 @@ def test_remove_empty_folders_keeps_folder_with_files(tmp_path: Path) -> None:
     assert (folder / "stay.txt").exists()
 
 
-def test_delete_records_failures(tmp_path: Path) -> None:
+def test_delete_records_failures(
+    tmp_path: Path,
+) -> None:
     path = tmp_path / "blocked.txt"
     path.write_text("x", encoding="utf-8")
 
@@ -137,12 +155,16 @@ def test_remove_empty_folders_no_roots() -> None:
     assert failed == []
 
 
-def test_remove_empty_folders_skips_non_dir_and_duplicates(tmp_path: Path) -> None:
+def test_remove_empty_folders_skips_non_dir_and_duplicates(
+    tmp_path: Path,
+) -> None:
     root = tmp_path / "scan_root"
     (root / "empty").mkdir(parents=True)
     missing = tmp_path / "missing_root"
 
-    def fake_trash(path: str) -> None:
+    def fake_trash(
+        path: str,
+    ) -> None:
         Path(path).rmdir()
 
     with patch("src.core.deleter.send2trash", side_effect=fake_trash):
@@ -152,7 +174,9 @@ def test_remove_empty_folders_skips_non_dir_and_duplicates(tmp_path: Path) -> No
     assert (root / "empty") in removed
 
 
-def test_remove_empty_folders_can_cancel(tmp_path: Path) -> None:
+def test_remove_empty_folders_can_cancel(
+    tmp_path: Path,
+) -> None:
     root = tmp_path / "scan_root"
     (root / "a").mkdir(parents=True)
     (root / "b").mkdir(parents=True)
@@ -168,7 +192,9 @@ def test_remove_empty_folders_can_cancel(tmp_path: Path) -> None:
     assert mocked.call_count == 0
 
 
-def test_remove_empty_folders_records_trash_failure(tmp_path: Path) -> None:
+def test_remove_empty_folders_records_trash_failure(
+    tmp_path: Path,
+) -> None:
     root = tmp_path / "scan_root"
     empty = root / "empty"
     empty.mkdir(parents=True)
@@ -182,7 +208,9 @@ def test_remove_empty_folders_records_trash_failure(tmp_path: Path) -> None:
     assert "busy" in failed[0][1]
 
 
-def test_remove_empty_folders_records_walk_errors(tmp_path: Path) -> None:
+def test_remove_empty_folders_records_walk_errors(
+    tmp_path: Path,
+) -> None:
     import os
 
     root = tmp_path / "scan_root"
@@ -190,12 +218,25 @@ def test_remove_empty_folders_records_walk_errors(tmp_path: Path) -> None:
     (root / "empty").mkdir()
     real_walk = os.walk
 
-    def walk_with_error(top, topdown=True, onerror=None, followlinks=False):
+    def walk_with_error(
+        top,
+        topdown=True,
+        onerror=None,
+        followlinks=False,
+    ):
         if onerror is not None:
-            onerror(PermissionError(13, "permission denied", str(root / "blocked")))
-        yield from real_walk(top, topdown=topdown, onerror=None, followlinks=followlinks)
+            blocked = str(root / "blocked")
+            onerror(PermissionError(13, "permission denied", blocked))
+        yield from real_walk(
+            top,
+            topdown=topdown,
+            onerror=None,
+            followlinks=followlinks,
+        )
 
-    def fake_trash(path: str) -> None:
+    def fake_trash(
+        path: str,
+    ) -> None:
         Path(path).rmdir()
 
     with patch("src.core.deleter.os.walk", side_effect=walk_with_error):

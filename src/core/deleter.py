@@ -86,7 +86,9 @@ def delete_to_recycle_bin(
     return DeleteResult(deleted=deleted, failed=failed, canceled=False)
 
 
-def _resolve_path(path: Path) -> Path:
+def _resolve_path(
+    path: Path,
+) -> Path:
     """Вернуть абсолютный путь или исходный при ошибке resolve."""
     try:
         return path.resolve()
@@ -144,7 +146,11 @@ def remove_empty_folders(
     scanned = 0
     last_emit_at = 0.0
 
-    def emit(folder: Path, *, force: bool = False) -> None:
+    def emit(
+        folder: Path,
+        *,
+        force: bool = False,
+    ) -> None:
         """Отправить throttled-прогресс очистки пустых папок."""
         nonlocal last_emit_at
         if not progress_callback:
@@ -189,7 +195,9 @@ def remove_empty_folders(
         seen_roots.add(root_res)
 
         try:
-            def on_walk_error(exc: OSError) -> None:
+            def on_walk_error(
+                exc: OSError,
+            ) -> None:
                 """Записать ошибку scandir при обходе в failed."""
                 path = Path(getattr(exc, "filename", None) or root_res)
                 failed.append((path, str(exc)))

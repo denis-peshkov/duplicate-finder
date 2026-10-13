@@ -1,0 +1,190 @@
+---
+description: Python — публичные vs _private; запрет import as; docstring Args / Funcs (API)
+globs: .cursor/skills/**/*.py
+alwaysApply: false
+---
+
+# Python naming: public vs `_private`
+
+При создании или правке `.py` в `.cursor/skills/**/scripts/` (и соседних модулях скилла).
+
+## Правило
+
+| Префикс | Кто зовёт | Пример |
+|---------|-----------|--------|
+| **без `_`** | другой модуль / CLI entry (`main`) / константы-API | `apply_at_meta`, `label`, `at_find_work`, `main` |
+| **с `_`** | только этот же файл | `_should_write`, `_fold_title`, `_norm_title` |
+
+- Один вызов из того же файла ≠ повод оставлять без `_`.
+- Не вызывать чужой `_foo` из другого модуля. Нужно снаружи → сделать публичным (убрать `_`) или дать тонкий публичный фасад.
+- Классы/dataclass: то же (`EnrichScope` публичен только если импортируют снаружи; иначе `_EnrichScope`).
+- `main` — всегда публичный entry CLI.
+
+## Docstring секции
+
+| Модуль | Секция | Содержимое |
+|--------|--------|------------|
+| любой | **`Funcs (API):`** | публичные функции/классы (без `_`); **ровно одна сущность на строку** + пояснение через `—`; у CLI минимум `main()` |
+| CLI (`argparse` / флаги) | **`Args:`** | каждый флаг/positional — **одна строка**, колонка выровнена (как `enrich_cover.py`) |
+| любой | **`Internal:`** | зависимости; **одна строка = один объект**, имя и пояснение через `—` |
+| CLI, который зовут из `SKILL.md` или `references/` | **`Usage:`** | примеры команд **в одну строку**, без `\` |
+
+`Usage:` — **только** если скилл или reference явно запускают этот файл (`python3 …/foo.py …`).  
+Library (`import enrich_meta`) и CLI без вызова из скилла/рефа — **без** `Usage:`.
+
+`Funcs (API):` — **одна строка = одна функция или класс**. Запрещено склеивать имена через `/`, запятую, «и». Колонка имени выровнена, пояснение через `—` (как `enrich_cover.py`).
+
+```text
+# плохо
+Funcs (API):
+  detect_kind / grab / set_field
+  strip_trailing_title_dot(s) / clean_work_title(s, author=…)  — реэкспорт volumes
+
+# хорошо
+Funcs (API):
+  detect_kind(text, *, hint=…)   — series / full / movie
+  grab(text, kind, placeholder)  — значение строки поля
+  set_field(text, kind, ph, val) — записать поле по метке шаблона
+```
+
+`Internal:` — **одна строка = один объект**, имя и пояснение через `—`, колонка выровнена:
+
+```text
+Internal:
+  enrich_meta             — метки из templates/card-*.md
+  author-today/.secrets/token — Bearer для AT API (если есть)
+```
+
+Не склеивать несколько путей через `|` или `/` в одной строке.
+
+Порядок в docstring: `Internal` → `Funcs (API)` → `Args` (если CLI) → `Usage` (если зовут из скилла/рефа).  
+**Не** писать CLI-флаги в `Funcs (API):` и **не** писать функции в `Args:`.  
+У **каждого** `.py` в `scripts/` должна быть секция `Funcs (API):`.  
+CLI **обязан** иметь ещё и `Args:`.
+
+Пример `Args:`:
+
+```text
+Args:
+  --post DIR            пост → DIR/attachments/cover.jpg
+  --catalog-cover PATH  каталожный cover (in+out = PATH)
+  --out PATH            явный выход (с --in и/или --url)
+  --in PATH             локальный исходник → optimize
+  --url URL             кандидат URL (флаг можно повторять)
+```
+
+## Имена тестов (`scripts/tests/`) — жёсткий запрет
+
+### Файлы
+
+**Только** `*_tests.py`. **Запрещено** `test_*.py` / `test*.py`.
+
+```text
+# плохо
+test_common_http.py
+
+# хорошо
+common_http_tests.py
+```
+
+Шаблон: `<тема>_tests.py`. Плоско в `scripts/tests/` (не `tests/common/` —
+конфликт с пакетом `common`).  
+unittest discover / Rider: pattern обязательно `*_tests.py`.
+
+### Методы — Given_When_Then
+
+Имя метода: **`test_<Given>_<When>_<Then>`** — контекст, действие, ожидаемый результат.  
+Префикс `test_` обязателен для unittest; дальше PascalCase-сегменты через `_`.
+
+```text
+# плохо
+def test_clean_html_strips_tags(self): ...
+
+# хорошо
+def test_HtmlWithTags_CleanHtml_ReturnsPlainText(self): ...
+```
+
+Пример по смыслу C# `ValidUser_Login_ReturnsToken` →  
+`test_ValidUser_Login_ReturnsToken`.
+
+### Тома: `volumes` / `expected`
+
+Тесты имён томов (`_title_from_raw`, `_normalize_volumes_title`, `finalize_volumes_title`): в теле метода **обязаны** быть оба литерала `volumes = [` и `expected = [`. См. `.cursor/rules/media-hosting-volume-tests.mdc`.
+
+### Запуск
+
+```shell
+cd .cursor/skills/media-hosting-audiobooks/scripts
+python3 -m unittest discover -s tests -p '*_tests.py'
+```
+
+## Чеклист при ревью/правке
+
+1. Новая функция: кто caller? Только этот файл → `_name`.
+2. Переименовал публичное → обновить импорты и `Funcs (API)` / `Args`.
+3. Не плодить публичные обёртки «join вокруг collect» — см. стиль media-hosting enrich.
+4. Новый тест: файл `*_tests.py`; метод `test_<Given>_<When>_<Then>`.
+
+## Анти-паттерны
+
+```python
+# плохо: «публичное», но зовётся только здесь
+def set_cycle_books(...): ...
+
+# хорошо
+def _set_cycle_books(...): ...
+
+# плохо: снаружи лезем в чужой private
+enrich_meta._bare(lab)
+
+# хорошо: в enrich_meta публичный bare(...); снаружи enrich_meta.bare(...)
+
+# плохо: library с секцией Args: --foo
+# плохо: library с секцией Usage: import foo
+# плохо: CLI без секции Args:
+# плохо: Funcs (API) — несколько имён через / в одной строке
+```
+
+## Не алиасить import (модули / имена) — жёсткий запрет
+
+**Запрещено всегда** для модулей и символов скилла:
+- `import модуль as …`
+- `from пакет import имя as …`
+
+Коротких имён (`emeta`, `pc`, `sat`, `_pc`, …) **нет**. Звать **только** полным именем модуля/символа. Нарушать нельзя — ни в коде, ни «для краткости» в docstring/примерах правила.
+
+```python
+# единственный допустимый вид
+import enrich_meta
+import enrich_sources_at
+enrich_meta.grab(...)
+enrich_meta.clean_work_title(...)
+enrich_sources_at.at_find_work(...)
+```
+
+То же для `telegram_mcp_ipc`: только `import telegram_mcp_ipc` →
+`telegram_mcp_ipc.call(...)` / `telegram_mcp_ipc.status(...)`.
+
+**Не путать** с `with open(...) as f` / `except Err as e` — это не import.
+
+## Не алиасить короткие вызовы
+
+Не вводить локальную переменную, которая **только** хранит результат короткого
+вызова (`_ye_flex_re(x)`, `re.escape(x)`, `fold_title(x)`, …) ради более
+короткого имени в следующих строках. Писать вызов **на месте**.
+
+```python
+# плохо
+ser_re = _ye_flex_re(ser)
+esc = re.escape(auth)
+rf"{ser_re}\s+"
+rf"{esc}\s*$"
+
+# хорошо
+rf"{_ye_flex_re(ser)}\s+"
+rf"{re.escape(auth)}\s*$"
+```
+
+Допустимо сохранить результат, если имя несёт **доменный** смысл и значение
+реально участвует в логике (не «укороченный вызов»), например сравнение
+свёрнутых заголовков: `series_fold = fold_title(series_title)`.
