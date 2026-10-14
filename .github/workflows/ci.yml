@@ -37,7 +37,10 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/test
+      - uses: ./.github/actions/sonar
         with:
           sonar_token: ${{ secrets.SONAR_TOKEN }}
 
@@ -53,13 +56,16 @@ jobs:
         include:
           - target: x86_64-pc-windows-msvc
             os: windows-latest
-            exe: DuplicateFinder.exe
+            exe: duplicate-finder.exe
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            exe: duplicate-finder
           - target: aarch64-apple-darwin
             os: macos-latest
-            exe: DuplicateFinder
+            exe: duplicate-finder
           - target: x86_64-apple-darwin
             os: macos-15-intel
-            exe: DuplicateFinder
+            exe: duplicate-finder
     permissions:
       contents: read
       actions: write
@@ -86,6 +92,8 @@ jobs:
         with:
           ref: master
           fetch-depth: 0
+          # Protect tags: GITHUB_TOKEN cannot create v*; TAGTOKEN (admin) must win over checkout auth.
+          persist-credentials: false
       - id: push
         uses: ./.github/actions/push-tags
         with:

@@ -9,13 +9,17 @@ https://github.com/denis-peshkov/duplicate-finder
 Official Windows release archive:
 __RELEASE_URL__
 
-SHA256 of DuplicateFinder.exe in this package:
+Official SHA256SUMS for this release:
+__SHA256SUMS_URL__
+
+SHA256 of duplicate-finder.exe in this package:
 __EXE_SHA256__
 
 To verify on Windows PowerShell:
-  Get-FileHash "$env:ChocolateyInstall\lib\duplicate-finder\tools\DuplicateFinder.exe" -Algorithm SHA256
+  Get-FileHash "$env:ChocolateyInstall\lib\duplicate-finder\tools\duplicate-finder.exe" -Algorithm SHA256
 
-To verify against the official release zip:
-  1. Download the release archive from the URL above.
-  2. Extract DuplicateFinder.exe and run Get-FileHash with SHA256.
-  3. Compare with the hash listed above.
+To verify against the official release:
+  1. Download the release zip from the URL above.
+  2. Confirm the zip checksum against the matching line in SHA256SUMS.
+  3. Extract duplicate-finder.exe and run Get-FileHash with SHA256.
+  4. Compare with the hash listed above.

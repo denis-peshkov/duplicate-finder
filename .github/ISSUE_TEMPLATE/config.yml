@@ -1,0 +1,18 @@
+﻿blank_issues_enabled: false
+
+contact_links:
+  - name: Read CONTRIBUTING.md
+    url: https://github.com/denis-peshkov/duplicate-finder/blob/master/CONTRIBUTING.md
+    about: Branching, tests, PR process, and scope for Duplicate Finder.
+  - name: Open a pull request
+    url: https://github.com/denis-peshkov/duplicate-finder/compare
+    about: Ready to contribute a fix or feature? See CONTRIBUTING.md.
+  - name: Releases
+    url: https://github.com/denis-peshkov/duplicate-finder/releases
+    about: Check the latest published version before reporting a regression.
+  - name: Chocolatey package
+    url: https://community.chocolatey.org/packages/duplicate-finder
+    about: Windows package metadata and version history.
+  - name: Documentation
+    url: https://github.com/denis-peshkov/duplicate-finder#readme
+    about: Install, run, tests, and repository layout.

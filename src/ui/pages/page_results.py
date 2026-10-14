@@ -10,14 +10,21 @@ import subprocess
 import sys
 import threading
 from pathlib import Path
-from tkinter import Listbox, Menu, messagebox
+from tkinter import Listbox, Menu, messagebox, ttk
 from typing import Callable, Optional
 
 import customtkinter as ctk
 
 from src.config.app_info import HELP_RESULTS
-from src.core.deleter import DeleteProgress, DeleteResult, delete_to_recycle_bin
-from src.core.models import DuplicateGroup, FileEntry, ScanResult
+from src.config.settings import Settings
+from src.core.deleter import (
+    DeleteProgress,
+    DeleteResult,
+    delete_to_recycle_bin,
+    remove_empty_folders,
+    resolve_empty_folder_roots,
+)
+from src.core.models import DuplicateGroup, FileEntry, ListSource, ScanResult
 from src.ui.about_window import show_about
 from src.ui.delete_progress_window import DeleteProgressWindow
 from src.ui.info_dialog import show_info_dialog
@@ -26,9 +33,21 @@ from src.utils.formatters import format_count
 logger = logging.getLogger(__name__)
 
 FILE_FONT_SIZE = 14
+FILE_FONT_FAMILY = "Segoe UI"
+TREE_STYLE = "Results.Treeview"
+TREE_HEADING_STYLE = "Results.Treeview.Heading"
+CHECK_ON = "☑"
+CHECK_OFF = "☐"
+COL_CHECK = "check"
+COL_NAME = "name"
+COL_SIZE = "size"
+COL_PATH = "path"
 
 
-def _format_size(num_bytes: int) -> str:
+def _format_size(
+    num_bytes: int,
+) -> str:
+    """Отформатировать размер файла для таблицы."""
     if num_bytes < 1024:
         return f"{num_bytes} bytes"
     units = ["KB", "MB", "GB", "TB"]
@@ -40,7 +59,10 @@ def _format_size(num_bytes: int) -> str:
     return f"{num_bytes} bytes"
 
 
-def _group_title(group: DuplicateGroup) -> str:
+def _group_title(
+    group: DuplicateGroup,
+) -> str:
+    """Заголовок группы дубликатов в списке."""
     if group.files:
         name = group.files[0].path.name
     else:
@@ -54,20 +76,24 @@ class PageResults(ctk.CTkFrame):
     def __init__(
         self,
         parent: ctk.CTkFrame,
+        settings: Settings,
         on_back: Optional[Callable[[], None]] = None,
         on_cancel: Optional[Callable[[], None]] = None,
     ):
+        """Страница результатов: таблица дубликатов и удаление."""
         super().__init__(parent, fg_color="transparent")
+        self.settings = settings
         self.on_back = on_back
         self.on_cancel = on_cancel
         self._result: ScanResult | None = None
         self._selected_group_index: int = -1
-        self._row_vars: dict[Path, ctk.BooleanVar] = {}
         self._entry_by_path: dict[Path, FileEntry] = {}
         self._checked_paths: set[Path] = set()
-        self._file_rows: list[ctk.CTkFrame] = []
-        self._table_font = ctk.CTkFont(size=FILE_FONT_SIZE)
+        self._sort_column: str | None = None
+        self._sort_reverse = False
         self._delete_mode = ctk.StringVar(value="custom")
+        self._clean_empty_folders = ctk.BooleanVar(
+            value=bool(settings.clean_empty_folders))
         self._delete_queue: queue.Queue = queue.Queue()
         self._delete_thread: threading.Thread | None = None
         self._delete_cancel = threading.Event()
@@ -77,6 +103,7 @@ class PageResults(ctk.CTkFrame):
         self.after(100, self._process_delete_queue)
 
     def _create_widgets(self) -> None:
+        """Создать виджеты страницы результатов."""
         footer = ctk.CTkFrame(self, fg_color="transparent", height=52)
         footer.pack(side="bottom", fill="x", padx=12, pady=(0, 10))
         footer.pack_propagate(False)
@@ -121,7 +148,14 @@ class PageResults(ctk.CTkFrame):
         self.back_btn.pack(side="right")
 
         content = ctk.CTkFrame(self)
-        content.pack(side="top", fill="both", expand=True, padx=12, pady=(12, 8))
+        content.pack(
+            side="top",
+            fill="both",
+            expand=True,
+            padx=12,
+            pady=(
+                12,
+                8))
 
         self.summary_label = ctk.CTkLabel(
             content,
@@ -147,7 +181,7 @@ class PageResults(ctk.CTkFrame):
             selectforeground="#ffffff",
             highlightthickness=0,
             borderwidth=0,
-            font=("Segoe UI", FILE_FONT_SIZE),
+            font=(FILE_FONT_FAMILY, FILE_FONT_SIZE),
             height=10,
         )
         self.sets_list.pack(side="left", fill="both", expand=True)
@@ -186,13 +220,21 @@ class PageResults(ctk.CTkFrame):
             content,
             text=(
                 "Select the checkbox of the items you wish to delete, "
-                "or right-click for more options, including Rename."
+                "or right-click for more options, including Rename. "
+                "Click a column header to sort."
             ),
             anchor="w",
             justify="left",
             wraplength=900,
         )
-        self.hint_label.pack(fill="x", padx=10, pady=(4, 6))
+        self.hint_label.pack(fill="x", padx=10, pady=(4, 4))
+
+        ctk.CTkCheckBox(
+            content,
+            text="Clean empty folders in target location",
+            variable=self._clean_empty_folders,
+            command=self._on_clean_empty_changed,
+        ).pack(anchor="w", padx=10, pady=(0, 6))
 
         # По умолчанию скрыт — показывается только в two_lists
         self.delete_mode_frame.pack_forget()
@@ -200,42 +242,157 @@ class PageResults(ctk.CTkFrame):
         table_frame = ctk.CTkFrame(content)
         table_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 
-        header = ctk.CTkFrame(table_frame, fg_color="transparent", height=28)
-        header.pack(fill="x", padx=4, pady=(6, 0))
-        header.pack_propagate(False)
+        tree_host = ctk.CTkFrame(table_frame, fg_color="#1a1a1a")
+        tree_host.pack(fill="both", expand=True, padx=4, pady=4)
 
-        ctk.CTkLabel(header, text="", width=28).pack(side="left")
-        ctk.CTkLabel(
-            header, text="Filename", width=180, anchor="w", font=self._table_font
-        ).pack(side="left")
-        ctk.CTkLabel(
-            header, text="File Size", width=110, anchor="w", font=self._table_font
-        ).pack(side="left")
-        ctk.CTkLabel(
-            header, text="Original Path", anchor="w", font=self._table_font
-        ).pack(side="left", fill="x", expand=True)
+        self._configure_tree_style()
+        self.files_tree = ttk.Treeview(
+            tree_host,
+            columns=(COL_CHECK, COL_NAME, COL_SIZE, COL_PATH),
+            show="headings",
+            selectmode="browse",
+            style=TREE_STYLE,
+        )
+        self.files_tree.heading(
+            COL_CHECK,
+            text="",
+            command=lambda: self._sort_by(COL_CHECK),
+        )
+        self.files_tree.heading(
+            COL_NAME,
+            text="Filename",
+            command=lambda: self._sort_by(COL_NAME),
+            anchor="w",
+        )
+        self.files_tree.heading(
+            COL_SIZE,
+            text="File Size",
+            command=lambda: self._sort_by(COL_SIZE),
+            anchor="w",
+        )
+        self.files_tree.heading(
+            COL_PATH,
+            text="Original Path",
+            command=lambda: self._sort_by(COL_PATH),
+            anchor="w",
+        )
+        self.files_tree.column(
+            COL_CHECK,
+            width=36,
+            minwidth=36,
+            stretch=False,
+            anchor="center")
+        self.files_tree.column(
+            COL_NAME,
+            width=220,
+            minwidth=80,
+            stretch=False,
+            anchor="w")
+        self.files_tree.column(
+            COL_SIZE,
+            width=110,
+            minwidth=70,
+            stretch=False,
+            anchor="w")
+        self.files_tree.column(
+            COL_PATH,
+            width=420,
+            minwidth=120,
+            stretch=True,
+            anchor="w")
 
-        self.table_scroll = ctk.CTkScrollableFrame(table_frame, fg_color="transparent")
-        self.table_scroll.pack(fill="both", expand=True, padx=4, pady=(0, 6))
+        y_scroll = ttk.Scrollbar(
+            tree_host,
+            orient="vertical",
+            command=self.files_tree.yview)
+        x_scroll = ttk.Scrollbar(
+            tree_host,
+            orient="horizontal",
+            command=self.files_tree.xview)
+        self.files_tree.configure(
+            yscrollcommand=y_scroll.set,
+            xscrollcommand=x_scroll.set)
 
-    def show_results(self, result: ScanResult) -> None:
+        self.files_tree.grid(row=0, column=0, sticky="nsew")
+        y_scroll.grid(row=0, column=1, sticky="ns")
+        x_scroll.grid(row=1, column=0, sticky="ew")
+        tree_host.grid_rowconfigure(0, weight=1)
+        tree_host.grid_columnconfigure(0, weight=1)
+
+        self.files_tree.bind("<Button-1>", self._on_tree_click)
+        self.files_tree.bind("<Button-3>", self._on_tree_right_click)
+        self.files_tree.bind("<space>", self._on_tree_space)
+
+    def _configure_tree_style(self) -> None:
+        """Настроить стиль Treeview под тёмную тему."""
+        style = ttk.Style()
+        try:
+            style.theme_use("clam")
+        except Exception:  # noqa: BLE001
+            pass
+        style.configure(
+            TREE_STYLE,
+            background="#1a1a1a",
+            foreground="#e8e8e8",
+            fieldbackground="#1a1a1a",
+            borderwidth=0,
+            rowheight=28,
+            font=(FILE_FONT_FAMILY, FILE_FONT_SIZE),
+        )
+        style.configure(
+            TREE_HEADING_STYLE,
+            background="#2b2b2b",
+            foreground="#e8e8e8",
+            relief="flat",
+            borderwidth=0,
+            font=(FILE_FONT_FAMILY, FILE_FONT_SIZE, "bold"),
+        )
+        style.map(
+            TREE_STYLE,
+            background=[("selected", "#3a3a3a")],
+            foreground=[("selected", "#ffffff")],
+        )
+        style.map(
+            TREE_HEADING_STYLE,
+            background=[("active", "#3a3a3a")],
+        )
+
+    def save_to_settings(self) -> None:
+        """Сохранить состояние чекбокса очистки пустых папок."""
+        self.settings.clean_empty_folders = bool(
+            self._clean_empty_folders.get())
+
+    def _on_clean_empty_changed(self) -> None:
+        """Сохранить флаг очистки пустых папок в settings."""
+        self.save_to_settings()
+
+    def show_results(
+        self,
+        result: ScanResult,
+    ) -> None:
         """Отобразить результаты сканирования."""
+        self._clean_empty_folders.set(bool(self.settings.clean_empty_folders))
         self._result = result
         self._selected_group_index = -1
-        self._row_vars.clear()
         self._entry_by_path.clear()
         self._checked_paths.clear()
+        self._sort_column = None
+        self._sort_reverse = False
         self._clear_table()
         self.sets_list.delete(0, "end")
         self._delete_mode.set("custom")
+        self._update_heading_labels()
 
         if result.search_mode == "two_lists":
-            self.delete_mode_frame.pack(fill="x", padx=10, pady=(4, 0), before=self.hint_label)
+            self.delete_mode_frame.pack(
+                fill="x", padx=10, pady=(
+                    4, 0), before=self.hint_label)
         else:
             self.delete_mode_frame.pack_forget()
 
         if result.canceled:
-            self.summary_label.configure(text="Sets of duplicates: 0 (canceled)")
+            self.summary_label.configure(
+                text="Sets of duplicates: 0 (canceled)")
             return
 
         self.summary_label.configure(
@@ -249,92 +406,182 @@ class PageResults(ctk.CTkFrame):
             self.sets_list.selection_set(0)
             self.sets_list.activate(0)
             self._show_group(0)
-        else:
-            empty = ctk.CTkLabel(
-                self.table_scroll,
-                text="No duplicates found.",
-                text_color="gray70",
-                font=self._table_font,
-            )
-            empty.pack(anchor="w", pady=8)
-            self._file_rows.append(empty)  # type: ignore[arg-type]
 
-    def _on_set_selected(self, _event: object = None) -> None:
+    def _on_set_selected(
+        self,
+        _event: object = None,
+    ) -> None:
+        """Переключить режим выбора файлов для удаления."""
         selection = self.sets_list.curselection()
         if not selection:
             return
         self._show_group(int(selection[0]))
 
-    def _show_group(self, index: int) -> None:
+    def _show_group(
+        self,
+        index: int,
+    ) -> None:
+        """Показать файлы выбранной группы дубликатов."""
         if not self._result or index < 0 or index >= len(self._result.groups):
             return
         self._selected_group_index = index
         self._render_table(self._result.groups[index])
 
     def _clear_table(self) -> None:
-        for widget in self.table_scroll.winfo_children():
-            widget.destroy()
-        self._file_rows.clear()
+        """Очистить таблицу файлов текущей группы."""
+        for item in self.files_tree.get_children():
+            self.files_tree.delete(item)
 
-    def _render_table(self, group: DuplicateGroup) -> None:
+    def _path_from_iid(
+        self,
+        iid: str,
+    ) -> Path:
+        """Преобразовать iid строки Treeview в Path."""
+        return Path(iid)
+
+    def _render_table(
+        self,
+        group: DuplicateGroup,
+    ) -> None:
+        """Заполнить таблицу файлами выбранной группы."""
         self._clear_table()
-        self._row_vars.clear()
         self._entry_by_path.clear()
 
         for entry in group.files:
-            row = ctk.CTkFrame(self.table_scroll, fg_color="transparent")
-            row.pack(fill="x", pady=2)
-            self._file_rows.append(row)
-
-            var = ctk.BooleanVar(value=entry.path in self._checked_paths)
-            self._row_vars[entry.path] = var
             self._entry_by_path[entry.path] = entry
-            var.trace_add(
-                "write",
-                lambda *_args, p=entry.path, v=var: self._on_checkbox_changed(p, v),
+            if entry.path in self._checked_paths:
+                check = CHECK_ON
+            else:
+                check = CHECK_OFF
+            self.files_tree.insert(
+                "",
+                "end",
+                iid=str(entry.path),
+                values=(
+                    check,
+                    entry.path.name,
+                    _format_size(entry.size),
+                    str(entry.path),
+                ),
             )
 
-            ctk.CTkCheckBox(row, text="", variable=var, width=28).pack(side="left")
+        if self._sort_column:
+            self._apply_sort(
+                self._sort_column,
+                reverse=self._sort_reverse,
+                update_heading=False)
 
-            name_label = ctk.CTkLabel(
-                row,
-                text=entry.path.name,
-                width=180,
-                anchor="w",
-                font=self._table_font,
-            )
-            name_label.pack(side="left")
+    def _heading_title(
+        self,
+        column: str,
+    ) -> str:
+        """Текст заголовка колонки с индикатором сортировки."""
+        titles = {
+            COL_CHECK: "",
+            COL_NAME: "Filename",
+            COL_SIZE: "File Size",
+            COL_PATH: "Original Path",
+        }
+        title = titles.get(column, column)
+        if self._sort_column != column:
+            return title
+        return f"{title} {'▼' if self._sort_reverse else '▲'}".strip()
 
-            size_label = ctk.CTkLabel(
-                row,
-                text=_format_size(entry.size),
-                width=110,
-                anchor="w",
-                font=self._table_font,
-            )
-            size_label.pack(side="left")
+    def _update_heading_labels(self) -> None:
+        """Обновить подписи заголовков колонок."""
+        for column in (COL_CHECK, COL_NAME, COL_SIZE, COL_PATH):
+            self.files_tree.heading(column, text=self._heading_title(column))
 
-            path_label = ctk.CTkLabel(
-                row,
-                text=str(entry.path),
-                anchor="w",
-                justify="left",
-                font=self._table_font,
-            )
-            path_label.pack(side="left", fill="x", expand=True)
+    def _sort_by(
+        self,
+        column: str,
+    ) -> None:
+        """Переключить сортировку по колонке."""
+        reverse = self._sort_column == column and not self._sort_reverse
+        self._apply_sort(column, reverse=reverse, update_heading=True)
 
-            for widget in (row, name_label, size_label, path_label):
-                widget.bind("<Button-3>", lambda e, p=entry.path: self._show_context_menu(e, p))
+    def _apply_sort(
+        self,
+        column: str,
+        *,
+        reverse: bool,
+        update_heading: bool,
+    ) -> None:
+        """Применить сортировку строк таблицы."""
+        items = list(self.files_tree.get_children(""))
+        if not items:
+            return
 
-    def _on_checkbox_changed(self, path: Path, var: ctk.BooleanVar) -> None:
-        if var.get():
-            self._checked_paths.add(path)
-        else:
-            self._checked_paths.discard(path)
+        def sort_key(
+            iid: str,
+        ) -> object:
+            """Ключ сортировки для iid строки таблицы."""
+            path = self._path_from_iid(iid)
+            entry = self._entry_by_path.get(path)
+            if column == COL_CHECK:
+                return 0 if path in self._checked_paths else 1
+            if column == COL_NAME:
+                return path.name.lower()
+            if column == COL_SIZE:
+                return entry.size if entry else 0
+            return str(path).lower()
+
+        items.sort(key=sort_key, reverse=reverse)
+        for index, iid in enumerate(items):
+            self.files_tree.move(iid, "", index)
+
+        self._sort_column = column
+        self._sort_reverse = reverse
+        if update_heading:
+            self._update_heading_labels()
+
+    def _on_tree_click(
+        self,
+        event: object,
+    ) -> str | None:
+        """Обработать клик по строке/чекбоксу таблицы."""
+        tree = self.files_tree
+        region = tree.identify_region(
+            event.x, event.y)  # type: ignore[attr-defined]
+        if region != "cell":
+            return None
+        column = tree.identify_column(event.x)  # type: ignore[attr-defined]
+        row = tree.identify_row(event.y)  # type: ignore[attr-defined]
+        if not row:
+            return None
+        # #1 = check column
+        if column == "#1":
+            path = self._path_from_iid(row)
+            self._set_checked(path, path not in self._checked_paths)
+            return "break"
+        return None
+
+    def _on_tree_space(
+        self,
+        _event: object,
+    ) -> str:
+        """Переключить чекбокс выделенной строки по Space."""
+        selection = self.files_tree.selection()
+        if selection:
+            path = self._path_from_iid(selection[0])
+            self._set_checked(path, path not in self._checked_paths)
+        return "break"
+
+    def _on_tree_right_click(
+        self,
+        event: object,
+    ) -> None:
+        """Показать контекстное меню по правому клику."""
+        row = self.files_tree.identify_row(
+            event.y)  # type: ignore[attr-defined]
+        if not row:
+            return
+        self.files_tree.selection_set(row)
+        self._show_context_menu(event, self._path_from_iid(row))
 
     def _on_delete_mode_change(self) -> None:
         """Custom — сброс всех выделений.
-        List 1/2 — сброс и пометка всех дубликатов из соответствующего списка.
+        List 1/2 — сброс и пометка дубликатов из списка.
         """
         if not self._result:
             return
@@ -342,7 +589,9 @@ class PageResults(ctk.CTkFrame):
         mode = self._delete_mode.get()
         self._checked_paths.clear()
 
-        if mode in ("list1", "list2") and self._result.search_mode == "two_lists":
+        if mode in (
+            "list1",
+                "list2") and self._result.search_mode == "two_lists":
             source = mode
             for group in self._result.groups:
                 for entry in group.files:
@@ -352,15 +601,27 @@ class PageResults(ctk.CTkFrame):
         self._sync_visible_checkboxes()
 
     def _sync_visible_checkboxes(self) -> None:
-        for path, var in self._row_vars.items():
-            desired = path in self._checked_paths
-            if bool(var.get()) != desired:
-                var.set(desired)
+        """Синхронизировать чекбоксы с _checked_paths."""
+        for iid in self.files_tree.get_children(""):
+            path = self._path_from_iid(iid)
+            values = list(self.files_tree.item(iid, "values"))
+            if not values:
+                continue
+            values[0] = CHECK_ON if path in self._checked_paths else CHECK_OFF
+            self.files_tree.item(iid, values=values)
 
-    def _show_context_menu(self, event: object, path: Path) -> None:
+    def _show_context_menu(
+        self,
+        event: object,
+        path: Path,
+    ) -> None:
+        """Показать контекстное меню для файла в таблице."""
         menu = Menu(self, tearoff=0)
-        menu.add_command(label="Open folder", command=lambda: self._open_folder(path))
-        menu.add_command(label="Rename...", command=lambda: self._rename_file(path))
+        menu.add_command(label="Open folder",
+                         command=lambda: self._open_folder(path))
+        menu.add_command(
+            label="Rename...",
+            command=lambda: self._rename_file(path))
         menu.add_separator()
         menu.add_command(
             label="Select for delete",
@@ -371,33 +632,55 @@ class PageResults(ctk.CTkFrame):
             command=lambda: self._set_checked(path, False),
         )
         try:
-            menu.tk_popup(event.x_root, event.y_root)  # type: ignore[attr-defined]
+            # type: ignore[attr-defined]
+            menu.tk_popup(event.x_root, event.y_root)
         finally:
             menu.grab_release()
 
-    def _set_checked(self, path: Path, value: bool) -> None:
+    def _set_checked(
+        self,
+        path: Path,
+        value: bool,
+    ) -> None:
+        """Установить или снять выбор файла."""
         if value:
             self._checked_paths.add(path)
         else:
             self._checked_paths.discard(path)
-        var = self._row_vars.get(path)
-        if var is not None and bool(var.get()) != value:
-            var.set(value)
+        iid = str(path)
+        if self.files_tree.exists(iid):
+            values = list(self.files_tree.item(iid, "values"))
+            if values:
+                values[0] = CHECK_ON if value else CHECK_OFF
+                self.files_tree.item(iid, values=values)
 
-    def _open_folder(self, path: Path) -> None:
-        folder = path.parent if path.exists() else path.parent
+    def _open_folder(
+        self,
+        path: Path,
+    ) -> None:
+        """Открыть папку файла в проводнике ОС."""
+        folder = path.parent
         try:
             if sys.platform.startswith("win"):
-                subprocess.run(["explorer", "/select,", str(path)], check=False)
+                subprocess.run(
+                    ["explorer", "/select,", str(path)], check=False)
             elif sys.platform == "darwin":
                 subprocess.run(["open", "-R", str(path)], check=False)
             else:
                 subprocess.run(["xdg-open", str(folder)], check=False)
         except OSError as exc:
-            messagebox.showerror("Duplicate Finder", f"Cannot open folder:\n{exc}")
+            messagebox.showerror(
+                "Duplicate Finder",
+                f"Cannot open folder:\n{exc}")
 
-    def _rename_file(self, path: Path) -> None:
-        dialog = ctk.CTkInputDialog(text=f"New name for:\n{path.name}", title="Rename")
+    def _rename_file(
+        self,
+        path: Path,
+    ) -> None:
+        """Переименовать файл через диалог ввода имени."""
+        dialog = ctk.CTkInputDialog(
+            text=f"New name for:\n{
+                path.name}", title="Rename")
         new_name = dialog.get_input()
         if not new_name or new_name == path.name:
             return
@@ -419,86 +702,183 @@ class PageResults(ctk.CTkFrame):
                 self._checked_paths.discard(path)
                 self._checked_paths.add(target)
             self.sets_list.delete(self._selected_group_index)
-            self.sets_list.insert(self._selected_group_index, _group_title(group))
+            self.sets_list.insert(
+                self._selected_group_index,
+                _group_title(group))
             self.sets_list.selection_set(self._selected_group_index)
             self._show_group(self._selected_group_index)
 
     def _collect_selected_paths(self) -> list[Path]:
         """Все отмеченные файлы по всем сетам."""
-        # синхронизируем видимые чекбоксы на случай ручного изменения
-        for path, var in self._row_vars.items():
-            if var.get():
-                self._checked_paths.add(path)
-            else:
-                self._checked_paths.discard(path)
         return sorted(self._checked_paths, key=lambda p: str(p).lower())
 
+    def _sources_for_paths(
+        self,
+        paths: list[Path],
+    ) -> set[ListSource]:
+        """Источники (list1/list2) для отмеченных путей."""
+        if not self._result or not paths:
+            return set()
+        wanted = set(paths)
+        sources: set[ListSource] = set()
+        for group in self._result.groups:
+            for entry in group.files:
+                if entry.path in wanted:
+                    sources.add(entry.source)
+        return sources
+
+    def _empty_folder_roots_for_cleanup(
+        self,
+        selected: list[Path],
+    ) -> list[Path]:
+        """Корни очистки пустых папок по режиму и выбранному списку."""
+        if not self._result:
+            return []
+        return resolve_empty_folder_roots(
+            search_mode=self._result.search_mode,
+            list1_roots=self._result.list1_roots,
+            list2_roots=self._result.list2_roots,
+            delete_mode=self._delete_mode.get(),
+            selected_sources=self._sources_for_paths(selected),
+        )
+
     def _handle_next(self) -> None:
+        """Запустить удаление выбранных дубликатов."""
         if not self._result:
             return
         if self._delete_thread and self._delete_thread.is_alive():
             return
 
         selected = self._collect_selected_paths()
-        if not selected:
+        clean_empty = self._clean_empty_folders.get()
+        if not selected and not clean_empty:
             messagebox.showinfo(
                 "Duplicate Finder",
-                "Select at least one file to delete, or go Back.",
+                "Select at least one file to delete, enable "
+                "empty-folder cleanup, or go Back.",
             )
             return
 
-        preview = "\n".join(str(path) for path in selected[:10])
-        extra = (
-            f"\n... and {format_count(len(selected) - 10)} more"
-            if len(selected) > 10
-            else ""
-        )
-        confirmed = messagebox.askyesno(
-            "Confirm deletion",
-            f"Move {format_count(len(selected))} file(s) to Recycle Bin?\n\n{preview}{extra}",
-        )
+        empty_roots: list[Path] = []
+        if clean_empty:
+            empty_roots = self._empty_folder_roots_for_cleanup(selected)
+            if not empty_roots:
+                messagebox.showinfo(
+                    "Duplicate Finder",
+                    "Choose Delete from File List 1 or 2, or select "
+                    "files from a list, to clean empty folders.",
+                )
+                return
+
+        if selected:
+            preview = "\n".join(str(path) for path in selected[:10])
+            extra = (
+                f"\n... and {format_count(len(selected) - 10)} more"
+                if len(selected) > 10
+                else ""
+            )
+            clean_note = (
+                "\n\nEmpty folders under the target list "
+                "will also be cleaned."
+                if clean_empty
+                else ""
+            )
+            confirmed = messagebox.askyesno(
+                "Confirm deletion",
+                (
+                    f"Move {format_count(len(selected))} file(s) "
+                    f"to Recycle Bin?\n\n"
+                    f"{preview}{extra}{clean_note}"
+                ),
+            )
+        else:
+            confirmed = messagebox.askyesno(
+                "Confirm cleanup",
+                "Clean empty folders under the target list path(s)?",
+            )
         if not confirmed:
             return
 
-        self._start_delete(selected)
+        self._start_delete(
+            selected,
+            clean_empty=clean_empty,
+            empty_roots=empty_roots,
+        )
 
-    def _start_delete(self, selected: list[Path]) -> None:
+    def _start_delete(
+        self,
+        selected: list[Path],
+        *,
+        clean_empty: bool,
+        empty_roots: list[Path] | None = None,
+    ) -> None:
+        """Запустить фоновое удаление с окном прогресса."""
         self._delete_cancel.clear()
         self.next_btn.configure(state="disabled")
         self.back_btn.configure(state="disabled")
 
+        roots = list(empty_roots or [])
         self._delete_progress = DeleteProgressWindow(
             self.winfo_toplevel(),
-            total=len(selected),
+            total=max(len(selected), 1),
             on_cancel=self._delete_cancel.set,
+            initial_phase=(
+                "folders"
+                if (clean_empty and not selected)
+                else "files"
+            ),
         )
         self._delete_progress.update()
 
         self._delete_thread = threading.Thread(
             target=self._delete_worker,
-            args=(selected,),
+            args=(selected, clean_empty, roots),
             daemon=True,
             name="duplicate-delete",
         )
         self._delete_thread.start()
 
-    def _delete_worker(self, selected: list[Path]) -> None:
+    def _delete_worker(
+        self,
+        selected: list[Path],
+        clean_empty: bool,
+        empty_roots: list[Path],
+    ) -> None:
+        """Воркер удаления файлов и пустых папок."""
         try:
-            def progress_callback(progress: DeleteProgress) -> None:
+            def progress_callback(
+                progress: DeleteProgress,
+            ) -> None:
+                """Поставить прогресс удаления в очередь UI."""
                 if self._delete_queue.qsize() < 64:
                     self._delete_queue.put(("progress", progress))
 
-            result = delete_to_recycle_bin(
-                selected,
-                progress_callback=progress_callback,
-                cancel_check=self._delete_cancel.is_set,
-            )
+            if selected:
+                result = delete_to_recycle_bin(
+                    selected,
+                    progress_callback=progress_callback,
+                    cancel_check=self._delete_cancel.is_set,
+                )
+            else:
+                result = DeleteResult(deleted=[], failed=[], canceled=False)
+
+            if clean_empty and empty_roots and not result.canceled:
+                folders_removed, folders_failed = remove_empty_folders(
+                    roots=empty_roots,
+                    progress_callback=progress_callback,
+                    cancel_check=self._delete_cancel.is_set,
+                )
+                result.folders_removed = folders_removed
+                result.folders_failed = folders_failed
+                if self._delete_cancel.is_set():
+                    result.canceled = True
             self._delete_queue.put(("done", result))
         except Exception as exc:
             logger.exception("Delete failed")
             self._delete_queue.put(("error", str(exc)))
 
     def _process_delete_queue(self) -> None:
+        """Обработать сообщения из очереди удаления на UI-потоке."""
         try:
             while True:
                 message_type, payload = self._delete_queue.get_nowait()
@@ -513,6 +893,7 @@ class PageResults(ctk.CTkFrame):
         self.after(80, self._process_delete_queue)
 
     def _close_delete_progress(self) -> None:
+        """Закрыть окно прогресса удаления."""
         if self._delete_progress is not None:
             try:
                 self._delete_progress.finish()
@@ -523,8 +904,24 @@ class PageResults(ctk.CTkFrame):
         self.next_btn.configure(state="normal")
         self.back_btn.configure(state="normal")
 
-    def _on_delete_done(self, result: DeleteResult) -> None:
+    def _on_delete_done(
+        self,
+        result: DeleteResult,
+    ) -> None:
+        """Обработать завершение удаления на UI-потоке."""
         self._close_delete_progress()
+
+        folders_note = ""
+        if result.folders_removed or result.folders_failed:
+            folders_note = (
+                "\nEmpty folders removed: "
+                f"{format_count(len(result.folders_removed))}"
+            )
+            if result.folders_failed:
+                folders_note += (
+                    "\nEmpty folders failed: "
+                    f"{format_count(len(result.folders_failed))}"
+                )
 
         if result.canceled:
             messagebox.showinfo(
@@ -533,41 +930,66 @@ class PageResults(ctk.CTkFrame):
                     f"Deletion canceled.\n"
                     f"Moved: {format_count(len(result.deleted))}\n"
                     f"Remaining were kept."
+                    f"{folders_note}"
                 ),
             )
-        elif result.failed:
+        elif result.failed or result.folders_failed:
+            failed_items = list(result.failed) + list(result.folders_failed)
             failed_text = "\n".join(
-                f"{path}: {error}" for path, error in result.failed[:5]
+                f"{path}: {error}" for path, error in failed_items[:5]
             )
             messagebox.showwarning(
                 "Partial deletion",
                 (
                     f"Deleted: {format_count(len(result.deleted))}\n"
-                    f"Failed: {format_count(len(result.failed))}\n\n{failed_text}"
+                    f"Failed: {format_count(len(result.failed))}"
+                    f"{folders_note}\n\n{failed_text}"
                 ),
             )
         else:
-            messagebox.showinfo(
-                "Duplicate Finder",
-                f"Moved {format_count(len(result.deleted))} file(s) to Recycle Bin.",
-            )
+            if result.deleted:
+                message = (
+                    f"Moved {format_count(len(result.deleted))} "
+                    "file(s) to Recycle Bin."
+                    f"{folders_note}"
+                )
+            elif result.folders_removed:
+                message = (
+                    f"Removed {format_count(len(result.folders_removed))} "
+                    "empty folder(s)."
+                )
+            else:
+                message = f"Nothing was deleted.{folders_note}"
+            messagebox.showinfo("Duplicate Finder", message)
 
         if result.deleted:
             self._remove_deleted_files(set(result.deleted))
 
-    def _on_delete_error(self, message: str) -> None:
+    def _on_delete_error(
+        self,
+        message: str,
+    ) -> None:
+        """Показать ошибку удаления на UI-потоке."""
         self._close_delete_progress()
         messagebox.showerror("Delete error", message)
 
-    def _remove_deleted_files(self, deleted: set[Path]) -> None:
+    def _remove_deleted_files(
+        self,
+        deleted: set[Path],
+    ) -> None:
+        """Убрать удалённые файлы из результата и таблицы."""
         if not self._result:
             return
 
         new_groups: list[DuplicateGroup] = []
         for group in self._result.groups:
-            remaining = [entry for entry in group.files if entry.path not in deleted]
+            remaining = [
+                entry for entry in group.files if entry.path not in deleted]
             if len(remaining) >= 2:
-                new_groups.append(DuplicateGroup(key=group.key, files=remaining))
+                new_groups.append(
+                    DuplicateGroup(
+                        key=group.key,
+                        files=remaining))
 
         self._result.groups = new_groups
         previous = self._selected_group_index
@@ -584,15 +1006,19 @@ class PageResults(ctk.CTkFrame):
             self._show_group(index)
 
     def _handle_back(self) -> None:
+        """Вернуться на страницу настройки поиска."""
         if self.on_back:
             self.on_back()
 
     def _handle_cancel(self) -> None:
+        """Закрыть приложение со страницы результатов."""
         if self.on_cancel:
             self.on_cancel()
 
     def _show_about(self) -> None:
+        """Открыть окно About."""
         show_about(self)
 
     def _show_results_help(self) -> None:
+        """Показать справку по экрану результатов."""
         show_info_dialog(self, "Results", HELP_RESULTS, width=520)

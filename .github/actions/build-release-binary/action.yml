@@ -1,15 +1,15 @@
 name: Build Release Binary
-description: Build DuplicateFinder with PyInstaller for one platform and upload artifact
+description: Build duplicate-finder with PyInstaller for one platform and upload artifact
 
 inputs:
   version:
     description: Release version (Major.Minor.run_number)
     required: true
   target:
-    description: Target triple (e.g. x86_64-pc-windows-msvc, aarch64-apple-darwin)
+    description: Target triple (e.g. x86_64-pc-windows-msvc, x86_64-unknown-linux-gnu, aarch64-apple-darwin)
     required: true
   exe:
-    description: Built executable file name (DuplicateFinder.exe or DuplicateFinder)
+    description: Built executable file name (duplicate-finder.exe or duplicate-finder)
     required: true
   publish_artifacts:
     description: Package and upload release-binary-* artifact (push to master/release/hotfix)
@@ -26,21 +26,33 @@ runs:
       with:
         python-version: '3.12'
 
-    - name: Set application version
-      if: inputs.publish_artifacts == 'true'
+    - name: Install Linux GUI build deps
+      if: runner.os == 'Linux'
       shell: bash
       run: |
         set -euo pipefail
-        VERSION="${{ inputs.version }}"
-        perl -pi -e "s/^version = \".*\"/version = \"${VERSION}\"/" pyproject.toml
-        perl -pi -e "s/^APP_VERSION = \".*\"/APP_VERSION = \"${VERSION}\"/" src/config/app_info.py
+        # customtkinter / tkinter need Tk libs on the runner for PyInstaller collect
+        sudo apt-get update
+        sudo apt-get install -y python3-tk libxkbcommon-x11-0 libxcb-cursor0
+        python -c "import tkinter"
 
     - name: Install dependencies
       shell: bash
       run: |
         set -euo pipefail
+        # Install with repo placeholder version first — PR SemVer like
+        # 2.0.41-pr1 is not PEP 440 and breaks `pip install -e`.
         python -m pip install --upgrade pip
         pip install -e ".[dev]"
+
+    - name: Set application version
+      shell: bash
+      run: |
+        set -euo pipefail
+        VERSION="${{ inputs.version }}"
+        echo "Application version: ${VERSION}"
+        perl -pi -e "s/^version = \".*\"/version = \"${VERSION}\"/" pyproject.toml
+        perl -pi -e "s/^APP_VERSION = \".*\"/APP_VERSION = \"${VERSION}\"/" src/config/app_info.py
 
     - name: Build with PyInstaller
       shell: bash

@@ -1,5 +1,7 @@
-[![License](https://img.shields.io/github/license/denis-peshkov/duplicate-finder)](LICENSE)
+[![License](https://img.shields.io/github/license/denis-peshkov/duplicate-finder)](LICENSE.md)
 [![GitHub Release Date](https://img.shields.io/github/release-date/denis-peshkov/duplicate-finder?label=released)](https://github.com/denis-peshkov/duplicate-finder/releases)
+[![Chocolatey](https://img.shields.io/chocolatey/v/duplicate-finder)](https://community.chocolatey.org/packages/duplicate-finder)
+[![Chocolatey](https://img.shields.io/chocolatey/dt/duplicate-finder)](https://community.chocolatey.org/packages/duplicate-finder)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=duplicate-finder&metric=coverage&token=2e1bc340b26c62bd30e0b6a4b6bb8985e01cf33d)](https://sonarcloud.io/summary/new_code?id=duplicate-finder)
 [![issues](https://img.shields.io/github/issues/denis-peshkov/duplicate-finder)](https://github.com/denis-peshkov/duplicate-finder/issues)
 [![CI](https://github.com/denis-peshkov/duplicate-finder/actions/workflows/ci.yml/badge.svg)](https://github.com/denis-peshkov/duplicate-finder/actions/workflows/ci.yml)
@@ -68,7 +70,8 @@ Download binaries from [Releases](https://github.com/denis-peshkov/duplicate-fin
 
 | Asset | Platform |
 |-------|----------|
-| `duplicate-finder-{version}-x86_64-pc-windows-msvc.zip` | Windows x64 (`DuplicateFinder.exe`) |
+| `duplicate-finder-{version}-x86_64-pc-windows-msvc.zip` | Windows x64 (`duplicate-finder.exe`) |
+| `duplicate-finder-{version}-x86_64-unknown-linux-gnu.tar.gz` | Linux x64 |
 | `duplicate-finder-{version}-aarch64-apple-darwin.tar.gz` | macOS Apple Silicon |
 | `duplicate-finder-{version}-x86_64-apple-darwin.tar.gz` | macOS Intel |
 | `duplicate-finder-{version}-src.tar.gz` | Source archive |
@@ -83,7 +86,7 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 ```
 
-On macOS you also need Tk: `brew install python-tk@3.12`.
+On macOS you also need Tk: `brew install python-tk@3.12`. On Linux: `sudo apt install python3-tk` (or the equivalent for your distro).
 
 ## Run
 
@@ -104,21 +107,8 @@ pip install pyinstaller
 pyinstaller duplicate_finder.spec
 ```
 
-- Windows: `dist/DuplicateFinder.exe`
-- macOS: `dist/DuplicateFinder`
-
-## Versioning
-
-[GitVersion](https://gitversion.net/) (`GitVersion.yml`) on push:
-
-| Branch | SemVer (example) | Git tags | GitHub Release | Chocolatey | Homebrew |
-|--------|------------------|----------|----------------|------------|----------|
-| `master` | `0.1.5` (stable) | `v0.1.5`, `v0.1`, `v0` | **Release** (binaries + source) | push (stable) | core PR / bump |
-| `release/*`, `hotfix/*` | `0.2.0-preview.3` | — | — | push (prerelease) | preview tap (`homebrew-preview-tap`) |
-
-Preview branches publish Chocolatey and the Homebrew preview tap (no git tags). **Git tags** and **GitHub Release** run on **`master` only**. Details: [docs/ci-cd.md](docs/ci-cd.md).
-
-On release binary builds, CI substitutes `version` in `pyproject.toml` and `APP_VERSION` in `src/config/app_info.py` before PyInstaller.
+- Windows: `dist/duplicate-finder.exe`
+- macOS: `dist/duplicate-finder`
 
 ## Settings
 
@@ -140,11 +130,11 @@ On release binary builds, CI substitutes `version` in `pyproject.toml` and `APP_
 | `distribution/homebrew-core/` | homebrew-core formula draft |
 | `distribution/homebrew-preview/` | Preview tap formula + README |
 | `.github/workflows/ci.yml` | CI orchestrator — [docs/ci-cd.md](docs/ci-cd.md) |
-| `.github/actions/` | Composite actions (version, test, build, publish-*) |
+| `.github/actions/` | Composite actions (version, test, sonar, build, publish-*) |
 | `.github/scripts/` | Pack / Chocolatey / Homebrew helpers |
 | `docs/` | [ci-cd.md](docs/ci-cd.md), [distribution.md](docs/distribution.md) |
-| `duplicate-finder-icon.png` | Project / Chocolatey icon |
-| `LICENSE` | MIT |
+| `icon.png` | Project / Chocolatey icon |
+| `LICENSE.md` | MIT |
 
 ### Local CLI after install
 
@@ -154,4 +144,4 @@ duplicate-finder --version
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE.md](LICENSE.md).

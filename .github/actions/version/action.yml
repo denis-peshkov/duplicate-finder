@@ -32,15 +32,16 @@ runs:
         fetch-depth: 0
 
     - name: Setup GitVersion
-      uses: gittools/actions/gitversion/setup@v1.1.1
+      # v1.x only allows GV >=5.2 <6.1; 6.8.x needs actions v4.7.x
+      # https://github.com/GitTools/actions/blob/main/docs/versions.md
+      uses: gittools/actions/gitversion/setup@v4.7.0
       with:
-        versionSpec: 5.12.0
+        versionSpec: 6.8.2
 
     - name: Determine Version
       id: gitversion
-      uses: gittools/actions/gitversion/execute@v1.1.1
-      with:
-        useConfigFile: true
+      uses: gittools/actions/gitversion/execute@v4.7.0
+      # defaults to configFilePath: GitVersion.yml (useConfigFile removed in v3+/v4)
 
     - name: Set VERSION
       id: set

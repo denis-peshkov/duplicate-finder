@@ -1,0 +1,109 @@
+﻿name: Bug report
+description: Reproducible defect in Duplicate Finder (scan, delete, UI, packaging).
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We may close this issue without comment if required fields are empty or verification boxes are not checked honestly.
+
+        **Never paste** personal file paths you do not want public, passwords, or API tokens.
+
+  - type: input
+    id: app-version
+    attributes:
+      label: Duplicate Finder version
+      description: From `duplicate-finder --version`, About dialog, or the GitHub Release / Chocolatey / Homebrew package version.
+      placeholder: "x.y.z"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows 10/11
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Other (describe below)
+    validations:
+      required: true
+
+  - type: input
+    id: install-channel
+    attributes:
+      label: How did you install?
+      description: e.g. GitHub Release zip, Chocolatey, Homebrew, run from source
+      placeholder: "choco install duplicate-finder"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: verification
+    attributes:
+      label: Verification
+      description: Please verify before submitting. If you cannot check these honestly, use the **Question** template instead.
+      options:
+        - label: I searched [open and closed issues](https://github.com/denis-peshkov/duplicate-finder/issues?q=is%3Aissue) and did not find a duplicate.
+          required: true
+        - label: I am on the latest release (or the issue also reproduces on the latest).
+          required: true
+        - label: I can reproduce this with a **minimal** folder set (not only on a huge private tree), or I described the smallest repro I can share.
+          required: true
+        - label: I removed secrets and private paths from logs and screenshots in this report.
+          required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: What were you trying to do (and why)?
+      description: Scan mode, masks, one list vs two lists, delete options, etc.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened?
+      description: Actual behavior, errors, log excerpts (redacted). Log file is usually under `~/.duplicate-finder/duplicate-finder.log`.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Step-by-step reproduction
+      description: Include include/exclude masks and relevant settings if applicable.
+      render: shell
+      placeholder: |
+        1. Open Duplicate Finder
+        2. Add folder …
+        3. Set include/exclude masks …
+        4. Start scan / delete …
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area (if known)
+      options:
+        - Unknown
+        - Scan / duplicate detection
+        - Include / exclude masks
+        - Results UI / sorting
+        - Delete / Recycle Bin / empty folders
+        - Settings / config
+        - Packaging (Chocolatey / Homebrew / Release binary)
+        - Documentation
+    validations:
+      required: true

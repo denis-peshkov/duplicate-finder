@@ -11,11 +11,14 @@ from typing import Callable
 
 logger = logging.getLogger(__name__)
 
-PARTIAL_CHUNK_SIZE = 64 * 1024
+PARTIAL_CHUNK_SIZE = 8 * 1024
 
 
-def partial_hash(path: Path, cancel_check: Callable[[], bool] | None = None) -> str:
-    """Быстрый partial hash: первые и последние 64 KB."""
+def partial_hash(
+    path: Path,
+    cancel_check: Callable[[], bool] | None = None,
+) -> str:
+    """Быстрый partial hash: первые и последние 8 KB."""
     try:
         digest = hashlib.blake2b(digest_size=16)
         size = path.stat().st_size
@@ -36,11 +39,14 @@ def partial_hash(path: Path, cancel_check: Callable[[], bool] | None = None) -> 
 
         return digest.hexdigest()
     except OSError as exc:
-        logger.warning("Не удалось сделать partial hash %s: %s", path, exc)
+        logger.warning("Failed partial hash for %s: %s", path, exc)
         return ""
 
 
-def full_hash(path: Path, cancel_check: Callable[[], bool] | None = None) -> str:
+def full_hash(
+    path: Path,
+    cancel_check: Callable[[], bool] | None = None,
+) -> str:
     """Полный hash содержимого файла."""
     digest = hashlib.blake2b(digest_size=16)
 
@@ -64,5 +70,5 @@ def hash_file(
     try:
         return full_hash(path, cancel_check=cancel_check)
     except OSError as exc:
-        logger.warning("Не удалось хешировать %s: %s", path, exc)
+        logger.warning("Failed to hash %s: %s", path, exc)
         return ""

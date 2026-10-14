@@ -31,6 +31,7 @@ class AboutWindow(ctk.CTkToplevel):
         self,
         parent: ctk.CTk | ctk.CTkToplevel | ctk.CTkFrame,
     ):
+        """Создать модальное окно About с информацией о приложении."""
         root = parent.winfo_toplevel()
         super().__init__(root)
         self.title(f"About {APP_NAME}")
@@ -121,7 +122,12 @@ class AboutWindow(ctk.CTkToplevel):
 
         self.after(50, self._activate_modal)
 
-    def _section_title(self, parent: ctk.CTkBaseClass, text: str) -> None:
+    def _section_title(
+        self,
+        parent: ctk.CTkBaseClass,
+        text: str,
+    ) -> None:
+        """Добавить заголовок секции в окно About."""
         ctk.CTkLabel(
             parent,
             text=text,
@@ -136,6 +142,7 @@ class AboutWindow(ctk.CTkToplevel):
         url: str,
         font: ctk.CTkFont | None = None,
     ) -> ctk.CTkLabel:
+        """Добавить кликабельную ссылку-лейбл."""
         label = ctk.CTkLabel(
             parent,
             text=text,
@@ -148,6 +155,7 @@ class AboutWindow(ctk.CTkToplevel):
         return label
 
     def _activate_modal(self) -> None:
+        """Поднять окно и захватить фокус модально."""
         try:
             self.lift()
             self.focus_force()

@@ -4,17 +4,16 @@
 """
 
 from __future__ import annotations
+import sys
+from src.utils.logger import setup_logging
+from src.ui.app import DuplicateFinderApp
+from src.config.settings import load_settings, save_settings
+from src.config.app_info import APP_NAME, APP_VERSION
 
 import logging
-import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-
-from src.config.app_info import APP_NAME, APP_VERSION
-from src.config.settings import load_settings, save_settings
-from src.ui.app import DuplicateFinderApp
-from src.utils.logger import setup_logging
 
 
 def main() -> None:
@@ -35,7 +34,7 @@ def main() -> None:
     settings = load_settings()
 
     if settings.first_run:
-        logger.info("Первый запуск приложения")
+        logger.info("First application launch")
         settings.first_run = False
         save_settings(settings)
 
@@ -43,7 +42,7 @@ def main() -> None:
         app = DuplicateFinderApp(settings)
         app.run()
     except Exception as exc:
-        logger.critical("Критическая ошибка: %s", exc, exc_info=True)
+        logger.critical("Critical error: %s", exc, exc_info=True)
         sys.exit(1)
 
 

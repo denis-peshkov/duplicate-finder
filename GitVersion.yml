@@ -1,80 +1,127 @@
-next-version: 1.0.0 #
+# GitVersion 6.x (CI: versionSpec 6.8.2+)
+# https://gitversion.net/docs/reference/configuration
+#
+# Digits in release/* names are ignored — release/11.0.0-… == release/test.
+# YAML keys are GV6 built-ins (`main`, `develop`); git branches may still be `master` / `dev`.
+#
+# Only this file may be changed to adjust SemVer behaviour.
+# No CI overrides, no matrix fallbacks, no +semver / commit-message tricks.
+#
+# main.source-branches: release + hotfix only (no develop) → squash/merge release Minor, hotfix Patch.
+# Root increment: Patch — when master is orphaned (no release/hotfix tip), GV still yields a config
+# (EffectiveBranchConfigurationFinder skips orphaned only if root Increment is Inherit).
+
+commit-message-incrementing: Disabled
+
+# Fallback when Inherit cannot resolve a parent (direct push / at-tag / merge from develop).
+increment: Patch
+
+next-version: 2.0.0 #
+
+# Never treat branch-name digits as a SemVer (release/11.0.0-… must match release/test).
+version-in-branch-pattern: '(?<version>DO_NOT_MATCH_VERSION_IN_BRANCH_NAME)'
+
+strategies:
+  - Fallback
+  - ConfiguredNextVersion
+  - MergeMessage
+  - TaggedCommit
+  - TrackReleaseBranches
+  # VersionInBranchName intentionally omitted — digits in branch names must not set the version.
+
 branches:
-  master:
+  main:
     regex: ^master$|^main$
-    mode: ContinuousDelivery
-    tag: ''
+    mode: ContinuousDeployment
+    label: ''
+    # develop omitted: if listed, Inherit makes squash(release) follow develop (Patch).
     source-branches:
-      - feature
-      - hotfix
       - release
+      - hotfix
     increment: Inherit
-    prevent-increment-of-merged-branch-version: true
+    prevent-increment:
+      of-merged-branch: true
+      when-current-commit-tagged: true
     track-merge-target: true
+    # Avoid picking X.Y.Z from squash message "Merge branch 'release/11.0.0-…'".
+    track-merge-message: false
     tracks-release-branches: true
-    is-release-branch: true
+    is-release-branch: false
+    is-main-branch: true
     pre-release-weight: 0
+
   release:
     regex: ^release(s)?[/-]
     mode: ContinuousDelivery
-    tag: preview
-    tag-number-pattern: '[/-](?<number>\d+)[-/]'
+    label: preview
     source-branches:
-      - master
-      - dev
+      - main
       - release
+      - develop
     increment: Minor
-    prevent-increment-of-merged-branch-version: false
+    prevent-increment:
+      of-merged-branch: false
     track-merge-target: true
+    track-merge-message: false
     tracks-release-branches: true
     is-release-branch: true
     pre-release-weight: 30000
+
   hotfix:
     regex: ^hotfix(es)?[/-]
     mode: ContinuousDelivery
-    tag: preview
-    tag-number-pattern: '[/-](?<number>\d+)[-/]'
-    source-branches: [ master, hotfix ]
+    label: preview
+    source-branches:
+      - main
+      - hotfix
     increment: Patch
-    prevent-increment-of-merged-branch-version: false
+    prevent-increment:
+      of-merged-branch: false
     track-merge-target: true
+    track-merge-message: false
     tracks-release-branches: true
     is-release-branch: true
     pre-release-weight: 30000
-  feature:
-    regex: ^feature(s)?[/-]
-    mode: ContinuousDelivery
-    tag: useBranchName
-    increment: Inherit
-    prevent-increment-of-merged-branch-version: false
-    track-merge-target: false
-    tracks-release-branches: false
-    is-release-branch: false
-  pull-request:
-    regex: ^(pull|pull\-requests|pr|merge)[/-]
-    mode: ContinuousDelivery
-    tag: pr
-    tag-number-pattern: '[/-](?<number>\d+)[-/]'
-    source-branches:
-      - dev
-      - master
-      - release
-      - feature
-      - support
-      - hotfix
-    increment: None
-    prevent-increment-of-merged-branch-version: false
-    track-merge-target: false
-    tracks-release-branches: false
-    is-release-branch: false
-  dev:
+
+  develop:
     regex: ^dev(elop)?(ment)?$
-    mode: ContinuousDeployment
-    tag: dev
-    source-branches: [ master ]
-    increment: Minor
-    prevent-increment-of-merged-branch-version: false
+    mode: ContinuousDelivery
+    label: dev
+    source-branches: [main]
+    increment: Patch
+    prevent-increment:
+      of-merged-branch: false
     track-merge-target: true
     tracks-release-branches: true
     is-release-branch: false
     pre-release-weight: 40000
+
+  feature:
+    regex: ^feature(s)?[/-](?<BranchName>.+)
+    mode: ContinuousDelivery
+    label: '{BranchName}'
+    increment: Inherit
+    prevent-increment:
+      of-merged-branch: false
+    track-merge-target: false
+    tracks-release-branches: false
+    is-release-branch: false
+
+  pull-request:
+    # GitHub Actions uses refs like pull/22/merge — capture Number or label stays literal `pr{Number}` (invalid NuGet).
+    regex: ^(pull|pull\-requests|pr|merge)[/-](?<Number>\d+)
+    mode: ContinuousDelivery
+    label: pr{Number}
+    source-branches:
+      - main
+      - release
+      - hotfix
+      - develop
+      - feature
+      - support
+    increment: None
+    prevent-increment:
+      of-merged-branch: false
+    track-merge-target: false
+    tracks-release-branches: false
+    is-release-branch: false

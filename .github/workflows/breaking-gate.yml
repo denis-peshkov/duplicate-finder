@@ -1,0 +1,42 @@
+# Block consumer-breaking PRs until the repository owner adds breaking-approved.
+#
+# pull_request_target: GITHUB_TOKEN can label/comment fork PRs (pull_request cannot).
+# Security: checkout ONLY the PR base SHA and run scripts from that tree — never
+# checkout/run the PR head (fork-controlled). Diff uses fetched SHAs / pull/*/head.
+
+name: Breaking gate
+permissions: {}
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+    branches:
+      - master
+      - release/*
+      - hotfix/*
+      - dev
+
+jobs:
+  breaking-gate:
+    name: breaking-gate
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout base only (trusted)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+
+      - name: Enforce breaking-change gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REPO_OWNER: ${{ github.repository_owner }}
+        run: bash .github/workflows/scripts/check-breaking-gate.sh

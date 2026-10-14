@@ -1,0 +1,171 @@
+# Automated issue/PR triage (Cursor SDK).
+# Requires repository secret: CURSOR_API_KEY (Cursor Dashboard → Integrations)
+name: Triage
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Triage mode (audit = report only)'
+        required: false
+        default: audit
+        type: choice
+        options:
+          - audit
+          - full
+      post_comment:
+        description: 'Create/update GitHub issue with triage-report label'
+        required: false
+        default: false
+        type: boolean
+      pr_number:
+        description: 'Post automated PR triage comment (category, priority, confidence) — manual test'
+        required: false
+        type: string
+  issues:
+    types: [opened]
+  pull_request:
+    # No `edited` — title/body edits would re-burn Cursor quota
+    types: [opened, synchronize, reopened, ready_for_review]
+  # Fork PRs: secrets available; must never checkout/run head (see job steps).
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: triage-${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  pr-triage-comment:
+    name: PR automated comment
+    runs-on: ubuntu-22.04
+    # Same-repo → pull_request (secrets OK). Fork → pull_request_target (secrets OK).
+    # Mutually exclusive on head.repo so a PR never runs twice. Skip drafts.
+    if: >
+      (
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.draft == false &&
+        github.event.pull_request.head.repo.full_name == github.repository
+      ) ||
+      (
+        github.event_name == 'pull_request_target' &&
+        github.event.pull_request.draft == false &&
+        github.event.pull_request.head.repo.full_name != github.repository
+      ) ||
+      (github.event_name == 'workflow_dispatch' && inputs.pr_number != '')
+
+    steps:
+      # Same-repo / manual: full history so local agent tools see base...head, not tip-only.
+      - name: Checkout
+        if: github.event_name != 'pull_request_target'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Fork path: ONLY base SHA — never head.sha. Diff/commits come from gh API in yarn pr-triage.
+      - name: Checkout base only (fork PR)
+        if: github.event_name == 'pull_request_target'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.4'
+          cache: yarn
+          cache-dependency-path: .cursor/triage/yarn.lock
+
+      - name: Install triage dependencies
+        working-directory: .cursor/triage
+        run: yarn install --frozen-lockfile --ignore-engines || yarn install --ignore-engines
+
+      - name: Post PR triage comment
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+          TRIAGE_ICON_REL_PATH: icon.png
+        working-directory: .cursor/triage
+        run: yarn pr-triage
+
+  triage:
+    name: Repository triage
+    runs-on: ubuntu-22.04
+    if: >
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.pr_number == '') ||
+      github.event_name == 'issues'
+
+    env:
+      TRIAGE_MODE: ${{ github.event.inputs.mode || 'audit' }}
+      TRIAGE_POST_COMMENT: ${{ github.event.inputs.post_comment || 'false' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify gh CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh auth status
+          gh repo view --json nameWithOwner
+
+      - name: Collect triage data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash .cursor/triage/collect-data.sh
+
+      - name: Setup Node.js
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.pr_number == '')
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.4'
+          cache: yarn
+          cache-dependency-path: .cursor/triage/yarn.lock
+
+      - name: Install triage dependencies
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.pr_number == '')
+        working-directory: .cursor/triage
+        run: yarn install --frozen-lockfile --ignore-engines || yarn install --ignore-engines
+
+      - name: Run Cursor triage agent
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.pr_number == '')
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: .cursor/triage
+        run: yarn triage
+
+      - name: Upload triage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: triage-${{ github.run_id }}
+          path: |
+            .cursor/triage/docs/.data/
+            .cursor/triage/docs/ci-report-*.md
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Workflow summary
+        if: always()
+        run: |
+          echo "## Triage run" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Event: ${{ github.event_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Mode: ${TRIAGE_MODE}" >> "$GITHUB_STEP_SUMMARY"
+          REPORT=$(ls .cursor/triage/docs/ci-report-*.md 2>/dev/null | head -1 || true)
+          if [ -n "$REPORT" ]; then
+            echo "- Report: $REPORT" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- Data collected (issues event or PR-only run)" >> "$GITHUB_STEP_SUMMARY"
+          fi

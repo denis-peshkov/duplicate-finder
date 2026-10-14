@@ -15,11 +15,11 @@ CI workflow run: __CI_RUN_URL__
 Source tree at commit:
 __SOURCE_ARCHIVE_URL__
 
-SHA256 of DuplicateFinder.exe in this package:
+SHA256 of duplicate-finder.exe in this package:
 __EXE_SHA256__
 
 To verify on Windows PowerShell:
-  Get-FileHash "$env:ChocolateyInstall\lib\duplicate-finder\tools\DuplicateFinder.exe" -Algorithm SHA256
+  Get-FileHash "$env:ChocolateyInstall\lib\duplicate-finder\tools\duplicate-finder.exe" -Algorithm SHA256
 
 This preview package embeds the Windows binary built in CI. Compare the hash
 above with the CI run artifacts or rebuild from the source archive at commit.

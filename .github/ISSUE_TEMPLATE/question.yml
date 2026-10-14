@@ -1,0 +1,45 @@
+﻿name: Question
+description: Usage question or unclear behavior — not a confirmed bug.
+labels:
+  - question
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template when you are **not sure** the behavior is a bug, or you need guidance using Duplicate Finder.
+
+        If you have a **reproducible defect**, use **Bug report** instead.
+
+        **Do not post** secrets, tokens, or private paths you want kept private.
+
+  - type: checkboxes
+    id: verification
+    attributes:
+      label: Verification
+      options:
+        - label: I searched [issues](https://github.com/denis-peshkov/duplicate-finder/issues?q=is%3Aissue) and the [README](https://github.com/denis-peshkov/duplicate-finder/blob/master/README.md) first.
+          required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: Duplicate Finder version (if applicable)
+      placeholder: "x.y.z"
+    validations:
+      required: false
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What are you trying to achieve? Include OS and install channel if relevant.
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What you already tried
+      description: Settings, masks, docs links, screenshots (redacted).
+    validations:
+      required: false
