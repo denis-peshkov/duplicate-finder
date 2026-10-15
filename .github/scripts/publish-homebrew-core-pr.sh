@@ -2,14 +2,14 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 <repo-root> <git-token> <version> [github-api-token]" >&2
+  echo "Usage: $0 <repo-root> <git-token> <version> <github-api-token>" >&2
   exit 1
 }
 
 REPO_ROOT="${1:-}"
 GIT_TOKEN="${2:-}"
 VERSION="${3:-}"
-GH_API_TOKEN="${4:-${GIT_TOKEN}}"
+GH_API_TOKEN="${4:-}"
 
 CORE_REPO="denis-peshkov/homebrew-core"
 UPSTREAM_REPO="Homebrew/homebrew-core"
@@ -21,7 +21,7 @@ FORMULA_DST="Formula/d/duplicate-finder.rb"
 PR_HEAD="denis-peshkov:${BRANCH}"
 PR_COMPARE_URL="https://github.com/${UPSTREAM_REPO}/compare/${UPSTREAM_DEFAULT_BRANCH}...${PR_HEAD}?expand=1"
 
-if [[ -z "${REPO_ROOT}" || -z "${GIT_TOKEN}" || -z "${VERSION}" ]]; then
+if [[ -z "${REPO_ROOT}" || -z "${GIT_TOKEN}" || -z "${VERSION}" || -z "${GH_API_TOKEN}" ]]; then
   usage
 fi
 
@@ -73,60 +73,15 @@ PR_BODY="$(printf '%s' "${PR_TEMPLATE}" | perl -0777 -pe '
 ')"
 PR_TITLE="duplicate-finder ${VERSION} (new formula)"
 
-open_pr_with_gh() {
-  local token="$1"
-  export GH_TOKEN="${token}"
-  gh auth setup-git >/dev/null 2>&1 || true
-  gh pr create \
-    --repo "${UPSTREAM_REPO}" \
-    --head "${PR_HEAD}" \
-    --base "${UPSTREAM_DEFAULT_BRANCH}" \
-    --title "${PR_TITLE}" \
-    --body "${PR_BODY}"
-}
-
-open_pr_with_rest() {
-  local token="$1"
-  local payload
-  payload="$(jq -n \
-    --arg title "${PR_TITLE}" \
-    --arg head "${PR_HEAD}" \
-    --arg base "${UPSTREAM_DEFAULT_BRANCH}" \
-    --arg body "${PR_BODY}" \
-    '{title: $title, head: $head, base: $base, body: $body}')"
-  curl -fsSL -X POST \
-    -H "Authorization: Bearer ${token}" \
-    -H "Accept: application/vnd.github+json" \
-    -H "X-GitHub-Api-Version: 2022-11-28" \
-    "https://api.github.com/repos/${UPSTREAM_REPO}/pulls" \
-    -d "${payload}"
-}
-
-try_open_pr() {
-  local token="$1"
-  export GH_TOKEN="${token}"
-
-  if open_pr_with_gh "${token}" 2>/dev/null; then
-    return 0
-  fi
-
-  if open_pr_with_rest "${token}" >/dev/null 2>&1; then
-    return 0
-  fi
-
-  return 1
-}
-
 print_token_help() {
   cat >&2 <<EOF
-Failed to open a pull request to ${UPSTREAM_REPO}.
+Failed to open a pull request to ${UPSTREAM_REPO} with GH_FORK_TOKEN.
 
-Fork branch was pushed: ${CORE_REPO}:${BRANCH}
+Fork branch was pushed with TAGTOKEN: ${CORE_REPO}:${BRANCH}
 Manual compare URL: ${PR_COMPARE_URL}
 
-HOMEBREW_GITHUB_API_KEY (or TAGTOKEN fallback) must be a classic PAT with the
-public_repo scope, or a fine-grained PAT with Pull requests: Read and write on
-${UPSTREAM_REPO}. See:
+Fix Actions secret GH_FORK_TOKEN (do not rely on TAGTOKEN for this step).
+It must be a classic PAT with the public_repo scope. See:
 https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request#generating-a-personal-access-token-classic
 EOF
 }
@@ -150,21 +105,41 @@ if [[ "${open_pr_count}" != "0" ]]; then
   exit 0
 fi
 
-tokens_to_try=()
-if [[ -n "${GH_API_TOKEN}" ]]; then
-  tokens_to_try+=("${GH_API_TOKEN}")
-fi
-if [[ -n "${GIT_TOKEN}" && "${GIT_TOKEN}" != "${GH_API_TOKEN}" ]]; then
-  tokens_to_try+=("${GIT_TOKEN}")
+echo "Opening PR with GH_FORK_TOKEN (no TAGTOKEN fallback)…"
+gh auth setup-git >/dev/null 2>&1 || true
+
+if gh pr create \
+  --repo "${UPSTREAM_REPO}" \
+  --head "${PR_HEAD}" \
+  --base "${UPSTREAM_DEFAULT_BRANCH}" \
+  --title "${PR_TITLE}" \
+  --body "${PR_BODY}"; then
+  echo "Opened PR to ${UPSTREAM_REPO}"
+  gh pr list --repo "${UPSTREAM_REPO}" --head "${PR_HEAD}" --state open --json url --jq '.[0].url'
+  exit 0
 fi
 
-for token in "${tokens_to_try[@]}"; do
-  if try_open_pr "${token}"; then
-    echo "Opened PR to ${UPSTREAM_REPO}"
-    gh pr list --repo "${UPSTREAM_REPO}" --head "${PR_HEAD}" --state open --json url --jq '.[0].url'
-    exit 0
-  fi
-done
+echo "gh pr create failed; trying GitHub REST API with the same GH_FORK_TOKEN…" >&2
+payload="$(jq -n \
+  --arg title "${PR_TITLE}" \
+  --arg head "${PR_HEAD}" \
+  --arg base "${UPSTREAM_DEFAULT_BRANCH}" \
+  --arg body "${PR_BODY}" \
+  '{title: $title, head: $head, base: $base, body: $body}')"
+http_code="$(curl -sS -o /tmp/homebrew-pr-create.json -w "%{http_code}" -X POST \
+  -H "Authorization: Bearer ${GH_API_TOKEN}" \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  "https://api.github.com/repos/${UPSTREAM_REPO}/pulls" \
+  -d "${payload}" || true)"
+echo "REST createPullRequest HTTP ${http_code}" >&2
+sed -n '1,40p' /tmp/homebrew-pr-create.json >&2 || true
+
+if [[ "${http_code}" =~ ^2 ]]; then
+  echo "Opened PR to ${UPSTREAM_REPO} via REST"
+  jq -r '.html_url // empty' /tmp/homebrew-pr-create.json
+  exit 0
+fi
 
 print_token_help
 exit 1

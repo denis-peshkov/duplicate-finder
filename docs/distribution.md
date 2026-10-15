@@ -72,7 +72,7 @@ Draft: [`distribution/homebrew-core/duplicate-finder.rb`](../distribution/homebr
 
 Python deps are declared as PyPI `resource` blocks (`url` + `sha256` from [PyPI JSON](https://warehouse.pypa.io/api-reference/json.html)); install uses `virtualenv_install_with_resources`. After changing app dependencies, refresh resources (e.g. `brew update-python-resources` against a local tap copy, or regenerate from PyPI metadata).
 
-Secrets: `TAGTOKEN`, `HOMEBREW_GITHUB_API_KEY` (classic PAT with `public_repo`).
+Secrets: `TAGTOKEN` (fork push / tags / preview tap), `GH_FORK_TOKEN` (classic PAT with `public_repo` — required to open the homebrew-core PR; **no** TAGTOKEN fallback).
 
 ## Homebrew preview tap
 

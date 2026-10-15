@@ -65,9 +65,9 @@ flowchart TD
 
 | Secret | Used by |
 |--------|---------|
-| `TAGTOKEN` | `push-tags`, Homebrew fork / preview tap |
+| `TAGTOKEN` | `push-tags`, Homebrew fork push / preview tap |
 | `CHOCOLATEY_API_KEY` | `publish-chocolatey` |
-| `HOMEBREW_GITHUB_API_KEY` | `publish-homebrew` (`brew bump-formula-pr` / PR) |
+| `GH_FORK_TOKEN` | `publish-homebrew` PR / `brew bump-formula-pr` only (required; no TAGTOKEN fallback) |
 | `SONAR_TOKEN` | `sonar` action in `test` job |
 
 Pipeline distribution details: [distribution.md](distribution.md).
