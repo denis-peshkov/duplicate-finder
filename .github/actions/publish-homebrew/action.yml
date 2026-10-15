@@ -11,8 +11,8 @@ inputs:
   tagtoken:
     description: GitHub PAT for homebrew-core fork push
     required: true
-  homebrew_github_api_key:
-    description: GitHub PAT for brew bump-formula-pr and gh pr create
+  gh_fork_token:
+    description: Classic PAT (public_repo) for brew bump-formula-pr and gh pr create to upstream
     required: true
 
 runs:
@@ -89,7 +89,7 @@ runs:
       env:
         VERSION: ${{ inputs.version }}
         GIT_TOKEN: ${{ inputs.tagtoken }}
-        GH_API_TOKEN: ${{ inputs.homebrew_github_api_key }}
+        GH_API_TOKEN: ${{ inputs.gh_fork_token }}
       run: |
         set -euo pipefail
         ./.github/scripts/publish-homebrew-core-pr.sh "${{ github.workspace }}" "${GIT_TOKEN}" "${VERSION}" "${GH_API_TOKEN}"
@@ -99,14 +99,14 @@ runs:
       shell: bash
       env:
         VERSION: ${{ inputs.version }}
-        HOMEBREW_GITHUB_API_TOKEN: ${{ inputs.homebrew_github_api_key }}
-        GH_TOKEN: ${{ inputs.homebrew_github_api_key }}
+        HOMEBREW_GITHUB_API_TOKEN: ${{ inputs.gh_fork_token }}
+        GH_TOKEN: ${{ inputs.gh_fork_token }}
       run: |
         set -euo pipefail
         if ! brew bump-formula-pr duplicate-finder \
           --version="${VERSION}" \
           --url="${{ env.SOURCE_URL }}" \
           --sha256="${{ env.SOURCE_SHA256 }}"; then
-          echo "brew bump-formula-pr failed. HOMEBREW_GITHUB_API_KEY must be a classic PAT with public_repo scope." >&2
+          echo "brew bump-formula-pr failed. GH_FORK_TOKEN must be a classic PAT with public_repo scope." >&2
           exit 1
         fi

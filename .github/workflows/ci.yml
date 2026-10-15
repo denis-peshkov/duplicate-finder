@@ -173,4 +173,4 @@ jobs:
           version: ${{ needs.version.outputs.version }}
           version_commit: ${{ needs.version.outputs.version_commit }}
           tagtoken: ${{ secrets.TAGTOKEN }}
-          homebrew_github_api_key: ${{ secrets.HOMEBREW_GITHUB_API_KEY }}
+          gh_fork_token: ${{ secrets.GH_FORK_TOKEN }}
